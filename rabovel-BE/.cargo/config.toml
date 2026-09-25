@@ -1,0 +1,2 @@
+[alias]
+server = ["watch", "-s", "set -a; . ./.env; set +a; cargo run -p rabovel-api"]

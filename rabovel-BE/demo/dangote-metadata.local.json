@@ -1,0 +1,9 @@
+{
+  "name": "Rabovel Demo Dangote Cement",
+  "symbol": "rDANGCEM",
+  "uri": "https://example.invalid/rabovel/dangote.json",
+  "additional_metadata": [
+    ["ratio", "1 token = 1 simulated share"],
+    ["disclosure", "Prototype; simulated assets; not an offering; not SEC-approved"]
+  ]
+}

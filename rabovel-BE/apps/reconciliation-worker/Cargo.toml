@@ -1,0 +1,13 @@
+[package]
+name = "reconciliation-worker"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+events = { path = "../../crates/events" }
+infrastructure = { path = "../../crates/infrastructure" }
+reconciliation = { path = "../../crates/reconciliation" }
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

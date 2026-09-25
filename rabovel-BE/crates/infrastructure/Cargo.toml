@@ -1,0 +1,24 @@
+[package]
+name = "infrastructure"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+events = { path = "../events" }
+domain = { path = "../domain" }
+identity = { path = "../identity" }
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+futures = "0.3"
+rskafka = { version = "0.6", default-features = false }
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "macros", "migrate"] }
+redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
+openidconnect = "4"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+siwe = "0.6"
+hex = "0.4"
