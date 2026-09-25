@@ -1,7 +1,7 @@
 import { apiClient, isMockApiEnabled } from "@/lib/api/client";
 import { mockDelay } from "@/lib/api/mock-delay";
 import { mockAssets, mockNavHistory } from "@/mocks/assets.mock";
-import type { Asset, InvestorCatalog, InvestorQuote, NavHistoryPoint } from "@/types";
+import type { Asset, InvestorCatalog, InvestorQuote, NavHistoryPoint, PreparedPurchase, PurchaseSettlement } from "@/types";
 import { env } from "@/lib/env";
 
 export async function getAssets(): Promise<Asset[]> {
@@ -43,6 +43,20 @@ export async function createInvestorQuote(
   return investorRequest<InvestorQuote>("/investor/quote", token, {
     method: "POST",
     body: JSON.stringify({ asset_id: assetId, side: "buy", quantity }),
+  });
+}
+
+export async function prepareInvestorPurchase(token: string, assetId: string, quantity: string) {
+  return investorRequest<PreparedPurchase>("/investor/purchase/prepare", token, {
+    method: "POST",
+    body: JSON.stringify({ asset_id: assetId, quantity }),
+  });
+}
+
+export async function submitInvestorPurchase(token: string, transactionBase64: string) {
+  return investorRequest<PurchaseSettlement>("/investor/purchase/submit", token, {
+    method: "POST",
+    body: JSON.stringify({ transaction_base64: transactionBase64 }),
   });
 }
 

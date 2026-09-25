@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { InvestorCatalogAsset } from "@/types";
-import { useInvestorQuote } from "../hooks/use-assets";
+import { useInvestorPurchase, useInvestorQuote } from "../hooks/use-assets";
 
 type Props = {
   asset: InvestorCatalogAsset;
@@ -26,6 +26,7 @@ type Props = {
 export function InvestorQuoteDialog({ asset, open, onOpenChange, paymentDecimals }: Props) {
   const [quantity, setQuantity] = useState("1");
   const quote = useInvestorQuote();
+  const purchase = useInvestorPurchase();
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
@@ -78,7 +79,7 @@ export function InvestorQuoteDialog({ asset, open, onOpenChange, paymentDecimals
               <Button variant="outline" onClick={() => quote.reset()}>
                 Change quantity
               </Button>
-              <Button disabled>Confirm purchase (coming next)</Button>
+              <Button disabled={purchase.isPending} onClick={() => purchase.mutate({ assetId: asset.asset_id, quantity: quote.data!.quantity, expectedTotal: quote.data!.total_payment }, { onSuccess: () => onOpenChange(false) })}>{purchase.isPending ? "Confirming in Phantom…" : "Confirm purchase"}</Button>
             </DialogFooter>
           </div>
         ) : (

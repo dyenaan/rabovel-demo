@@ -94,3 +94,13 @@ export type InvestorQuote = {
   created_at: number;
   expires_at: number;
 };
+
+export type PreparedPurchase = {
+  transaction_base64: string;
+  quote: InvestorQuote;
+};
+
+export type PurchaseSettlement = {
+  signature: string;
+  status: "confirmed";
+};
