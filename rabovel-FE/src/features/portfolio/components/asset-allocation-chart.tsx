@@ -5,7 +5,13 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Decimal, formatCompactMoney, formatPercentage } from "@/lib/formatters";
+import {
+  Decimal,
+  formatCompactMoney,
+  formatMoney,
+  formatPercentage,
+  formatQuantity,
+} from "@/lib/formatters";
 import { useHoldings } from "../hooks/use-portfolio";
 
 const COLORS = [
@@ -91,18 +97,30 @@ export function AssetAllocationChart() {
                 </span>
               </div>
             </div>
-            <ul className="w-full space-y-2">
+            <ul className="w-full divide-y">
               {data.map((holding, index) => (
-                <li key={holding.assetId} className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2">
+                <li key={holding.assetId} className="flex items-center justify-between gap-3 py-3 text-sm">
+                  <span className="flex min-w-0 items-center gap-2">
                     <span
-                      className="size-2.5 rounded-full"
+                      className="size-2.5 shrink-0 rounded-full"
                       style={{ background: COLORS[index % COLORS.length] }}
                     />
-                    {holding.symbol}
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium text-foreground">
+                        {holding.assetName}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatQuantity(holding.quantity)} {holding.symbol}
+                      </span>
+                    </span>
                   </span>
-                  <span className="font-tabular text-muted-foreground">
-                    {formatPercentage(holding.allocationPercent, { signed: false })}
+                  <span className="shrink-0 text-right font-tabular">
+                    <span className="block font-medium text-foreground">
+                      {formatMoney(holding.marketValue)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatPercentage(holding.allocationPercent, { signed: false })}
+                    </span>
                   </span>
                 </li>
               ))}
