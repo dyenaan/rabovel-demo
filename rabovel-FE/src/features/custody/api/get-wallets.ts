@@ -14,6 +14,20 @@ type BackendWallet = {
 
 type WalletChallenge = { challenge_id: string; message: string; expires_at: number };
 type WalletLinkResponse = { wallet: BackendWallet; onboarding_status: string };
+export type CngnWalletStatus = {
+  code: string;
+  name: string;
+  network: string;
+  mint_address: string;
+  token_program: string | null;
+  decimals: number | null;
+  wallet_address: string;
+  token_account: string | null;
+  balance_base_units: string | null;
+  account_verified: boolean;
+  ready: boolean;
+  error: string | null;
+};
 
 async function backendRequest<T>(path: string, token: string, init?: RequestInit): Promise<T> {
   const response = await fetch(new URL(path, env.NEXT_PUBLIC_API_BASE_URL), {
@@ -59,4 +73,12 @@ export async function completeSolanaWalletLink(token: string, challengeId: strin
     body: JSON.stringify({ challenge_id: challengeId, signature }),
   });
   return adaptWallet(linked.wallet);
+}
+
+export async function getInvestorCngnStatus(token: string): Promise<CngnWalletStatus> {
+  return backendRequest<CngnWalletStatus>("/wallet/payment-assets/cngn", token);
+}
+
+export async function createInvestorCngnAccount(token: string): Promise<CngnWalletStatus> {
+  return backendRequest<CngnWalletStatus>("/wallet/payment-assets/cngn", token, { method: "POST" });
 }
