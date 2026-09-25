@@ -369,6 +369,25 @@ impl Repository for PgRepository {
         Ok(())
     }
 
+    async fn delete_asset_draft(
+        &self,
+        asset_id: &str,
+        issuer_user_id: &str,
+    ) -> Result<(), AuthError> {
+        let result = sqlx::query(
+            "DELETE FROM asset_drafts WHERE asset_id = $1 AND issuer_user_id = $2 AND status = 'draft'",
+        )
+        .bind(asset_id)
+        .bind(issuer_user_id)
+        .execute(&self.pool)
+        .await
+        .map_err(db_error("failed to delete asset draft"))?;
+        if result.rows_affected() != 1 {
+            return Err(AuthError::ForbiddenAction);
+        }
+        Ok(())
+    }
+
     async fn approve_asset_for_demo_setup(
         &self,
         asset_id: &str,

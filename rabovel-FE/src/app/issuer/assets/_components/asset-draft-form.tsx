@@ -2,13 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Copy, ImagePlus, Save } from "lucide-react";
+import { ArrowLeft, Check, Copy, ImagePlus, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createAssetDraft, updateAssetDraft, uploadAssetImage, type AssetDraftSubmission } from "@/features/auth/api/backend-auth";
+import { createAssetDraft, deleteAssetDraft, updateAssetDraft, uploadAssetImage, type AssetDraftSubmission } from "@/features/auth/api/backend-auth";
 import { useAuthStore } from "@/stores/auth-store";
 
 export const DISCLOSURE = "Prototype / simulated asset / not an offering / not SEC-approved";
@@ -19,7 +20,7 @@ export const defaultAssetDraft: AssetDraftSubmission = {
   metadata: { name: "Rabovel Nigeria Telco", symbol: "RABO-NG-TELCO", description: "A simulated Nigerian telecom equity used only in the Rabovel demo.", image_uri: null, external_url: null, metadata_uri: null, additional_metadata: [] },
 };
 
-export function AssetDraftForm({ initialValue, assetId }: { initialValue: AssetDraftSubmission; assetId?: string }) {
+export function AssetDraftForm({ initialValue, assetId, deletable = false }: { initialValue: AssetDraftSubmission; assetId?: string; deletable?: boolean }) {
   const token = useAuthStore((state) => state.token); const router = useRouter();
   const [form, setForm] = useState(initialValue); const [error, setError] = useState<string | null>(null); const [saving, setSaving] = useState(false);
   const [savedAssetId, setSavedAssetId] = useState(assetId);
@@ -53,6 +54,7 @@ export function AssetDraftForm({ initialValue, assetId }: { initialValue: AssetD
   };
   const metadataJson = JSON.stringify(metadataDocument, null, 2);
   async function copyMetadata() { await navigator.clipboard.writeText(metadataJson); setCopied(true); window.setTimeout(() => setCopied(false), 1500); }
+  async function removeDraft() { if (!token || !assetId) return; setError(null); try { await deleteAssetDraft(token, assetId); router.push("/issuer"); router.refresh(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not delete this draft."); } }
 
   return <div className="mx-auto max-w-4xl space-y-6"><div><Button asChild variant="ghost" className="mb-2 -ml-3"><Link href="/issuer"><ArrowLeft />Issuer overview</Link></Button><p className="text-sm font-medium text-primary">Asset registry</p><h1 className="text-3xl font-semibold tracking-tight">{editing ? "Edit asset draft" : "Create asset draft"}</h1><p className="mt-2 text-muted-foreground">Define the simulated instrument and metadata. Saving does not create a mint or issue inventory.</p></div>
     <form onSubmit={submit} className="space-y-6"><Card><CardHeader><CardTitle>Instrument</CardTitle><CardDescription>Stable identity, classification, and authorized supply.</CardDescription></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
@@ -67,7 +69,7 @@ export function AssetDraftForm({ initialValue, assetId }: { initialValue: AssetD
       <Field label="Asset image" wide><div className="grid gap-4 rounded-lg border border-dashed p-4 sm:grid-cols-[10rem_1fr] sm:items-center"><div className="flex aspect-square items-center justify-center overflow-hidden rounded-md bg-muted bg-cover bg-center" style={imagePreview ? { backgroundImage: `url(${imagePreview})` } : undefined}>{!imagePreview && <ImagePlus className="size-8 text-muted-foreground" />}</div><div className="space-y-3"><Input type="file" accept="image/png,image/jpeg,image/webp" disabled={saving} onChange={(event) => { const file = event.target.files?.[0] ?? null; if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview); setImageFile(file); setImagePreview(file ? URL.createObjectURL(file) : form.metadata.image_uri); }} /><p className="text-xs text-muted-foreground">PNG, JPEG, or WebP up to 5 MB. The selected image uploads when you save the draft.</p></div></div></Field><Field label="External URL (optional)"><Input type="url" value={form.metadata.external_url ?? ""} onChange={metadataField("external_url")} placeholder="https://…" /></Field>
       <Field label="Metadata URI" wide><Input type="url" value={form.metadata.metadata_uri ?? ""} readOnly placeholder="Assigned by the backend after publishing" /><p className="text-xs text-muted-foreground">Planned path: <span className="font-mono">metadata/assets/{assetId ?? "{asset_id}"}/metadata.json</span></p></Field>
     </CardContent></Card><Card className="overflow-hidden"><CardHeader className="flex-row items-start justify-between gap-4 border-b bg-muted/20"><div><CardTitle>Metadata JSON preview</CardTitle><CardDescription className="mt-1">This is the public document that will be uploaded. System-owned fields override custom metadata.</CardDescription></div><Button type="button" size="sm" variant="outline" onClick={() => void copyMetadata()}>{copied ? <Check /> : <Copy />}{copied ? "Copied" : "Copy JSON"}</Button></CardHeader><CardContent className="p-0"><pre className="max-h-[32rem] overflow-auto p-5 text-xs leading-relaxed"><code>{metadataJson}</code></pre></CardContent></Card><Card className="border-amber-500/40 bg-amber-500/5"><CardContent className="pt-6"><p className="font-medium">{DISCLOSURE}</p><p className="mt-1 text-sm text-muted-foreground">This mandatory disclosure is stored with the draft and metadata.</p></CardContent></Card>
-    {error && <p className="text-sm text-destructive">{error}</p>}<div className="flex justify-end"><Button disabled={saving} type="submit"><Save />{saving ? "Saving…" : editing ? "Save changes" : "Save draft"}</Button></div></form></div>;
+    {error && <p className="text-sm text-destructive">{error}</p>}<div className="flex items-center justify-between gap-3">{deletable && assetId ? <ConfirmDialog trigger={<Button type="button" variant="destructive"><Trash2 />Delete draft</Button>} title="Delete this asset draft?" description={`This permanently deletes ${form.name}. It cannot be recovered.`} confirmLabel="Delete draft" destructive onConfirm={removeDraft} /> : <span />}<Button disabled={saving} type="submit"><Save />{saving ? "Saving…" : editing ? "Save changes" : "Save draft"}</Button></div></form></div>;
 }
 
 function Field({ label, wide, children }: { label: string; wide?: boolean; children: React.ReactNode }) { return <div className={`space-y-2 ${wide ? "sm:col-span-2" : ""}`}><Label>{label}</Label>{children}</div>; }

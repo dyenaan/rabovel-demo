@@ -593,6 +593,7 @@ impl IntoResponse for ApiError {
         list_asset_drafts_handler,
         get_asset_draft_handler,
         update_asset_draft_handler,
+        delete_asset_draft_handler,
         submit_asset_for_demo_review_handler,
         start_asset_setup_handler,
         get_asset_setup_operation_handler,
@@ -1304,6 +1305,21 @@ async fn update_asset_draft_handler(
         .await
         .map_err(ApiError::from)?;
     Ok(Json(asset_draft_response(updated)))
+}
+
+#[utoipa::path(delete, path = "/issuer/assets/{asset_id}", responses((status = 204), (status = 403, body = ApiErrorResponse), (status = 404, body = ApiErrorResponse)))]
+async fn delete_asset_draft_handler(
+    State(state): State<GatewayState>,
+    user: AuthenticatedUser,
+    Path(asset_id): Path<String>,
+) -> Result<StatusCode, ApiError> {
+    require_approved_issuer(&state, &user.user_id).await?;
+    state
+        .repository
+        .delete_asset_draft(&asset_id, &user.user_id)
+        .await
+        .map_err(ApiError::from)?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[utoipa::path(post, path = "/issuer/assets/{asset_id}/submit", responses((status = 200, body = AssetDraftResponse), (status = 400, body = ApiErrorResponse), (status = 403, body = ApiErrorResponse), (status = 404, body = ApiErrorResponse)))]

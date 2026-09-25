@@ -155,6 +155,10 @@ export async function updateAssetDraft(token: string, assetId: string, submissio
   return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}`, { method: "PATCH", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(submission) });
 }
 
+export async function deleteAssetDraft(token: string, assetId: string) {
+  return directRequest<null>(`/issuer/assets/${encodeURIComponent(assetId)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+}
+
 export async function submitAssetForDemoReview(token: string, assetId: string) {
   return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/submit`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
 }

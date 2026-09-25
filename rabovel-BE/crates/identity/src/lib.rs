@@ -153,6 +153,11 @@ pub trait Repository: Send + Sync {
 
     async fn create_asset_draft(&self, asset: AssetDraftRecord) -> Result<(), AuthError>;
     async fn update_asset_draft(&self, asset: AssetDraftRecord) -> Result<(), AuthError>;
+    async fn delete_asset_draft(
+        &self,
+        asset_id: &str,
+        issuer_user_id: &str,
+    ) -> Result<(), AuthError>;
     async fn approve_asset_for_demo_setup(
         &self,
         asset_id: &str,
@@ -375,6 +380,22 @@ pub mod in_memory {
                 return Err(AuthError::PolicyViolation("an asset with this instrument code or market/ticker/share class already exists; edit the existing draft or use a distinct instrument identity".into()));
             }
             assets.insert(asset.asset_id.clone(), asset);
+            Ok(())
+        }
+
+        async fn delete_asset_draft(
+            &self,
+            asset_id: &str,
+            issuer_user_id: &str,
+        ) -> Result<(), AuthError> {
+            let mut assets = self.asset_drafts.write().map_err(|_| state_unavailable())?;
+            let existing = assets
+                .get(asset_id)
+                .ok_or_else(|| AuthError::PolicyViolation("asset draft not found".into()))?;
+            if existing.issuer_user_id != issuer_user_id || existing.status != "draft" {
+                return Err(AuthError::ForbiddenAction);
+            }
+            assets.remove(asset_id);
             Ok(())
         }
 

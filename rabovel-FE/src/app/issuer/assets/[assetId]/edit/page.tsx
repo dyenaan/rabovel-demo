@@ -12,5 +12,5 @@ export default function EditIssuerAssetPage({ params }: { params: Promise<{ asse
   useEffect(() => { if (token) void fetchIssuerAsset(token, assetId).then(setAsset).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not load this draft.")); }, [assetId, token]);
   if (error) return <p className="mx-auto max-w-4xl text-sm text-destructive">{error}</p>;
   if (!asset) return <LoadingState />;
-  return <AssetDraftForm assetId={asset.asset_id} initialValue={asset.draft} />;
+  return <AssetDraftForm assetId={asset.asset_id} initialValue={asset.draft} deletable={asset.status === "draft"} />;
 }

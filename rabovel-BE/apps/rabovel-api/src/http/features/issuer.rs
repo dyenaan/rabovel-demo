@@ -5,12 +5,12 @@ use axum::{
 
 use crate::{
     cngn_payment_asset_handler, confirm_asset_image_upload_handler, create_asset_draft_handler,
-    create_asset_image_upload_handler, create_broker_cngn_account_handler, get_asset_draft_handler,
-    get_asset_setup_operation_handler, get_initial_inventory_handler,
-    issue_initial_inventory_handler, issuer_onboarding_handler, issuer_overview_handler,
-    list_asset_drafts_handler, publish_asset_listing_handler, start_asset_setup_handler,
-    submit_asset_backing_handler, submit_asset_for_demo_review_handler, update_asset_draft_handler,
-    GatewayState,
+    create_asset_image_upload_handler, create_broker_cngn_account_handler,
+    delete_asset_draft_handler, get_asset_draft_handler, get_asset_setup_operation_handler,
+    get_initial_inventory_handler, issue_initial_inventory_handler, issuer_onboarding_handler,
+    issuer_overview_handler, list_asset_drafts_handler, publish_asset_listing_handler,
+    start_asset_setup_handler, submit_asset_backing_handler, submit_asset_for_demo_review_handler,
+    update_asset_draft_handler, GatewayState,
 };
 
 pub(crate) fn routes() -> Router<GatewayState> {
@@ -31,7 +31,9 @@ pub(crate) fn routes() -> Router<GatewayState> {
         )
         .route(
             "/issuer/assets/:asset_id",
-            get(get_asset_draft_handler).patch(update_asset_draft_handler),
+            get(get_asset_draft_handler)
+                .patch(update_asset_draft_handler)
+                .delete(delete_asset_draft_handler),
         )
         .route(
             "/issuer/assets/:asset_id/submit",
