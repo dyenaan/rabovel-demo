@@ -302,10 +302,11 @@ impl SolanaMintSetupExecutor {
             settlement_wallet: settlement_wallet.to_string(),
             token_account: token_account.to_string(),
             authorized_units: authorized.clone(),
-            // Issuance remains complete after units leave the issuer inventory.
-            // Requiring the issuer balance to equal the full supply made a live
-            // asset look unissued immediately after its first purchase.
-            issuance_complete: supply == authorized && token_account_ready,
+            // Issuance is a supply invariant, not a transient account-state
+            // invariant. ACL-controlled accounts may be frozen or thawed while
+            // trading, and sold units leave issuer inventory, but neither event
+            // reverses the completed issuance.
+            issuance_complete: supply == authorized,
             supply,
             inventory_balance: balance,
             wallet_allowlisted,
