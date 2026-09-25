@@ -70,6 +70,7 @@ export type InvestorCatalogAsset = {
   settlement_currency: string; network: string; mint_address: string; authorized_units: string;
   issuer_inventory: string; investor_token_account: string; investor_balance: string;
   investor_account_ready: boolean; image_uri: string | null; disclosure: string;
+  backing: { summary: string; document_name: string; content_type: string; size_bytes: number; verification_status: "verified"; verified_at: number };
 };
 
 export type InvestorCatalog = {

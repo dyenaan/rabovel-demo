@@ -39,10 +39,14 @@ export type AssetDraftSubmission = {
   representation: string; rights_description: string; disclosure: string;
   metadata: { name: string; symbol: string; description: string; image_uri: string | null; external_url: string | null; metadata_uri: string | null; additional_metadata: AssetMetadataProperty[] };
 };
+export type BackingEvidence = {
+  summary: string; document_name: string; content_type: string; size_bytes: number;
+  verification_status: "verified"; verified_at: number;
+};
 export type AssetDraft = {
   asset_id: string; issuer_user_id: string; status: "draft" | "pending_review" | "approved_for_setup" | "minted" | "rejected" | "revision_required"; issued_units: string; mint_address: string | null;
   created_at: number; updated_at: number;
-  draft: AssetDraftSubmission;
+  draft: AssetDraftSubmission & { backing: BackingEvidence | null; listing_status: "not_listed" | "live" };
 };
 export type AssetSetupOperation = {
   operation_id: string; asset_id: string; network: string; mint_address: string;
@@ -169,6 +173,14 @@ export async function fetchInitialInventory(token: string, assetId: string) {
 
 export async function issueInitialInventory(token: string, assetId: string) {
   return directRequest<InitialInventory>(`/issuer/assets/${encodeURIComponent(assetId)}/inventory`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function submitAssetBacking(token: string, assetId: string, summary: string, file: File) {
+  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/backing`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify({ summary, document_name: file.name, content_type: file.type, size_bytes: file.size }) });
+}
+
+export async function publishAssetListing(token: string, assetId: string) {
+  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/listing`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
 }
 
 export async function fetchCngnPaymentAsset(token: string) {
