@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, RefreshCw, WalletCards } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { createInvestorCngnAccount, getInvestorCngnStatus, type CngnWalletStatus } from "../api/get-wallets";
 
 export function InvestorCngnCard() {
+  const queryClient = useQueryClient();
   const token = useAuthStore((state) => state.token);
   const [status, setStatus] = useState<CngnWalletStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -19,7 +21,7 @@ export function InvestorCngnCard() {
   async function refresh() {
     if (!token) return;
     setLoading(true); setError(null);
-    try { setStatus(await getInvestorCngnStatus(token)); }
+    try { const next = await getInvestorCngnStatus(token); setStatus(next); queryClient.setQueryData(["custody", "cngn"], next); await queryClient.invalidateQueries({ queryKey: ["investor", "catalog"] }); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Could not load your cNGN account."); }
     finally { setLoading(false); }
   }
@@ -27,7 +29,7 @@ export function InvestorCngnCard() {
   async function createAccount() {
     if (!token) return;
     setCreating(true); setError(null);
-    try { setStatus(await createInvestorCngnAccount(token)); }
+    try { const next = await createInvestorCngnAccount(token); setStatus(next); queryClient.setQueryData(["custody", "cngn"], next); await queryClient.invalidateQueries({ queryKey: ["investor", "catalog"] }); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Could not create your cNGN account."); }
     finally { setCreating(false); }
   }
@@ -36,11 +38,11 @@ export function InvestorCngnCard() {
     if (!token) return;
     let active = true;
     void getInvestorCngnStatus(token)
-      .then((result) => { if (active) setStatus(result); })
+      .then((result) => { if (active) { setStatus(result); queryClient.setQueryData(["custody", "cngn"], result); } })
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Link a Phantom wallet before creating a cNGN account."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [token]);
+  }, [queryClient, token]);
 
   return <Card>
     <CardHeader>

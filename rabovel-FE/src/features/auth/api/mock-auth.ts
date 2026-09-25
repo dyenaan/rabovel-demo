@@ -12,6 +12,15 @@ const MOCK_USERS: Record<string, { password: string; user: AuthUser }> = {
       investorId: "inv_1001",
     },
   },
+  "issuer@rabovel.com": {
+    password: "password123",
+    user: {
+      id: "usr_issuer_1",
+      name: "Rabovel Demo Issuer",
+      email: "issuer@rabovel.com",
+      role: "ISSUER",
+    },
+  },
   "admin@rabovel.com": {
     password: "password123",
     user: {

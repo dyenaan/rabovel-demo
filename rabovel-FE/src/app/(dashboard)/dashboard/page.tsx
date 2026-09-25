@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageContainer } from "@/components/layout/page-container";
 import { PageHeader } from "@/components/shared/page-header";
 import { ComplianceSummaryCard } from "@/features/dashboard/components/compliance-summary-card";
+import { InvestorSetupCard } from "@/features/dashboard/components/investor-setup-card";
 import { AssetAllocationChart } from "@/features/portfolio/components/asset-allocation-chart";
 import { PortfolioActivity } from "@/features/portfolio/components/portfolio-activity";
 import { PortfolioPerformanceChart } from "@/features/portfolio/components/portfolio-performance-chart";
@@ -19,6 +20,8 @@ export default function DashboardPage() {
       />
 
       <div className="space-y-6">
+        <InvestorSetupCard />
+
         <PortfolioSummaryCards />
 
         <PortfolioPerformanceChart />

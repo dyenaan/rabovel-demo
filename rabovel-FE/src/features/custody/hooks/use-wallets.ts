@@ -61,6 +61,7 @@ export function useConnectWallet() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.custody.wallets() });
+      queryClient.invalidateQueries({ queryKey: ["investor", "catalog"] });
       toast.success("Phantom wallet verified and linked.");
     },
   });

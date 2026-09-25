@@ -1,305 +1,79 @@
 # Rabovel-FE
 
-**Programmable capital-market infrastructure for African financial assets.**
+Rabovel FE is a Next.js App Router interface for the tokenized-equity demo. It presents separate issuer, investor and operations experiences and connects the primary demo journey to `rabovel-BE`.
 
-Rabovel is a blockchain-enabled investment platform exploring how Nigerian equities and other real-world financial assets can interact with programmable settlement infrastructure on Solana.
+The demo lets an issuer define an equity, submit simulated backing, create Token-2022 inventory and publish a listing. An investor can verify a Phantom wallet, create and fund a cNGN token account, review live listings and backing, settle a purchase on Solana, and see the resulting balance and portfolio value.
 
-This repository contains the frontend for the Rabovel prototype.
+> Demo only: KYC, backing review and prices are simulated. Tokens do not establish legal ownership of real shares.
 
----
+## Current experience
 
-## Overview
-
-Traditional capital markets depend on multiple intermediaries for order execution, custody, settlement, reconciliation, and ownership records.
-
-Rabovel explores a different architecture:
-
-```
-Investment order → backend coordination → Solana transaction → onchain settlement state
-```
-
-The goal is not to replace existing exchanges, brokers, custodians, or regulators. Instead, Rabovel explores how blockchain infrastructure can sit alongside traditional financial systems and provide a more programmable layer for settlement, ownership state, compliance logic, and financial coordination.
-
-The current prototype focuses on demonstrating how a familiar investment experience can connect to Solana-based settlement infrastructure behind the scenes.
-
----
-
-## Why Rabovel?
-
-African capital markets contain valuable financial assets, but access and infrastructure remain fragmented across brokers, banks, custodians, exchanges, and payment systems.
-
-At the same time, blockchain infrastructure has introduced new primitives for:
-
-- Programmable asset ownership
-- Transparent settlement
-- Stablecoin-based payments
-- Automated transfer rules
-- Composable financial products
-- Globally accessible financial rails
-
-Rabovel explores how those primitives can be applied to real capital-market infrastructure.
-
-We are starting with Nigerian equities and building toward a broader question: **What does African capital-market infrastructure look like when it becomes programmable?**
-
----
-
-## What the Prototype Demonstrates
-
-The Rabovel prototype is centered around the order-to-settlement lifecycle. A user can:
-
-1. Discover an investment opportunity through the Rabovel interface.
-2. Review asset and market information.
-3. Submit an investment order.
-4. Have the order processed by the Rabovel backend.
-5. Trigger settlement-related actions on Solana.
-6. View the resulting investment and transaction state.
-
-The frontend is designed to keep the experience familiar to traditional investors while exposing blockchain functionality through the underlying infrastructure.
-
----
-
-## Frontend Features
-
-The current frontend includes interfaces for:
-
-- Investment opportunity discovery
-- Asset detail views
-- Order creation and review
-- Investor portfolio tracking
-- Transaction and activity history
-- Investment dashboards
-- Operational workflows
-- Settlement status
-- Blockchain transaction state
-
-Some parts of the application currently use mock data while backend and blockchain integrations are progressively connected.
-
----
-
-## Architecture
-
-Rabovel separates the user experience, business workflow, and blockchain settlement layers.
-
-```
-┌──────────────────────────────┐
-│       Rabovel Frontend       │
-│                              │
-│  Discovery                   │
-│  Portfolio                   │
-│  Orders                      │
-│  Investor Experience         │
-└──────────────┬───────────────┘
-               │
-               │ API
-               ▼
-┌──────────────────────────────┐
-│        Rabovel Backend       │
-│                              │
-│  Order Processing            │
-│  Business Rules              │
-│  Workflow Coordination       │
-│  Settlement Orchestration    │
-└──────────────┬───────────────┘
-               │
-               │ Solana RPC
-               ▼
-┌──────────────────────────────┐
-│            Solana            │
-│                              │
-│  Settlement State            │
-│  Asset Representation        │
-│  Transaction History         │
-│  Programmable Asset Logic    │
-└──────────────────────────────┘
+```mermaid
+flowchart LR
+  L[Login] -->|Issuer| I[Draft → backing → mint → inventory → listing]
+  L -->|Investor| W[Verify Phantom]
+  W --> C[Create and fund cNGN account]
+  C --> A[Review live assets and backing]
+  A --> Q[Review quote]
+  Q --> P[Sign atomic purchase]
+  P --> D[Balances and dashboard refresh]
 ```
 
-The blockchain acts as a settlement and coordination layer rather than replacing the entire existing capital-market stack.
+- **Authentication:** email/password sessions with role-based routing; mock credentials are available when mock mode is enabled.
+- **Issuer workspace:** onboarding, asset creation/editing, simulated backing submission/review, mint setup, inventory issuance and live-listing status.
+- **Investor workspace:** readiness guidance, Phantom ownership verification, cNGN setup, live assets, simulated prices, quotes, purchases and current holdings.
+- **Operations UI:** admin, compliance, settlement and reconciliation screens remain largely fixture-backed demonstrations.
+- **State:** TanStack Query manages server data and invalidation; Zustand persists the browser session; React Hook Form and Zod handle forms.
 
----
+## Solana interaction
 
-## Tech Stack
+The browser never receives issuer or admin keys. Phantom signs two user-controlled actions:
 
-**Frontend**
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
-- Radix UI
-- Lucide
-- Framer Motion
+1. A one-time message proving ownership of the Solana wallet linked to the Rabovel account.
+2. A backend-prepared purchase transaction whose fee payer must match that linked wallet.
 
-**State & Data**
-- TanStack Query
-- Zustand
-- React Hook Form
-- Zod
-- Decimal.js
+The purchase contains both the investor cNGN payment and issuer equity delivery. The backend partially signs the issuer leg; Phantom signs the investor leg before the frontend returns the serialized transaction for verification and submission. Confirmed purchases invalidate catalog data so wallet balances, holdings and issuer inventory refresh together.
 
-**Blockchain**
-- Solana
-- solana/web3.js
-
-**Visualization**
-- Recharts
-- TanStack Table
-
----
-
-## Project Structure
-
-```
-src/
-├── app/          # Next.js routes and layouts
-├── components/   # Shared UI components
-├── features/     # Domain and feature modules
-├── lib/          # Shared utilities and integrations
-├── mocks/        # Prototype/mock data
-├── stores/       # Client-side state
-└── types/        # Shared TypeScript types
-```
-
-The application is organized around feature boundaries so that investment, portfolio, order, settlement, and operational concerns can evolve independently.
-
----
-
-## Getting Started
-
-### Prerequisites
-
-Make sure you have:
-
-- Node.js
-- pnpm
-
-installed locally.
-
-### Install Dependencies
+## Run locally
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
+pnpm dev --port 3001
 ```
 
-### Environment Configuration
+Create `.env.local` as needed:
 
-Configure the required environment variables before running the application.
-
-The frontend expects values such as:
-
-```
-NEXT_PUBLIC_APP_URL=
-NEXT_PUBLIC_API_BASE_URL=
-NEXT_PUBLIC_WS_URL=
-NEXT_PUBLIC_ENVIRONMENT=
+```dotenv
+NEXT_PUBLIC_USE_MOCK_API=false
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+NEXT_PUBLIC_ENVIRONMENT=development
 ```
 
-Refer to the project's environment documentation or `.env.example` for the current configuration.
+`NEXT_PUBLIC_USE_MOCK_API` defaults to `true`. Real demo auth, wallet, issuer and purchase flows require it to be `false` and the backend to be running. Browser-exposed variables must never contain secrets.
 
-### Run the Development Server
+See [commands](docs/commands.md) for verification and [architecture](docs/architecture.md) for source boundaries.
 
-```bash
-pnpm dev
-```
+## Source layout
 
-Then open: [http://localhost:3000](http://localhost:3000)
+| Path | Purpose |
+| --- | --- |
+| `src/app` | Routes, layouts and page composition |
+| `src/features` | Feature components, hooks and API adapters |
+| `src/components` | Shared layout, UI and financial presentation |
+| `src/types` | Frontend contracts |
+| `src/stores` | Persisted browser state |
+| `src/mocks` | Fixture data for incomplete/mock experiences |
 
-### Available Commands
+## Known gaps
 
-| Command | Description |
-|---|---|
-| `pnpm dev` | Runs the application in development mode. |
-| `pnpm build` | Creates a production build. |
-| `pnpm start` | Runs the production build. |
-| `pnpm lint` | Runs ESLint. |
+- Several admin, order, trade, settlement and historical-performance screens still use fixtures or legacy endpoints.
+- The dashboard derives current holdings from live catalog balances; durable cost basis, P&L and transaction history are not yet available.
+- cNGN funding uses an external devnet faucet; the app creates and displays the token account but does not mint payment funds.
+- Backing is metadata rather than a stored document, and review is instant because there is no admin review portal.
+- The price feed is deterministic and simulated, not licensed market data.
+- Wallet and transaction flows require Phantom, funded Solana accounts and a correctly configured backend/network.
+- No automated browser test suite currently exercises the complete issuer-to-investor journey.
 
----
+## Future state
 
-## Development Documentation
-
-Additional project documentation is available under `docs/`.
-
-Useful references include:
-
-- `docs/architecture.md`
-- `docs/commands.md`
-
-Coding agents should also follow: `AGENTS.md`
-
----
-
-## Solana Integration
-
-Solana is used as the programmable settlement layer for the Rabovel prototype.
-
-The long-term architecture may support infrastructure such as:
-
-- Onchain settlement records
-- Tokenized asset representations
-- Stablecoin settlement
-- Programmable transfer restrictions
-- Investor eligibility rules
-- Compliance-aware transfers
-- Token-2022 extensions
-- Transfer hooks
-- Integration with other onchain financial protocols
-
-For regulated securities, these mechanisms would need to operate alongside the appropriate legal, exchange, custody, and regulatory infrastructure.
-
----
-
-## Current Status
-
-Rabovel is currently an **experimental prototype**. The system is being built to validate the technical architecture and user experience around blockchain-enabled capital-market infrastructure.
-
-Some frontend flows currently rely on mocked or fixture-backed data.
-
-The project does not currently represent that Nigerian equities shown in the interface are:
-
-- Legally tokenized securities
-- Exchange-approved blockchain assets
-- Backed 1:1 by publicly traded shares
-- Available for unrestricted public trading
-
-Those are separate legal, regulatory, custody, and market-structure considerations beyond the scope of the current prototype.
-
----
-
-## Roadmap
-
-Areas being explored include:
-
-- Completing the frontend-to-backend integration
-- End-to-end order settlement
-- Solana program integration
-- Onchain settlement records
-- Token-2022 asset experiments
-- Compliance-aware transfer controls
-- Stablecoin settlement
-- Investor identity and eligibility infrastructure
-- Real-world asset custody models
-- Cross-border investment access
-- Composability with onchain financial protocols
-
----
-
-## Vision
-
-Rabovel's long-term thesis is that blockchain infrastructure can become a useful coordination layer for existing financial markets.
-
-Rather than simply putting stocks onchain, Rabovel is exploring the infrastructure underneath them:
-
-- How should ownership be represented?
-- How should trades settle?
-- How can transfer restrictions become programmable?
-- How can stablecoins interact with securities markets?
-- How can traditional and onchain financial systems communicate?
-- How can African investors and issuers participate in increasingly global financial rails?
-
-Rabovel is an attempt to build toward those answers.
-
----
-
-## Disclaimer
-
-Rabovel is an experimental software prototype built for research and demonstration purposes.
-
-Nothing in this repository constitutes an offer to buy or sell securities, investment advice, brokerage services, custody services, or a representation that any displayed asset is available for live trading.
+A production frontend could add regulated onboarding and document capture, real-time licensed prices, bank/payment rails, durable orders and settlement history, cost basis and performance reporting, corporate actions, secondary trading, accessibility/browser automation, and operational recovery views. Hardware-backed or custodian signing and explicit transaction simulation would complement the backend's future production custody model.

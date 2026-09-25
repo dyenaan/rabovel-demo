@@ -133,14 +133,23 @@ export function LoginForm() {
           </form>
         </Form>
 
-        {useMockApi && <div className="mt-6 flex gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+        <div className="mt-6 flex gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
           <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
           <div>
-            <p className="font-medium text-foreground">Demo credentials</p>
-            <p className="mt-1">investor@rabovel.com — admin@rabovel.com — compliance@rabovel.com</p>
-            <p>Password: password123</p>
+            <p className="font-medium text-foreground">Investor and issuer access</p>
+            {useMockApi ? (
+              <>
+                <p className="mt-1"><span className="font-medium text-foreground">Investor:</span> investor@rabovel.com</p>
+                <p><span className="font-medium text-foreground">Issuer:</span> issuer@rabovel.com</p>
+                <p>Password for both: password123</p>
+              </>
+            ) : (
+              <p className="mt-1">
+                Investors use their registered email. Issuers use the issuer email configured by the demo operator and are taken to the issuance workspace.
+              </p>
+            )}
           </div>
-        </div>}
+        </div>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}

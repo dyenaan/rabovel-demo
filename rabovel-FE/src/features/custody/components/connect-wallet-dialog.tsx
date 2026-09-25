@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { useConnectWallet } from "../hooks/use-wallets";
 
-export function ConnectWalletDialog() {
+export function ConnectWalletDialog({ label = "Bind Wallet" }: { label?: string }) {
   const [open, setOpen] = useState(false);
   const connectWallet = useConnectWallet();
 
@@ -34,7 +34,7 @@ export function ConnectWalletDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="size-4" />
-          Bind Wallet
+          {label}
         </Button>
       </DialogTrigger>
       <DialogContent>
