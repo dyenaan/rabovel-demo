@@ -45,3 +45,9 @@ Solana program ownership and asset ownership are kept separate:
 A production version could replace simulated KYC, backing and prices with regulated providers and audited custody; move keys to HSM/MPC or qualified custodians; add durable order, settlement and reconciliation ledgers; and activate a reviewed transfer hook or settlement program with per-trade authorization, replay protection and controlled recovery. Legal share rights, corporate actions, secondary trading, monitoring and disaster recovery would also require production-grade operating and regulatory frameworks.
 
 The Next.js frontend is in `rabovel-FE`; the companion `rabovel-BE` service owns API policy, Solana transaction construction and RPC verification.
+
+Test users:
+issuer: issuer@example.com  
+investor: dyenaandappet@gmail.com
+
+Password for both: 12345678
