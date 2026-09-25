@@ -37,8 +37,17 @@ export default function IssuerPage() {
   }, [token, overview?.account_status]);
 
   useEffect(() => {
+    const updatePublishedAsset = (event: Event) => {
+      const updated = (event as CustomEvent<AssetDraft>).detail;
+      setAssets((current) => current.map((asset) => asset.asset_id === updated.asset_id ? updated : asset));
+    };
+    window.addEventListener("rabovel:listing-published", updatePublishedAsset);
+    return () => window.removeEventListener("rabovel:listing-published", updatePublishedAsset);
+  }, []);
+
+  useEffect(() => {
     if (!token) return;
-    const eligible = assets.filter((asset) => ["approved_for_setup", "minted"].includes(asset.status));
+    const eligible = assets.filter((asset) => ["approved_for_setup", "minted", "listed"].includes(asset.status));
     void Promise.all(eligible.map(async (asset) => {
       try { return await fetchAssetSetup(token, asset.asset_id); } catch { return null; }
     })).then((operations) => setSetupByAsset(Object.fromEntries(operations.filter((operation): operation is AssetSetupOperation => Boolean(operation)).map((operation) => [operation.asset_id, operation]))));

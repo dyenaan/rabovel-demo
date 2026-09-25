@@ -34,7 +34,7 @@ export function InitialInventoryStatus({ token, assetId }: { token: string; asse
       .then((result) => { if (active) setInventory(result); })
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Could not read initial inventory."); })
       .finally(() => { if (active) setLoading(false); });
-    void fetchIssuerAsset(token, assetId).then((result) => { if (active) setAsset(result); }).catch(() => undefined);
+    void fetchIssuerAsset(token, assetId).then((result) => { if (active) { setAsset(result); if (result.status === "listed") window.dispatchEvent(new CustomEvent("rabovel:listing-published", { detail: result })); } }).catch(() => undefined);
     return () => { active = false; };
   }, [assetId, token]);
 

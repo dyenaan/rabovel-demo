@@ -17,7 +17,9 @@ export function AssetLifecycle({ current = 0 }: { current?: number }) {
   </ol></div>;
 }
 
-export function lifecycleStep(status: string) {
+export function lifecycleStep(status: string, listingStatus?: string) {
+  if (listingStatus === "live") return stages.length;
+  if (status === "listed") return stages.length;
   if (status === "pending_review") return 1;
   if (status === "approved_for_setup") return 2;
   if (status === "minted") return 3;

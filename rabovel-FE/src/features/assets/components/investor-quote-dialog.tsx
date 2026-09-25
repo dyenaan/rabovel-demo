@@ -72,8 +72,8 @@ export function InvestorQuoteDialog({ asset, open, onOpenChange, paymentDecimals
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Quote expires {new Date(quote.data.expires_at * 1000).toLocaleTimeString()}. This
-              quote validates funds and inventory; settlement confirmation is not enabled yet.
+              Simulated market feed updated {new Date(quote.data.price_updated_at * 1000).toLocaleTimeString()}.
+              Quote expires {new Date(quote.data.expires_at * 1000).toLocaleTimeString()} and validates live funds and inventory.
             </p>
             <DialogFooter>
               <Button variant="outline" onClick={() => quote.reset()}>

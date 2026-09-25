@@ -71,6 +71,7 @@ export type InvestorCatalogAsset = {
   issuer_inventory: string; investor_token_account: string; investor_balance: string;
   investor_account_ready: boolean; image_uri: string | null; disclosure: string;
   backing: { summary: string; document_name: string; content_type: string; size_bytes: number; verification_status: "verified"; verified_at: number };
+  price_per_unit: string; price_decimals: number; price_source: string; price_updated_at: number;
 };
 
 export type InvestorCatalog = {
@@ -93,6 +94,8 @@ export type InvestorQuote = {
   equity_token_account: string;
   created_at: number;
   expires_at: number;
+  price_source: string;
+  price_updated_at: number;
 };
 
 export type PreparedPurchase = {

@@ -44,7 +44,7 @@ export type BackingEvidence = {
   verification_status: "verified"; verified_at: number;
 };
 export type AssetDraft = {
-  asset_id: string; issuer_user_id: string; status: "draft" | "pending_review" | "approved_for_setup" | "minted" | "rejected" | "revision_required"; issued_units: string; mint_address: string | null;
+  asset_id: string; issuer_user_id: string; status: "draft" | "pending_review" | "approved_for_setup" | "minted" | "listed" | "rejected" | "revision_required"; issued_units: string; mint_address: string | null;
   created_at: number; updated_at: number;
   draft: AssetDraftSubmission & { backing: BackingEvidence | null; listing_status: "not_listed" | "live" };
 };
@@ -144,11 +144,11 @@ export async function createAssetDraft(token: string, submission: AssetDraftSubm
 }
 
 export async function fetchIssuerAssets(token: string) {
-  return directRequest<AssetDraft[]>("/issuer/assets", { headers: { Authorization: `Bearer ${token}` } });
+  return (await directRequest<AssetDraft[]>("/issuer/assets", { headers: { Authorization: `Bearer ${token}` } })).map(adaptListingStatus);
 }
 
 export async function fetchIssuerAsset(token: string, assetId: string) {
-  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}`, { headers: { Authorization: `Bearer ${token}` } });
+  return adaptListingStatus(await directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}`, { headers: { Authorization: `Bearer ${token}` } }));
 }
 
 export async function updateAssetDraft(token: string, assetId: string, submission: AssetDraftSubmission) {
@@ -180,7 +180,11 @@ export async function submitAssetBacking(token: string, assetId: string, summary
 }
 
 export async function publishAssetListing(token: string, assetId: string) {
-  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/listing`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+  return adaptListingStatus(await directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/listing`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }));
+}
+
+function adaptListingStatus(asset: AssetDraft): AssetDraft {
+  return asset.draft.listing_status === "live" ? { ...asset, status: "listed" } : asset;
 }
 
 export async function fetchCngnPaymentAsset(token: string) {
