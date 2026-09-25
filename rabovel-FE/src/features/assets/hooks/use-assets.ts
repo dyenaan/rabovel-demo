@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Transaction } from "@solana/web3.js";
 
 import { QUERY_STALE_TIME } from "@/lib/constants";
+import { Decimal } from "@/lib/formatters";
 import { queryKeys } from "@/lib/query-keys";
 import {
   createInvestorQuote,
@@ -16,6 +17,7 @@ import {
   submitInvestorPurchase,
 } from "../api/get-assets";
 import { useAuthStore } from "@/stores/auth-store";
+import type { InvestorCatalog } from "@/types";
 
 export function useAssets() {
   return useQuery({
@@ -88,14 +90,55 @@ export function useInvestorPurchase() {
       const signed = await provider.signTransaction(transaction);
       return submitInvestorPurchase(token, encodeBase64(signed.serialize()));
     },
-    onSuccess: (settlement) => {
-      queryClient.invalidateQueries({ queryKey: ["investor", "catalog"] });
+    onSuccess: (settlement, purchase) => {
+      queryClient.setQueryData<InvestorCatalog>(["investor", "catalog"], (catalog) =>
+        catalog ? applyConfirmedPurchase(catalog, purchase) : catalog,
+      );
+      window.setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: ["investor", "catalog"] });
+      }, 2_000);
       toast.success(`Purchase confirmed on-chain: ${shortSignature(settlement.signature)}`);
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Purchase settlement failed.");
     },
   });
+}
+
+function applyConfirmedPurchase(
+  catalog: InvestorCatalog,
+  purchase: { assetId: string; quantity: string; expectedTotal: string },
+): InvestorCatalog {
+  const asset = catalog.assets.find((candidate) => candidate.asset_id === purchase.assetId);
+  if (!asset) return catalog;
+
+  const quantity = new Decimal(purchase.quantity);
+  const paymentBalance = new Decimal(catalog.cngn.balance_base_units ?? "0");
+
+  return {
+    ...catalog,
+    cngn: {
+      ...catalog.cngn,
+      balance_base_units: Decimal.max(
+        0,
+        paymentBalance.minus(purchase.expectedTotal),
+      ).toFixed(0),
+    },
+    assets: catalog.assets.map((candidate) =>
+      candidate.asset_id === purchase.assetId
+        ? {
+            ...candidate,
+            investor_balance: new Decimal(candidate.investor_balance || "0")
+              .plus(quantity)
+              .toFixed(0),
+            issuer_inventory: Decimal.max(
+              0,
+              new Decimal(candidate.issuer_inventory || "0").minus(quantity),
+            ).toFixed(0),
+          }
+        : candidate,
+    ),
+  };
 }
 
 function decodeBase64(value: string) {
