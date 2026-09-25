@@ -9,10 +9,20 @@ import { Money } from "@/components/financial/money";
 import { Percentage } from "@/components/financial/percentage";
 import { usePortfolioSummary } from "../hooks/use-portfolio";
 
+const EMPTY_SUMMARY = {
+  totalValue: "0",
+  totalCostBasis: "0",
+  totalUnrealizedPnl: "0",
+  totalUnrealizedPnlPercent: "0",
+  cashBalance: "0",
+  investedValue: "0",
+  ytdIncome: "0",
+};
+
 export function PortfolioSummaryCards() {
   const { data, isPending } = usePortfolioSummary();
 
-  if (isPending || !data) {
+  if (isPending) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -26,6 +36,8 @@ export function PortfolioSummaryCards() {
     );
   }
 
+  const summary = data ?? EMPTY_SUMMARY;
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <Card className="border-primary/20 bg-primary/[0.03]">
@@ -34,8 +46,8 @@ export function PortfolioSummaryCards() {
             icon={Wallet}
             emphasis
             label="Total Portfolio Value"
-            value={<Money value={data.totalValue} />}
-            trend={<Percentage value={data.totalUnrealizedPnlPercent} colorize />}
+            value={<Money value={summary.totalValue} />}
+            trend={<Percentage value={summary.totalUnrealizedPnlPercent} colorize />}
           />
         </CardContent>
       </Card>
@@ -46,11 +58,11 @@ export function PortfolioSummaryCards() {
             label="Unrealized P&L"
             value={
               <Money
-                value={data.totalUnrealizedPnl}
-                className={Number(data.totalUnrealizedPnl) >= 0 ? "text-success" : "text-danger"}
+                value={summary.totalUnrealizedPnl}
+                className={Number(summary.totalUnrealizedPnl) >= 0 ? "text-success" : "text-danger"}
               />
             }
-            hint={`Cost basis ${new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(Number(data.totalCostBasis))}`}
+            hint={`Cost basis ${new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(Number(summary.totalCostBasis))}`}
           />
         </CardContent>
       </Card>
@@ -59,7 +71,7 @@ export function PortfolioSummaryCards() {
           <FinancialMetric
             icon={Landmark}
             label="Cash Balance"
-            value={<Money value={data.cashBalance} />}
+            value={<Money value={summary.cashBalance} />}
           />
         </CardContent>
       </Card>
@@ -68,7 +80,7 @@ export function PortfolioSummaryCards() {
           <FinancialMetric
             icon={PiggyBank}
             label="YTD Income"
-            value={<Money value={data.ytdIncome} />}
+            value={<Money value={summary.ytdIncome} />}
           />
         </CardContent>
       </Card>

@@ -30,8 +30,22 @@ export function AssetAllocationChart() {
         <CardTitle>Asset Allocation</CardTitle>
       </CardHeader>
       <CardContent className="flex h-full flex-col justify-center pb-6">
-        {isPending || !data ? (
+        {isPending ? (
           <Skeleton className="h-64 w-full" />
+        ) : !data || data.length === 0 ? (
+          <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-6 text-center">
+            <div className="flex size-24 items-center justify-center rounded-full border-8 border-muted">
+              <span className="font-tabular text-sm font-semibold text-foreground">
+                {formatCompactMoney("0")}
+              </span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">No holdings yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Assets you purchase will appear here.
+              </p>
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col items-center gap-4">
             <div className="relative w-full max-w-[220px]">

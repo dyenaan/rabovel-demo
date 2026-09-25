@@ -10,8 +10,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartNoAxesCombined } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCompactMoney, formatDate, formatMoney } from "@/lib/formatters";
@@ -72,6 +74,13 @@ export function PortfolioPerformanceChart() {
       <CardContent className="pb-6">
         {isPending ? (
           <Skeleton className="h-64 w-full" />
+        ) : chartData.length === 0 ? (
+          <EmptyState
+            icon={ChartNoAxesCombined}
+            title="No performance history yet"
+            description="Your portfolio history will appear after your first completed purchase."
+            className="h-64 py-8"
+          />
         ) : (
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>

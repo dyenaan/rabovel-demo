@@ -41,7 +41,12 @@ export function PortfolioActivity() {
         {isPending ? (
           <LoadingState label="Loading activity…" />
         ) : !data || data.length === 0 ? (
-          <EmptyState icon={ActivityIcon} title="No recent activity" />
+          <EmptyState
+            icon={ActivityIcon}
+            title="No recent activity"
+            description="Completed purchases and account updates will appear here."
+            className="py-10"
+          />
         ) : (
           <ul className="space-y-4">
             {data.map((event) => {
