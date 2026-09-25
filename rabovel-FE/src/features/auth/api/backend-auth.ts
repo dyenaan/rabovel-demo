@@ -51,6 +51,12 @@ export type AssetSetupOperation = {
   mint_config_address: string | null; allow_list_address: string | null; block_list_address: string | null;
   thaw_extra_metas_address: string | null; error: string | null; created_at: number; updated_at: number;
 };
+export type InitialInventory = {
+  network: string; mint_address: string; settlement_wallet: string; token_account: string;
+  authorized_units: string; supply: string; inventory_balance: string;
+  wallet_allowlisted: boolean; token_account_ready: boolean; issuance_complete: boolean;
+  signatures: string[];
+};
 export type PaymentAssetStatus = {
   code: string; name: string; network: string; mint_address: string | null; token_program: string | null;
   decimals: number | null; supply_base_units: string | null; broker_owner_address: string | null;
@@ -155,6 +161,14 @@ export async function fetchAssetSetup(token: string, assetId: string) {
 
 export async function startAssetSetup(token: string, assetId: string) {
   return directRequest<AssetSetupOperation>(`/issuer/assets/${encodeURIComponent(assetId)}/setup`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function fetchInitialInventory(token: string, assetId: string) {
+  return directRequest<InitialInventory>(`/issuer/assets/${encodeURIComponent(assetId)}/inventory`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function issueInitialInventory(token: string, assetId: string) {
+  return directRequest<InitialInventory>(`/issuer/assets/${encodeURIComponent(assetId)}/inventory`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
 }
 
 export async function fetchCngnPaymentAsset(token: string) {
