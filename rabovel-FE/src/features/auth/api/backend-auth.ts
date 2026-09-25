@@ -55,6 +55,7 @@ export type PaymentAssetStatus = {
   code: string; name: string; network: string; mint_address: string | null; token_program: string | null;
   decimals: number | null; supply_base_units: string | null; broker_owner_address: string | null;
   broker_token_account: string | null; broker_balance_base_units: string | null;
+  fee_payer_address: string | null;
   mint_verified: boolean; broker_account_verified: boolean; ready: boolean; error: string | null;
 };
 
@@ -158,6 +159,10 @@ export async function startAssetSetup(token: string, assetId: string) {
 
 export async function fetchCngnPaymentAsset(token: string) {
   return directRequest<PaymentAssetStatus>("/payment-assets/cngn", { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function createBrokerCngnAccount(token: string) {
+  return directRequest<PaymentAssetStatus>("/payment-assets/cngn", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
 }
 
 export async function uploadAssetImage(token: string, assetId: string, file: File) {
