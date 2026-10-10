@@ -1,3 +1,5 @@
+#[cfg(test)]
+mod authorization_tests;
 mod bootstrap;
 mod config;
 mod http;
@@ -131,7 +133,6 @@ pub struct GatewayStateBuilder {
     siwe_domain: String,
     public_origin: String,
     trusted_role_assignments: Vec<TrustedRoleAssignment>,
-    trusted_email_roles: Vec<(String, UserRole)>,
     security_policy: Option<BrokerageSecurityPolicy>,
     gateway_secret: Option<[u8; 32]>,
 }
@@ -161,7 +162,6 @@ impl Default for GatewayStateBuilder {
             siwe_domain: "localhost:3000".to_string(),
             public_origin: "http://localhost:3000".to_string(),
             trusted_role_assignments: Vec::new(),
-            trusted_email_roles: Vec::new(),
             security_policy: None,
             gateway_secret: None,
         }
@@ -244,11 +244,6 @@ impl GatewayStateBuilder {
         self
     }
 
-    pub fn trusted_email_roles(mut self, assignments: Vec<(String, UserRole)>) -> Self {
-        self.trusted_email_roles = assignments;
-        self
-    }
-
     pub fn gateway_secret(mut self, secret: &str) -> Self {
         self.gateway_secret = Some(Sha256::digest(secret.as_bytes()).into());
         self
@@ -295,7 +290,6 @@ impl GatewayStateBuilder {
             siwe_domain: self.siwe_domain.into(),
             public_origin: self.public_origin.into(),
             trusted_role_assignments: Arc::new(self.trusted_role_assignments),
-            trusted_email_roles: Arc::new(self.trusted_email_roles),
             gateway_secret: self.gateway_secret,
         }
     }
@@ -322,7 +316,6 @@ pub struct GatewayState {
     siwe_domain: Arc<str>,
     public_origin: Arc<str>,
     trusted_role_assignments: Arc<Vec<TrustedRoleAssignment>>,
-    trusted_email_roles: Arc<Vec<(String, UserRole)>>,
     gateway_secret: Option<[u8; 32]>,
 }
 
@@ -439,14 +432,6 @@ impl GatewayState {
         })
     }
 
-    fn role_for_email(&self, email: &str) -> UserRole {
-        self.trusted_email_roles
-            .iter()
-            .find(|(configured, _)| configured == email)
-            .map(|(_, role)| *role)
-            .unwrap_or(UserRole::Trader)
-    }
-
     async fn password_session(
         &self,
         email: &str,
@@ -462,18 +447,11 @@ impl GatewayState {
         Argon2::default()
             .verify_password(password.as_bytes(), &hash)
             .map_err(|_| AuthError::Unauthorized)?;
-        let mut record = self
+        let record = self
             .repository
             .get_user(&credential.user_id)
             .await?
             .ok_or(AuthError::Unauthorized)?;
-        record
-            .principal
-            .replace_roles(HashSet::from([self.role_for_email(email)]));
-        if record.principal.has_role(UserRole::Trader) {
-            record.principal.grant_permission(WalletAction::TradeSpot);
-        }
-        self.repository.save_user(record.clone()).await?;
         let status = self.auth_service.onboarding_status(&record.profile);
         let access_token = self.issue_session(&credential.user_id, None).await?;
         Ok(AuthSessionResponse {
@@ -671,6 +649,7 @@ impl IntoResponse for ApiError {
         GoogleAuthorizationResponse,
         GoogleCallbackRequest,
         PasswordRegisterRequest,
+        SignupAccountType,
         PasswordLoginRequest,
         AuthSessionResponse,
         CurrentUserResponse,
@@ -881,12 +860,15 @@ async fn password_register_handler(
         .profile_from_email_password(user_id.clone(), email.clone())
         .map_err(ApiError::from)?;
     profile.accept_terms("demo-v1").map_err(ApiError::from)?;
-    let role = state.role_for_email(&email);
-    let principal = AuthPrincipal::new(
-        user_id.clone(),
-        HashSet::from([role]),
-        HashSet::from([WalletAction::ViewPortfolio]),
-    );
+    let role = match request.account_type {
+        SignupAccountType::Investor => UserRole::Trader,
+        SignupAccountType::Issuer => UserRole::Issuer,
+    };
+    let mut permissions = HashSet::from([WalletAction::ViewPortfolio]);
+    if role == UserRole::Trader {
+        permissions.insert(WalletAction::TradeSpot);
+    }
+    let principal = AuthPrincipal::new(user_id.clone(), HashSet::from([role]), permissions);
     let salt = SaltString::generate(&mut OsRng);
     let password_hash = Argon2::default()
         .hash_password(request.password.as_bytes(), &salt)
@@ -1284,7 +1266,10 @@ async fn confirm_asset_image_upload_handler(
     Path(asset_id): Path<String>,
     Json(request): Json<ConfirmImageUploadRequest>,
 ) -> Result<Json<AssetDraftResponse>, ApiError> {
-    require_approved_issuer(&state, &user.user_id).await?;
+    let asset = owned_setup_asset(&state, &user.user_id, &asset_id).await?;
+    if asset.status != "draft" {
+        return Err(ApiError::from(AuthError::ForbiddenAction));
+    }
     let expected_prefix = format!("assets/{asset_id}/images/");
     if !request.object_path.starts_with(&expected_prefix) {
         return Err(ApiError::from(AuthError::ForbiddenAction));
@@ -3555,6 +3540,7 @@ mod tests {
     async fn register_password_user(app: Router, email: &str) -> (Router, String) {
         let payload = serde_json::json!({
             "display_name": "Demo Investor",
+            "account_type": "investor",
             "email": email,
             "password": "correct-horse-battery"
         });
@@ -3663,12 +3649,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn password_registration_and_login_use_server_assigned_roles() {
-        let app = router_with_state(
-            GatewayStateBuilder::default()
-                .trusted_email_roles(vec![("admin@example.com".to_string(), UserRole::Admin)])
-                .build(),
-        );
+    async fn password_registration_and_login_do_not_elevate_admin_email() {
+        let app = test_app();
         let (app, investor_token) = register_password_user(app, "Investor@Example.com").await;
         let investor_me = app
             .clone()
@@ -3700,7 +3682,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             body_json(admin_me).await["roles"],
-            serde_json::json!(["admin"])
+            serde_json::json!(["trader"])
         );
 
         let login = serde_json::json!({"email": "investor@example.com", "password": "correct-horse-battery"});

@@ -32,9 +32,35 @@ Checks completed for the slice:
 - ESLint on changed frontend source: no errors; one existing React Hook Form compiler warning in registration.
 - Production build: blocked downloading existing Geist Google Fonts in the restricted network environment; the requested network-enabled retry was declined. A successful production build remains a deployment check.
 
+## Slice 2: public signup and role authorization
+
+Password signup requires an explicit `account_type` (`investor` or `issuer`) and creates exactly one public role. Unknown fields, multiple roles and administrative/operational role selections are rejected. Password login no longer assigns roles from email; the legacy demo email settings are ignored. The UI provides the same two choices. Issuers must complete the existing simulated organization onboarding before asset creation; this does not establish verified legal identity.
+
+Migration `0006_restrict_password_roles.sql` normalizes existing password accounts: accounts containing an issuer role keep only issuer, all others become investor/trader; permissions are reduced to the corresponding public set. This intentionally removes previous password admin/compliance/operations grants. Users, credentials, organizations and assets are preserved. OIDC-only users are unchanged. Existing sessions reference current database roles, so the change applies without waiting for expiry. Do not restore old role grants when rolling back the binary. Review affected account IDs and role arrays before deployment; do not copy password hashes into review output.
+
+Deploy backend and frontend together: old registration clients omit the newly required account type and will receive 422. Existing password login continues working. Remove obsolete `RABOVEL_DEMO_ADMIN_EMAIL` and `RABOVEL_DEMO_ISSUER_EMAIL` environment variables. Existing investors cannot upgrade in place through signup; use a separate issuer account until an explicit account-conversion flow is designed. No public role-change or admin-provisioning endpoint is introduced.
+
+Authorization regression tests cover public role selection and persistence, attempted privilege injection, pending issuer restrictions, and access to another issuer's asset across read/edit/delete/setup/inventory/backing/listing/image endpoints. Image confirmation now checks ownership and draft state before calling storage. The migration has a separate opt-in test using temporary Postgres tables only.
+
+Slice 2 verification:
+
+- API unit/regression suite: 29 passed, including the three new signup/authorization tests. Strict Clippy for API and infrastructure (all targets), formatting and diff whitespace checks passed.
+- Frontend TypeScript checking: passed. Changed-file ESLint: no errors, one existing React Hook Form compiler warning.
+- The Postgres migration test compiled, but its connection was blocked by sandbox permissions; the requested local-database retry was declined. Database execution remains unverified and must pass before deployment. No migration was applied to existing local or hosted data.
+- Browser signup/onboarding and hosted smoke tests were not performed. Production build remains a deployment check from slice 1.
+
+To verify the migration against an available local Postgres instance, supply its URL through `RABOVEL_TEST_DATABASE_URL` and run from `rabovel-BE`:
+
+```bash
+cargo test -p infrastructure --test password_role_migration --locked -- --ignored
+```
+
+This test uses temporary tables in a rolled-back transaction; it does not migrate the configured database.
+
+Account/IP signup abuse controls, spend limits and quotas remain slice 3. Do not treat this slice as approval to advertise unrestricted signup before those controls are deployed.
+
 ## Remaining slices
 
-- Slice 2: remove email-based privileged-role assignment; safely support self-service issuer/investor registration and server-side authorization. This existing risk is not resolved by the gateway and must be addressed before advertising unrestricted signup.
 - Slice 3: Turnstile, account/IP abuse controls, small issuer quotas and devnet transaction/spend limits, including failure behavior when the 25 MB KV store is full.
 - Slice 4: explicit hosted demo configuration, CSP/security headers, secrets and private-network checks, monitoring, recovery and operational smoke tests.
 

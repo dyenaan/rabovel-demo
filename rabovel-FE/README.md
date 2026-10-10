@@ -19,7 +19,7 @@ flowchart LR
   P --> D[Balances and dashboard refresh]
 ```
 
-- **Authentication:** email/password sessions with role-based routing; mock credentials are available when mock mode is enabled.
+- **Authentication:** email/password sessions with explicit investor or issuer signup and role-based routing; mock credentials are available when mock mode is enabled.
 - **Issuer workspace:** onboarding, asset creation/editing, simulated backing submission/review, mint setup, inventory issuance and live-listing status.
 - **Investor workspace:** readiness guidance, Phantom ownership verification, cNGN setup, live assets, simulated prices, quotes, purchases and current holdings.
 - **Operations UI:** admin, compliance, settlement and reconciliation screens remain largely fixture-backed demonstrations.
