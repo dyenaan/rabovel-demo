@@ -17,7 +17,7 @@ import {
 } from "../api/get-portfolio";
 
 export function usePortfolioSummary() {
-  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.user?.id);
   const legacy = useQuery({
     queryKey: queryKeys.portfolio.summary(),
     queryFn: getPortfolioSummary,
@@ -35,20 +35,20 @@ export function usePortfolioSummary() {
   });
   const catalog = useQuery({
     queryKey: ["investor", "catalog"],
-    queryFn: () => getInvestorCatalog(token!),
-    enabled: !isMockApiEnabled && Boolean(token),
+    queryFn: () => getInvestorCatalog(),
+    enabled: !isMockApiEnabled && Boolean(userId),
     staleTime: QUERY_STALE_TIME.short,
   });
 
   if (isMockApiEnabled) return legacy;
   return {
     data: catalog.data ? portfolioSummaryFromCatalog(catalog.data) : undefined,
-    isPending: Boolean(token) && catalog.isPending,
+    isPending: Boolean(userId) && catalog.isPending,
   };
 }
 
 export function useHoldings() {
-  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.user?.id);
   const legacy = useQuery({
     queryKey: queryKeys.portfolio.holdings(),
     queryFn: getHoldings,
@@ -58,15 +58,15 @@ export function useHoldings() {
   });
   const catalog = useQuery({
     queryKey: ["investor", "catalog"],
-    queryFn: () => getInvestorCatalog(token!),
-    enabled: !isMockApiEnabled && Boolean(token),
+    queryFn: () => getInvestorCatalog(),
+    enabled: !isMockApiEnabled && Boolean(userId),
     staleTime: QUERY_STALE_TIME.short,
   });
 
   if (isMockApiEnabled) return legacy;
   return {
     data: catalog.data ? holdingsFromCatalog(catalog.data) : [],
-    isPending: Boolean(token) && catalog.isPending,
+    isPending: Boolean(userId) && catalog.isPending,
   };
 }
 

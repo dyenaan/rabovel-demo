@@ -1,4 +1,5 @@
-import { env, useMockApi } from "@/lib/env";
+import { useMockApi } from "@/lib/env";
+import { gatewayFetch } from "@/lib/api/gateway-fetch";
 import { mockDelay } from "@/lib/api/mock-delay";
 import { mockWallets } from "@/mocks/custody.mock";
 import type { Wallet } from "@/types";
@@ -29,10 +30,10 @@ export type CngnWalletStatus = {
   error: string | null;
 };
 
-async function backendRequest<T>(path: string, token: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(new URL(path, env.NEXT_PUBLIC_API_BASE_URL), {
+async function backendRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await gatewayFetch(path, {
     ...init,
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...init?.headers },
+    headers: { "Content-Type": "application/json", ...init?.headers },
   });
   const payload = await response.json().catch(() => null) as { message?: string } | T | null;
   if (!response.ok) throw new Error((payload as { message?: string } | null)?.message ?? "The wallet request failed.");
@@ -52,33 +53,33 @@ function adaptWallet(wallet: BackendWallet, index = 0): Wallet {
   };
 }
 
-export async function getWallets(token: string): Promise<Wallet[]> {
+export async function getWallets(): Promise<Wallet[]> {
   if (useMockApi) {
     await mockDelay();
     return mockWallets;
   }
-  return (await backendRequest<BackendWallet[]>("/wallets", token)).map(adaptWallet);
+  return (await backendRequest<BackendWallet[]>("/wallets")).map(adaptWallet);
 }
 
-export async function createSolanaChallenge(token: string, address: string): Promise<WalletChallenge> {
-  return backendRequest<WalletChallenge>("/wallet/solana/challenges", token, {
+export async function createSolanaChallenge(address: string): Promise<WalletChallenge> {
+  return backendRequest<WalletChallenge>("/wallet/solana/challenges", {
     method: "POST",
     body: JSON.stringify({ address }),
   });
 }
 
-export async function completeSolanaWalletLink(token: string, challengeId: string, signature: string): Promise<Wallet> {
-  const linked = await backendRequest<WalletLinkResponse>("/wallet/link", token, {
+export async function completeSolanaWalletLink(challengeId: string, signature: string): Promise<Wallet> {
+  const linked = await backendRequest<WalletLinkResponse>("/wallet/link", {
     method: "POST",
     body: JSON.stringify({ challenge_id: challengeId, signature }),
   });
   return adaptWallet(linked.wallet);
 }
 
-export async function getInvestorCngnStatus(token: string): Promise<CngnWalletStatus> {
-  return backendRequest<CngnWalletStatus>("/wallet/payment-assets/cngn", token);
+export async function getInvestorCngnStatus(): Promise<CngnWalletStatus> {
+  return backendRequest<CngnWalletStatus>("/wallet/payment-assets/cngn");
 }
 
-export async function createInvestorCngnAccount(token: string): Promise<CngnWalletStatus> {
-  return backendRequest<CngnWalletStatus>("/wallet/payment-assets/cngn", token, { method: "POST" });
+export async function createInvestorCngnAccount(): Promise<CngnWalletStatus> {
+  return backendRequest<CngnWalletStatus>("/wallet/payment-assets/cngn", { method: "POST" });
 }

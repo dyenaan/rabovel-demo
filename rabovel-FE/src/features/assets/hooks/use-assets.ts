@@ -46,16 +46,16 @@ export function useAssetNavHistory(assetId: string) {
 }
 
 export function useInvestorCatalog() {
-  const token = useAuthStore((state) => state.token);
-  return useQuery({ queryKey: ["investor", "catalog"], queryFn: () => getInvestorCatalog(token!), enabled: Boolean(token), staleTime: QUERY_STALE_TIME.short });
+  const userId = useAuthStore((state) => state.user?.id);
+  return useQuery({ queryKey: ["investor", "catalog"], queryFn: () => getInvestorCatalog(), enabled: Boolean(userId), staleTime: QUERY_STALE_TIME.short });
 }
 
 export function useInvestorQuote() {
-  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.user?.id);
   return useMutation({
     mutationFn: ({ assetId, quantity }: { assetId: string; quantity: string }) => {
-      if (!token) throw new Error("Your session has expired. Sign in and try again.");
-      return createInvestorQuote(token, assetId, quantity);
+      if (!userId) throw new Error("Your session has expired. Sign in and try again.");
+      return createInvestorQuote(assetId, quantity);
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Could not create the quote.");
@@ -70,15 +70,15 @@ type PhantomProvider = {
 };
 
 export function useInvestorPurchase() {
-  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.user?.id);
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ assetId, quantity, expectedTotal }: { assetId: string; quantity: string; expectedTotal: string }) => {
-      if (!token) throw new Error("Your session has expired. Sign in and try again.");
+      if (!userId) throw new Error("Your session has expired. Sign in and try again.");
       const browser = window as Window & { phantom?: { solana?: PhantomProvider }; solana?: PhantomProvider };
       const provider = browser.phantom?.solana ?? browser.solana;
       if (!provider?.isPhantom) throw new Error("Phantom is not installed or enabled.");
-      const prepared = await prepareInvestorPurchase(token, assetId, quantity);
+      const prepared = await prepareInvestorPurchase(assetId, quantity);
       if (prepared.quote.total_payment !== expectedTotal) {
         throw new Error("The quote changed. Review a fresh quote before purchasing.");
       }
@@ -88,7 +88,7 @@ export function useInvestorPurchase() {
         throw new Error("Phantom is connected to a different wallet than your linked Rabovel wallet.");
       }
       const signed = await provider.signTransaction(transaction);
-      return submitInvestorPurchase(token, encodeBase64(signed.serialize()));
+      return submitInvestorPurchase(encodeBase64(signed.serialize()));
     },
     onSuccess: (settlement, purchase) => {
       queryClient.setQueryData<InvestorCatalog>(["investor", "catalog"], (catalog) =>

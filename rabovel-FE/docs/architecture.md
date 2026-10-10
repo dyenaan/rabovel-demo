@@ -13,20 +13,22 @@ One Next.js application, not a package workspace. `package.json` pins Next 16.3.
 | `src/lib` | Environment validation, HTTP client, query keys, formatters and WebSocket transports. |
 | `src/types`, `src/mocks`, `src/stores` | Frontend contracts, fixture data, and Zustand browser state respectively. |
 
-Route-group parentheses do not appear in URLs. The root layout loads Geist fonts/global CSS and `providers.tsx`, which supplies theme, React Query, auth-token wiring, tooltips and toasts. React Query owns fetched data/cache; Zustand owns session, onboarding, sidebar and user preferences. Charts use Recharts; forms commonly use React Hook Form and Zod.
+Route-group parentheses do not appear in URLs. The root layout loads Geist fonts/global CSS and `providers.tsx`, which supplies theme, React Query, session restoration, tooltips and toasts. React Query owns fetched data/cache; Zustand owns session, onboarding, sidebar and user preferences. Charts use Recharts; forms commonly use React Hook Form and Zod.
 
 ## Data and integration boundaries
 
 Typical flow: route → feature component → query/mutation hook → feature API → fixture or `apiClient` → shared display. Query keys live in `src/lib/query-keys.ts`; mutations invalidate affected queries. Defaults are 30-second query freshness, one query retry and no mutation retry, with feature overrides.
 
-`src/lib/env.ts` validates public environment variables at import time. `NEXT_PUBLIC_USE_MOCK_API` defaults to true and selects fixture branches and a simulated WebSocket transport. Real HTTP calls use a configured API base URL, bearer token callback, request IDs and optional idempotency headers; they expect `{ data, meta? }` success envelopes. TypeScript casts do not validate server payloads at runtime.
+`src/lib/env.ts` validates browser-visible configuration. Mock mode defaults on in development and off in production; production rejects mock authentication. Real adapters call the same-origin `/api/*` gateway. Server-only configuration fixes the backend origin and shared gateway secret. Legacy adapters still expect wrapped responses; primary demo adapters use backend DTOs. TypeScript casts do not validate response payloads.
 
 `src/lib/websocket/` shares one transport and manages channel listeners/reconnection. Hooks currently expose market, order-book and public-trade streams. Order/settlement channel names exist, but the mock transport only emits those three market streams; settlement views use queries, not a settlement subscription.
 
-The flag is not a complete integration switch: login/registration call mock auth directly; wallet connection mutates fixtures; onboarding submission is simulated; several admin/compliance/reserve views import mocks directly. There are no application API route handlers or backend services in this folder. `next.config.ts` contains no API proxy configuration.
+The flag is not a complete integration switch: several admin/compliance/reserve views still import fixtures. The Node route handler at `src/app/api/[...path]/route.ts` forwards only allowlisted routes and methods to a fixed backend. It bounds bodies and responses, rejects redirects, requires exact configured Origin plus JSON on mutations, and rebuilds upstream headers. In production it trusts Vercel's client-IP metadata and fails closed when absent; deployment outside Vercel needs a separately reviewed IP trust configuration.
 
 ## Authentication and backend compatibility
 
-`auth-store.ts` persists user/token in browser storage; `AuthProvider` registers a token getter with the HTTP client. `RequireAuth` waits for hydration and redirects signed-out users; `RoleGuard` controls visible content. These are presentation controls, not a server authorization boundary. Onboarding has its own layout without those guards.
+The gateway stores backend bearer credentials in a host-only HttpOnly, SameSite=Lax cookie (`__Host-rabovel-session`, Secure in production). Login/register JSON omits the credential. `auth-store.ts` holds only the user in memory; `AuthProvider` restores it through `/api/auth/me` and removes legacy persisted credentials. Logout revokes the backend session and clears the cookie; backend 401 responses also clear it. Sessions retain the existing 15-minute lifetime without automatic refresh.
 
-Current frontend contracts are not confirmed against the sibling backend. Concrete differences include mock email/password login versus backend Google OIDC, frontend `/portfolio/summary` versus backend `/portfolio`, camelCase/uppercase order DTOs versus backend snake_case/lowercase values, and frontend wrapped responses versus backend direct DTO responses. Resolve each relevant contract during integration; changing an environment URL alone is insufficient. Production deployment, session lifecycle and WebSocket server compatibility remain unresolved.
+`RequireAuth` and `RoleGuard` are presentation controls. Backend authorization remains necessary on every protected route. Gateway authentication proves the request came through the frontend server; it does not grant a user role. Query caches are cleared on login/logout. Existing sessions persisted only in localStorage require a fresh login after deployment.
+
+See the [hardening rollout](../../rabovel-BE/docs/plans/public-demo-hardening.md). Role assignment, public issuer safeguards, spend quotas and browser security policy remain later slices. WebSocket transport and fixture-backed screens are not enabled by this gateway.

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { fetchInitialInventory, fetchIssuerAsset, issueInitialInventory, type AssetDraft, type InitialInventory } from "@/features/auth/api/backend-auth";
 import { BackingListingStatus } from "./backing-listing-status";
 
-export function InitialInventoryStatus({ token, assetId }: { token: string; assetId: string }) {
+export function InitialInventoryStatus({ userId, assetId }: { userId: string; assetId: string }) {
   const [inventory, setInventory] = useState<InitialInventory | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,27 +16,27 @@ export function InitialInventoryStatus({ token, assetId }: { token: string; asse
 
   async function load() {
     setLoading(true); setError(null);
-    try { setInventory(await fetchInitialInventory(token, assetId)); }
+    try { setInventory(await fetchInitialInventory(assetId)); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Could not read initial inventory."); }
     finally { setLoading(false); }
   }
 
   async function issue() {
     setIssuing(true); setError(null);
-    try { setInventory(await issueInitialInventory(token, assetId)); }
+    try { setInventory(await issueInitialInventory(assetId)); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Could not issue initial inventory."); }
     finally { setIssuing(false); }
   }
 
   useEffect(() => {
     let active = true;
-    void fetchInitialInventory(token, assetId)
+    void fetchInitialInventory(assetId)
       .then((result) => { if (active) setInventory(result); })
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Could not read initial inventory."); })
       .finally(() => { if (active) setLoading(false); });
-    void fetchIssuerAsset(token, assetId).then((result) => { if (active) { setAsset(result); if (result.status === "listed") window.dispatchEvent(new CustomEvent("rabovel:listing-published", { detail: result })); } }).catch(() => undefined);
+    void fetchIssuerAsset(assetId).then((result) => { if (active) { setAsset(result); if (result.status === "listed") window.dispatchEvent(new CustomEvent("rabovel:listing-published", { detail: result })); } }).catch(() => undefined);
     return () => { active = false; };
-  }, [assetId, token]);
+  }, [assetId, userId]);
 
   return <><div className="mt-4 rounded-md border bg-background p-3 text-xs">
     <div className="flex flex-wrap items-start justify-between gap-2">
@@ -45,7 +45,7 @@ export function InitialInventoryStatus({ token, assetId }: { token: string; asse
     </div>
     {inventory && <div className="mt-3 grid gap-3 sm:grid-cols-3"><Value label="Authorized units" value={inventory.authorized_units} /><Value label="Mint supply" value={inventory.supply} /><Value label="Issuer inventory" value={inventory.inventory_balance} /><Address label="Settlement wallet" value={inventory.settlement_wallet} /><Address label="Asset token account" value={inventory.token_account} /><div className="sm:col-span-3 flex flex-wrap gap-4 text-muted-foreground"><span className="flex items-center gap-1"><CheckCircle2 className={inventory.wallet_allowlisted ? "size-3.5 text-primary" : "size-3.5"} />Wallet allow-listed</span><span className="flex items-center gap-1"><CheckCircle2 className={inventory.token_account_ready ? "size-3.5 text-primary" : "size-3.5"} />Token account ready</span></div></div>}
     {!inventory && loading && <p className="mt-3 text-muted-foreground">Loading inventory status…</p>}{error && <p role="alert" className="mt-3 text-destructive">{error}</p>}{!inventory?.issuance_complete && !loading && <p className="mt-3 text-muted-foreground">This one-time action allow-lists the settlement wallet, creates its asset token account, and mints the full authorized supply to it.</p>}
-  </div>{asset && <BackingListingStatus token={token} asset={asset} onChange={setAsset} />}</>;
+  </div>{asset && <BackingListingStatus asset={asset} onChange={setAsset} />}</>;
 }
 
 function Value({ label, value }: { label: string; value: string }) { return <div><p className="text-muted-foreground">{label}</p><p className="mt-1 font-medium">{Number(value).toLocaleString()}</p></div>; }

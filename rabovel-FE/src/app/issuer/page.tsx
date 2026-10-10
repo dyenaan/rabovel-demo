@@ -15,7 +15,7 @@ import { PaymentAssetStatusCard } from "./_components/payment-asset-status";
 import { InitialInventoryStatus } from "./_components/initial-inventory-status";
 
 export default function IssuerPage() {
-  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.user?.id);
   const user = useAuthStore((state) => state.user);
   const [overview, setOverview] = useState<IssuerOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,16 +25,16 @@ export default function IssuerPage() {
   const [startingSetupId, setStartingSetupId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!token) return;
-    void fetchIssuerOverview(token).then(setOverview).catch((reason: unknown) =>
+    if (!userId) return;
+    void fetchIssuerOverview().then(setOverview).catch((reason: unknown) =>
       setError(reason instanceof Error ? reason.message : "Access denied."),
     );
-  }, [token]);
+  }, [userId]);
 
   useEffect(() => {
-    if (!token || overview?.account_status !== "approved") return;
-    void fetchIssuerAssets(token).then(setAssets).catch(() => undefined);
-  }, [token, overview?.account_status]);
+    if (!userId || overview?.account_status !== "approved") return;
+    void fetchIssuerAssets().then(setAssets).catch(() => undefined);
+  }, [userId, overview?.account_status]);
 
   useEffect(() => {
     const updatePublishedAsset = (event: Event) => {
@@ -46,28 +46,28 @@ export default function IssuerPage() {
   }, []);
 
   useEffect(() => {
-    if (!token) return;
+    if (!userId) return;
     const eligible = assets.filter((asset) => ["approved_for_setup", "minted", "listed"].includes(asset.status));
     void Promise.all(eligible.map(async (asset) => {
-      try { return await fetchAssetSetup(token, asset.asset_id); } catch { return null; }
+      try { return await fetchAssetSetup(asset.asset_id); } catch { return null; }
     })).then((operations) => setSetupByAsset(Object.fromEntries(operations.filter((operation): operation is AssetSetupOperation => Boolean(operation)).map((operation) => [operation.asset_id, operation]))));
-  }, [token, assets]);
+  }, [userId, assets]);
 
   async function submitForDemoApproval(assetId: string) {
-    if (!token) return;
+    if (!userId) return;
     setAdvancingId(assetId); setError(null);
-    try { const updated = await submitAssetForDemoReview(token, assetId); setAssets((current) => current.map((asset) => asset.asset_id === assetId ? updated : asset)); }
+    try { const updated = await submitAssetForDemoReview(assetId); setAssets((current) => current.map((asset) => asset.asset_id === assetId ? updated : asset)); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Could not advance this asset."); }
     finally { setAdvancingId(null); }
   }
 
   async function beginMintSetup(assetId: string) {
-    if (!token) return;
+    if (!userId) return;
     setStartingSetupId(assetId); setError(null);
     try {
-      const operation = await startAssetSetup(token, assetId);
+      const operation = await startAssetSetup(assetId);
       setSetupByAsset((current) => ({ ...current, [assetId]: operation }));
-      const refreshed = await fetchIssuerAssets(token);
+      const refreshed = await fetchIssuerAssets();
       setAssets(refreshed);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not start mint setup."); }
     finally { setStartingSetupId(null); }
@@ -135,7 +135,7 @@ export default function IssuerPage() {
           </Card>
           <Card className="md:col-span-2"><CardHeader><CardTitle>Path to market</CardTitle><CardDescription>Complete mint setup and inventory issuance, submit simulated backing evidence, then publish the investor listing.</CardDescription></CardHeader><CardContent><AssetLifecycle /></CardContent></Card>
           <PaymentAssetStatusCard />
-          {assets.length > 0 && <Card className="md:col-span-2"><CardHeader><CardTitle>Issuer assets</CardTitle><CardDescription>Edit and approve drafts, then start the configured Token-2022 and ACL setup.</CardDescription></CardHeader><CardContent className="space-y-3">{assets.map((asset) => { const setup = setupByAsset[asset.asset_id]; return <div key={asset.asset_id} className="rounded-lg border bg-muted/10 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-medium">{asset.draft.name}</p><p className="text-sm text-muted-foreground">{asset.draft.ticker} · {asset.draft.market} · {Number(asset.draft.authorized_units).toLocaleString()} authorized units</p></div><div className="flex flex-wrap items-center gap-2"><Badge variant={["approved_for_setup", "minted"].includes(asset.status) ? "success" : "secondary"}>{asset.status.replaceAll("_", " ")}</Badge>{asset.status === "draft" && <><Button asChild size="sm" variant="outline"><Link href={`/issuer/assets/${asset.asset_id}/edit`}><Pencil />Edit draft</Link></Button><Button size="sm" disabled={advancingId === asset.asset_id} onClick={() => void submitForDemoApproval(asset.asset_id)}><Send />{advancingId === asset.asset_id ? "Approving…" : "Approve draft"}</Button></>}{asset.status === "approved_for_setup" && !setup && <Button size="sm" disabled={startingSetupId === asset.asset_id} onClick={() => void beginMintSetup(asset.asset_id)}><Coins />{startingSetupId === asset.asset_id ? "Setting up…" : "Start mint setup"}</Button>}</div></div>{asset.status === "draft" && <p className="mt-3 text-xs text-muted-foreground">Approval publishes the metadata automatically. If publishing fails, the asset stays editable and you can retry.</p>}{setup && <div className="mt-4 rounded-md border bg-background p-3 text-xs"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-medium">Mint & ACL setup · {setup.network}</p><Badge variant={setup.status === "confirmed" ? "success" : setup.status === "failed" || setup.status === "reconciliation_required" ? "destructive" : "secondary"}>{setup.status.replaceAll("_", " ")}</Badge></div><p className="mt-2 break-all text-muted-foreground">Mint: {setup.mint_address}</p>{setup.stages.length > 0 && <ul className="mt-3 grid gap-1 sm:grid-cols-2">{setup.stages.map((stage) => <li key={stage.stage} className="flex items-center gap-2"><CheckCircle2 className="size-3.5 text-primary" />{stage.stage.replaceAll("_", " ")}</li>)}</ul>}{setup.error && <p className="mt-3 text-destructive">{setup.error}</p>}</div>}{setup?.status === "confirmed" && token && <InitialInventoryStatus token={token} assetId={asset.asset_id} />}<div className="mt-5 border-t pt-5"><AssetLifecycle current={lifecycleStep(asset.status)} /></div></div>; })}</CardContent></Card>}
+          {assets.length > 0 && <Card className="md:col-span-2"><CardHeader><CardTitle>Issuer assets</CardTitle><CardDescription>Edit and approve drafts, then start the configured Token-2022 and ACL setup.</CardDescription></CardHeader><CardContent className="space-y-3">{assets.map((asset) => { const setup = setupByAsset[asset.asset_id]; return <div key={asset.asset_id} className="rounded-lg border bg-muted/10 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-medium">{asset.draft.name}</p><p className="text-sm text-muted-foreground">{asset.draft.ticker} · {asset.draft.market} · {Number(asset.draft.authorized_units).toLocaleString()} authorized units</p></div><div className="flex flex-wrap items-center gap-2"><Badge variant={["approved_for_setup", "minted"].includes(asset.status) ? "success" : "secondary"}>{asset.status.replaceAll("_", " ")}</Badge>{asset.status === "draft" && <><Button asChild size="sm" variant="outline"><Link href={`/issuer/assets/${asset.asset_id}/edit`}><Pencil />Edit draft</Link></Button><Button size="sm" disabled={advancingId === asset.asset_id} onClick={() => void submitForDemoApproval(asset.asset_id)}><Send />{advancingId === asset.asset_id ? "Approving…" : "Approve draft"}</Button></>}{asset.status === "approved_for_setup" && !setup && <Button size="sm" disabled={startingSetupId === asset.asset_id} onClick={() => void beginMintSetup(asset.asset_id)}><Coins />{startingSetupId === asset.asset_id ? "Setting up…" : "Start mint setup"}</Button>}</div></div>{asset.status === "draft" && <p className="mt-3 text-xs text-muted-foreground">Approval publishes the metadata automatically. If publishing fails, the asset stays editable and you can retry.</p>}{setup && <div className="mt-4 rounded-md border bg-background p-3 text-xs"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-medium">Mint & ACL setup · {setup.network}</p><Badge variant={setup.status === "confirmed" ? "success" : setup.status === "failed" || setup.status === "reconciliation_required" ? "destructive" : "secondary"}>{setup.status.replaceAll("_", " ")}</Badge></div><p className="mt-2 break-all text-muted-foreground">Mint: {setup.mint_address}</p>{setup.stages.length > 0 && <ul className="mt-3 grid gap-1 sm:grid-cols-2">{setup.stages.map((stage) => <li key={stage.stage} className="flex items-center gap-2"><CheckCircle2 className="size-3.5 text-primary" />{stage.stage.replaceAll("_", " ")}</li>)}</ul>}{setup.error && <p className="mt-3 text-destructive">{setup.error}</p>}</div>}{setup?.status === "confirmed" && userId && <InitialInventoryStatus userId={userId} assetId={asset.asset_id} />}<div className="mt-5 border-t pt-5"><AssetLifecycle current={lifecycleStep(asset.status)} /></div></div>; })}</CardContent></Card>}
         </div>
       )}
     </div>

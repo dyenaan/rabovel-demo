@@ -1,35 +1,26 @@
 "use client";
 
 import { type ReactNode, useEffect } from "react";
-import { registerAuthTokenProvider } from "@/lib/api/client";
 import { useMockApi } from "@/lib/env";
 import { useAuthStore } from "@/stores/auth-store";
 import { fetchCurrentUser } from "../api/backend-auth";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const hasHydrated = useAuthStore((state) => state.hasHydrated);
-
   useEffect(() => {
-    registerAuthTokenProvider(() => useAuthStore.getState().token ?? undefined);
-  }, []);
-
-  useEffect(() => {
-    if (!hasHydrated) return;
-    const { token, clearSession, setSession, setSessionValidated } = useAuthStore.getState();
+    let active = true;
+    // Remove credentials persisted by older releases, even if no cookie exists.
+    try { localStorage.removeItem("rabovel-auth"); } catch { /* Storage can be disabled. */ }
+    const { setHasHydrated, setSession, clearSession, setSessionValidated } = useAuthStore.getState();
+    setHasHydrated(true);
     if (useMockApi) {
-      if (token && !token.startsWith("mock_token_")) clearSession();
-      else setSessionValidated(true);
-      return;
+      setSessionValidated(true);
+    } else {
+      void fetchCurrentUser()
+        .then((user) => { if (active && !useAuthStore.getState().sessionValidated) setSession(user); })
+        .catch(() => { if (active && !useAuthStore.getState().sessionValidated) clearSession(); });
     }
-    if (!token || token.startsWith("mock_token_")) {
-      clearSession();
-      return;
-    }
-    setSessionValidated(false);
-    void fetchCurrentUser(token)
-      .then((user) => setSession(user, token))
-      .catch(() => clearSession());
-  }, [hasHydrated]);
+    return () => { active = false; };
+  }, []);
 
   return <>{children}</>;
 }

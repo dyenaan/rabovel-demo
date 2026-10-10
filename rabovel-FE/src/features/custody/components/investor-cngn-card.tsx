@@ -12,43 +12,43 @@ import { createInvestorCngnAccount, getInvestorCngnStatus, type CngnWalletStatus
 
 export function InvestorCngnCard() {
   const queryClient = useQueryClient();
-  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.user?.id);
   const [status, setStatus] = useState<CngnWalletStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
-    if (!token) return;
+    if (!userId) return;
     setLoading(true); setError(null);
-    try { const next = await getInvestorCngnStatus(token); setStatus(next); queryClient.setQueryData(["custody", "cngn"], next); await queryClient.invalidateQueries({ queryKey: ["investor", "catalog"] }); }
+    try { const next = await getInvestorCngnStatus(); setStatus(next); queryClient.setQueryData(["custody", "cngn"], next); await queryClient.invalidateQueries({ queryKey: ["investor", "catalog"] }); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Could not load your cNGN account."); }
     finally { setLoading(false); }
   }
 
   async function createAccount() {
-    if (!token) return;
+    if (!userId) return;
     setCreating(true); setError(null);
-    try { const next = await createInvestorCngnAccount(token); setStatus(next); queryClient.setQueryData(["custody", "cngn"], next); await queryClient.invalidateQueries({ queryKey: ["investor", "catalog"] }); }
+    try { const next = await createInvestorCngnAccount(); setStatus(next); queryClient.setQueryData(["custody", "cngn"], next); await queryClient.invalidateQueries({ queryKey: ["investor", "catalog"] }); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Could not create your cNGN account."); }
     finally { setCreating(false); }
   }
 
   useEffect(() => {
-    if (!token) return;
+    if (!userId) return;
     let active = true;
-    void getInvestorCngnStatus(token)
+    void getInvestorCngnStatus()
       .then((result) => { if (active) { setStatus(result); queryClient.setQueryData(["custody", "cngn"], result); } })
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Link a Phantom wallet before creating a cNGN account."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [queryClient, token]);
+  }, [queryClient, userId]);
 
   return <Card>
     <CardHeader>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div><CardTitle className="flex items-center gap-2"><WalletCards className="size-5" />Investor cNGN funding</CardTitle><CardDescription className="mt-1">Create your cNGN token account, then copy that token-account address into the devnet faucet.</CardDescription></div>
-        <div className="flex items-center gap-2"><Badge variant={status?.ready ? "success" : "warning"}>{status?.ready ? "Ready" : "Not ready"}</Badge>{status && !status.account_verified && <Button size="sm" disabled={creating || loading} onClick={() => void createAccount()}>{creating && <RefreshCw className="animate-spin" />}{creating ? "Creating…" : "Create cNGN account"}</Button>}<Button size="icon" variant="outline" disabled={!token || loading || creating} onClick={() => void refresh()} aria-label="Refresh cNGN balance"><RefreshCw className={loading ? "animate-spin" : undefined} /></Button></div>
+        <div className="flex items-center gap-2"><Badge variant={status?.ready ? "success" : "warning"}>{status?.ready ? "Ready" : "Not ready"}</Badge>{status && !status.account_verified && <Button size="sm" disabled={creating || loading} onClick={() => void createAccount()}>{creating && <RefreshCw className="animate-spin" />}{creating ? "Creating…" : "Create cNGN account"}</Button>}<Button size="icon" variant="outline" disabled={!userId || loading || creating} onClick={() => void refresh()} aria-label="Refresh cNGN balance"><RefreshCw className={loading ? "animate-spin" : undefined} /></Button></div>
       </div>
     </CardHeader>
     <CardContent className="grid gap-4 text-sm sm:grid-cols-2">

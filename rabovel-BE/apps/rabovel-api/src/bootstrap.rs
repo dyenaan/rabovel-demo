@@ -40,6 +40,9 @@ pub async fn router_from_env() -> Result<Router, String> {
     }
     let browser_origin = format!("{}://{}", origin.scheme(), origin.authority());
 
+    let gateway_secret = env::var("RABOVEL_GATEWAY_SECRET").ok();
+    super::ingress::validate_secret(gateway_secret.as_deref(), origin.host_str())?;
+
     let mut builder = GatewayStateBuilder::default()
         .wallet_proof(Arc::new(SiweWalletProofVerifier))
         .siwe_domain(origin.authority().to_string())
@@ -58,6 +61,10 @@ pub async fn router_from_env() -> Result<Router, String> {
             .filter(|(email, _)| !email.is_empty())
             .collect(),
         );
+
+    if let Some(secret) = gateway_secret {
+        builder = builder.gateway_secret(&secret);
+    }
 
     if demo_mode_enabled()? {
         builder = builder.security_policy(BrokerageSecurityPolicy::for_demo());

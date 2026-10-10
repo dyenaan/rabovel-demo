@@ -37,7 +37,7 @@ const initialForm: IssuerOnboardingSubmission = {
 
 export default function IssuerOnboardingPage() {
   const router = useRouter();
-  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.user?.id);
   const user = useAuthStore((state) => state.user);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(initialForm);
@@ -50,10 +50,10 @@ export default function IssuerOnboardingPage() {
   const representativeComplete = [form.representative_name, form.representative_title, form.document_reference].every((value) => value.trim().length >= 2) && form.beneficial_owners_confirmed;
 
   async function submit() {
-    if (!token) return;
+    if (!userId) return;
     setIsSubmitting(true);
     try {
-      await submitIssuerOnboarding(token, form);
+      await submitIssuerOnboarding(form);
       toast.success("Organization verified for this demo.");
       router.push("/issuer");
       router.refresh();

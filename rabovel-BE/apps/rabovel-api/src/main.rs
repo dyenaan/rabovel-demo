@@ -13,12 +13,17 @@ async fn main() {
 
     println!("Rabovel API listening on http://{}", server.bind_addr);
     #[cfg(debug_assertions)]
-    println!(
-        "Swagger UI available at http://{}/swagger-ui",
-        server.bind_addr
-    );
+    if std::env::var_os("RABOVEL_GATEWAY_SECRET").is_none() {
+        println!(
+            "Swagger UI available at http://{}/swagger-ui",
+            server.bind_addr
+        );
+    }
 
-    axum::serve(listener, app)
-        .await
-        .expect("rabovel-api server failed");
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .await
+    .expect("rabovel-api server failed");
 }

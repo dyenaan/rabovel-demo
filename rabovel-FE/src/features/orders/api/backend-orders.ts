@@ -1,4 +1,4 @@
-import { env } from "@/lib/env";
+import { gatewayFetch } from "@/lib/api/gateway-fetch";
 import { useAuthStore } from "@/stores/auth-store";
 import type { Order, OrderSide, OrderStatus, OrderType } from "@/types";
 
@@ -116,13 +116,12 @@ export function adaptOrderAck(
 }
 
 export async function ordersRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = useAuthStore.getState().token;
-  if (!token) throw new Error("Sign in to trade.");
-  const response = await fetch(new URL(path, env.NEXT_PUBLIC_API_BASE_URL), {
+  const userId = useAuthStore.getState().user?.id;
+  if (!userId) throw new Error("Sign in to trade.");
+  const response = await gatewayFetch(path, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
       ...init?.headers,
     },
   });

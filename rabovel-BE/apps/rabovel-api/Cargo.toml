@@ -24,6 +24,7 @@ hex = "0.4"
 serde = { workspace = true }
 serde_json = { workspace = true }
 sha2 = "0.10"
+subtle = "2.6"
 solana-client = "3.1.10"
 solana-commitment-config = "3.1.0"
 solana-instruction = "3.1.0"
