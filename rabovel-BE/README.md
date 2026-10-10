@@ -8,7 +8,8 @@ This is a working demo, not a production brokerage. KYC, backing verification an
 
 ```mermaid
 flowchart LR
-  FE[Next.js frontend] --> API[Axum API :8080 / Cargo Watch]
+  FE[Browser] --> GW[Next.js cookie gateway]
+  GW --> API[Axum API :8080 / Cargo Watch]
   API --> PG[(Postgres)]
   API --> RD[(Redis)]
   API --> SOL[Solana RPC]
@@ -20,7 +21,7 @@ flowchart LR
 - **Investor lifecycle:** live-asset catalog, verified-backing summary, simulated price feed, wallet/cNGN/equity balance checks, expiring quotes and purchase settlement.
 - **Instrument catalog:** `GET /instruments` serves a deterministic NGX-shaped demo catalog through an injectable provider. Its response is explicitly marked simulated; it does not fetch exchange data or authorize token issuance.
 - **Persistence:** Postgres stores users, wallets, KYC cases, issuer assets and setup operations; Redis stores sessions, challenges and rate-limit state. In-memory fallbacks are used when these services are not configured.
-- **Local infrastructure:** Docker Compose runs Postgres and Redis. The API runs on the host through Cargo Watch; Kafka and the WAF are not part of this local setup. Debug builds expose Swagger UI.
+- **Local infrastructure:** Docker Compose runs Postgres and Redis. The API runs on the host through Cargo Watch; Kafka and the WAF are not part of this local setup. Debug builds expose Swagger UI only when the gateway secret is unset.
 
 ## Solana integration
 
@@ -64,6 +65,7 @@ DATABASE_URL=postgres://rabovel:change-me@localhost:5432/rabovel
 REDIS_PASSWORD=change-me
 REDIS_URL=redis://:change-me@localhost:6379/0
 RABOVEL_PUBLIC_ORIGIN=http://localhost:3001
+RABOVEL_GATEWAY_SECRET=replace-with-64-hex-characters
 
 RABOVEL_DEMO_MODE=true
 RABOVEL_DEMO_ISSUER_EMAIL=issuer@example.com
@@ -97,11 +99,11 @@ docker compose up -d --wait
 cargo watch --env-file .env -x 'run -p rabovel-api --locked'
 ```
 
-In another terminal, check `curl -f http://localhost:8080/health`. Cargo Watch loads the local `.env` and rebuilds/restarts the API when source changes. Migrations run at API startup. Debug builds provide `/swagger-ui` and `/api-docs/openapi.json` on port `8080`.
+In another terminal, check `curl -f http://localhost:8080/health`. Cargo Watch loads the local `.env` and rebuilds/restarts the API when source changes. Migrations run at API startup. Debug builds provide `/swagger-ui` and `/api-docs/openapi.json` only when the gateway secret is unset.
 
 Postgres and Redis publish ports only on `127.0.0.1`; `POSTGRES_PORT` and `REDIS_PORT` can override the defaults. Match those ports in `DATABASE_URL` and `REDIS_URL`. Redis uses `maxmemory 25mb` and `noeviction`, so memory-consuming writes fail when full rather than evicting security records; normal TTL expiration continues.
 
-Run the frontend on port `3001` (`pnpm dev --port 3001`), set its local `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080` and `NEXT_PUBLIC_USE_MOCK_API=false`, and match `RABOVEL_PUBLIC_ORIGIN` to `http://localhost:3001`. Local settings do not change Render or Vercel configuration. Keep `KAFKA_BOOTSTRAP_SERVERS` unset so the API uses its no-op event producer.
+Run the frontend on port `3001` (`pnpm dev --port 3001`), set its server-only `RABOVEL_API_URL=http://localhost:8080`, the same `RABOVEL_GATEWAY_SECRET`, and `NEXT_PUBLIC_USE_MOCK_API=false`, and match `RABOVEL_PUBLIC_ORIGIN` to `http://localhost:3001`. Local settings do not change Render or Vercel configuration. Keep `KAFKA_BOOTSTRAP_SERVERS` unset so the API uses its no-op event producer.
 
 If containers from the previous Compose setup still run, use `docker compose up -d --wait --remove-orphans` once to remove the retired API/WAF/Kafka containers. This preserves their named volumes. Avoid `docker compose down -v` when retaining local data.
 
@@ -120,7 +122,7 @@ For source development and verification commands, see [docs/commands.md](docs/co
 | Trading | `/orders` (place/list), `/orders/:order_id` (get/cancel), `/portfolio` |
 | Legacy stubs | `/tokenization/requests` |
 
-Authenticated routes use `Authorization: Bearer <token>`. The frontend demo should deploy with `RABOVEL_DEMO_MODE=true`: this bypasses onboarding checks that have no UI/endpoints yet, while preserving role, permission, linked-wallet, balance, inventory and transaction-signature checks.
+The frontend gateway supplies `Authorization: Bearer <token>` from its HttpOnly cookie. With `RABOVEL_GATEWAY_SECRET` configured, every route except `/health` additionally requires the gateway secret and a validated client IP. Hosted origins require a secret at startup. Direct local API calls must supply these headers too, or run in localhost-only development without the secret. See [public-demo hardening](docs/plans/public-demo-hardening.md) for deployment coordination. The frontend demo should deploy with `RABOVEL_DEMO_MODE=true`: this bypasses onboarding checks that have no UI/endpoints yet, while preserving role, permission, linked-wallet, balance, inventory and transaction-signature checks.
 
 ## Known gaps
 

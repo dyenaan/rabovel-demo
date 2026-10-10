@@ -1,4 +1,5 @@
-import { env, useMockApi } from "@/lib/env";
+import { useMockApi } from "@/lib/env";
+import { gatewayFetch } from "./gateway-fetch";
 import { ApiRequestError, type ApiError, type ApiResponse } from "@/types";
 
 export type RequestOptions = {
@@ -8,23 +9,12 @@ export type RequestOptions = {
   headers?: Record<string, string>;
 };
 
-let authTokenProvider: () => string | undefined = () => undefined;
-
-/** Wired up by the auth feature so the client never imports auth state directly. */
-export function registerAuthTokenProvider(provider: () => string | undefined) {
-  authTokenProvider = provider;
-}
-
 function buildUrl(path: string, params?: RequestOptions["params"]): string {
-  const url = new URL(
-    path.startsWith("http") ? path : `${env.NEXT_PUBLIC_API_BASE_URL}${path}`,
-  );
-  if (params) {
-    for (const [key, value] of Object.entries(params)) {
-      if (value !== undefined) url.searchParams.set(key, String(value));
-    }
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params ?? {})) {
+    if (value !== undefined) query.set(key, String(value));
   }
-  return url.toString();
+  return query.size ? `${path}?${query}` : path;
 }
 
 function createRequestId(): string {
@@ -46,13 +36,11 @@ async function request<T>(
     ...options.headers,
   };
 
-  const token = authTokenProvider();
-  if (token) headers.Authorization = `Bearer ${token}`;
   if (options.idempotencyKey) headers["Idempotency-Key"] = options.idempotencyKey;
 
   let response: Response;
   try {
-    response = await fetch(buildUrl(path, options.params), {
+    response = await gatewayFetch(buildUrl(path, options.params), {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,

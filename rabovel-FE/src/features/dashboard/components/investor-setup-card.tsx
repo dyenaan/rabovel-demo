@@ -15,13 +15,13 @@ import { useMockApi } from "@/lib/env";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function InvestorSetupCard() {
-  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.user?.id);
   const wallets = useWallets();
   const hasSolanaWallet = Boolean(wallets.data?.some((wallet) => wallet.blockchain === "SOLANA"));
   const cngn = useQuery({
     queryKey: ["custody", "cngn"],
-    queryFn: () => getInvestorCngnStatus(token!),
-    enabled: !useMockApi && Boolean(token) && hasSolanaWallet,
+    queryFn: () => getInvestorCngnStatus(),
+    enabled: !useMockApi && Boolean(userId) && hasSolanaWallet,
     staleTime: QUERY_STALE_TIME.short,
     refetchOnMount: "always",
   });

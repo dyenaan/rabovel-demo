@@ -57,15 +57,10 @@ export function LoginForm() {
   async function onSubmit(values: LoginFormValues) {
     setIsSubmitting(true);
     try {
-      const user = useMockApi
+      const authUser = useMockApi
         ? await mockLogin(values.email, values.password)
-        : await loginWithPassword(values.email, values.password).then(async ({ access_token }) => ({
-            user: await fetchCurrentUser(access_token),
-            token: access_token,
-          }));
-      const authUser = "user" in user ? user.user : user;
-      const token = "token" in user ? user.token : `mock_token_${authUser.id}`;
-      login(authUser, token);
+        : await loginWithPassword(values.email, values.password).then(() => fetchCurrentUser());
+      login(authUser);
       toast.success(`Welcome back, ${authUser.name.split(" ")[0]}.`);
       const redirect = getSafeRedirect(searchParams.get("redirect"));
       router.push(redirect ?? homeForRole(authUser.role));

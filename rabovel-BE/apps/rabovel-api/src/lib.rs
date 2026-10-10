@@ -1,6 +1,7 @@
 mod bootstrap;
 mod config;
 mod http;
+mod ingress;
 mod instrument_provider;
 mod mint_setup;
 mod payment_assets;
@@ -101,8 +102,8 @@ const WALLET_CHALLENGE_TTL_SECONDS: u64 = 300;
 const SESSION_TTL_SECONDS: u64 = 900;
 /// Applied per authenticated session on every financial-action route.
 const SESSION_RATE_LIMIT: (u32, u64) = (10, 60);
-/// Applied per client IP (as reported by the WAF in front of this service --
-/// see the `waf` docker-compose service) across all routes.
+/// Applied per client IP supplied by the authenticated gateway, or the
+/// socket peer in direct local development, across application routes.
 const IP_RATE_LIMIT: (u32, u64) = (60, 60);
 
 /// Builds a [`GatewayState`] with sensible in-memory/no-op defaults for
@@ -132,6 +133,7 @@ pub struct GatewayStateBuilder {
     trusted_role_assignments: Vec<TrustedRoleAssignment>,
     trusted_email_roles: Vec<(String, UserRole)>,
     security_policy: Option<BrokerageSecurityPolicy>,
+    gateway_secret: Option<[u8; 32]>,
 }
 
 impl Default for GatewayStateBuilder {
@@ -161,6 +163,7 @@ impl Default for GatewayStateBuilder {
             trusted_role_assignments: Vec::new(),
             trusted_email_roles: Vec::new(),
             security_policy: None,
+            gateway_secret: None,
         }
     }
 }
@@ -246,6 +249,11 @@ impl GatewayStateBuilder {
         self
     }
 
+    pub fn gateway_secret(mut self, secret: &str) -> Self {
+        self.gateway_secret = Some(Sha256::digest(secret.as_bytes()).into());
+        self
+    }
+
     pub fn security_policy(mut self, policy: BrokerageSecurityPolicy) -> Self {
         self.security_policy = Some(policy);
         self
@@ -288,6 +296,7 @@ impl GatewayStateBuilder {
             public_origin: self.public_origin.into(),
             trusted_role_assignments: Arc::new(self.trusted_role_assignments),
             trusted_email_roles: Arc::new(self.trusted_email_roles),
+            gateway_secret: self.gateway_secret,
         }
     }
 }
@@ -314,6 +323,7 @@ pub struct GatewayState {
     public_origin: Arc<str>,
     trusted_role_assignments: Arc<Vec<TrustedRoleAssignment>>,
     trusted_email_roles: Arc<Vec<(String, UserRole)>>,
+    gateway_secret: Option<[u8; 32]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -723,20 +733,11 @@ async fn ip_rate_limit_middleware(
     request: Request,
     next: Next,
 ) -> Result<axum::response::Response, ApiError> {
-    // Trustworthy only because the WAF container in front of this service
-    // (see the `waf` docker-compose service) is the sole path a real client
-    // request can take to reach it and is what sets this header -- the
-    // gateway is not exposed directly. A raw socket peer address is not
-    // used here since axum's `ConnectInfo` reflects the WAF's own address,
-    // not the original client's, once the WAF is in place.
-    let ip = request
-        .headers()
-        .get("x-forwarded-for")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.split(',').next())
-        .map(str::trim)
-        .unwrap_or("unknown")
-        .to_string();
+    // Health is the sole unauthenticated endpoint when gateway mode is enabled.
+    if request.uri().path() == "/health" {
+        return Ok(next.run(request).await);
+    }
+    let ip = ingress::client_ip(&state, &request)?;
     state
         .rate_limiter
         .check(&format!("ip:{ip}"), IP_RATE_LIMIT.0, IP_RATE_LIMIT.1)
@@ -4736,7 +4737,7 @@ Issued At: 2021-12-07T18:28:18.807Z"#;
                 .clone()
                 .oneshot(
                     Request::builder()
-                        .uri("/health")
+                        .uri("/instruments")
                         .body(Body::empty())
                         .unwrap(),
                 )
@@ -4745,6 +4746,17 @@ Issued At: 2021-12-07T18:28:18.807Z"#;
             assert_eq!(response.status(), StatusCode::OK);
         }
         let throttled = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/instruments")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(throttled.status(), StatusCode::TOO_MANY_REQUESTS);
+        let health = app
             .oneshot(
                 Request::builder()
                     .uri("/health")
@@ -4753,6 +4765,6 @@ Issued At: 2021-12-07T18:28:18.807Z"#;
             )
             .await
             .unwrap();
-        assert_eq!(throttled.status(), StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(health.status(), StatusCode::OK);
     }
 }

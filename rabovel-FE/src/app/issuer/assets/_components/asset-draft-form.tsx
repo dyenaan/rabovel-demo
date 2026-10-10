@@ -21,7 +21,7 @@ export const defaultAssetDraft: AssetDraftSubmission = {
 };
 
 export function AssetDraftForm({ initialValue, assetId, deletable = false }: { initialValue: AssetDraftSubmission; assetId?: string; deletable?: boolean }) {
-  const token = useAuthStore((state) => state.token); const router = useRouter();
+  const userId = useAuthStore((state) => state.user?.id); const router = useRouter();
   const [form, setForm] = useState(initialValue); const [error, setError] = useState<string | null>(null); const [saving, setSaving] = useState(false);
   const [savedAssetId, setSavedAssetId] = useState(assetId);
   const [copied, setCopied] = useState(false);
@@ -29,7 +29,7 @@ export function AssetDraftForm({ initialValue, assetId, deletable = false }: { i
   const editing = Boolean(savedAssetId);
   const field = (key: keyof AssetDraftSubmission) => (event: React.ChangeEvent<HTMLInputElement>) => setForm((current) => ({ ...current, [key]: event.target.value }));
   const metadataField = (key: "name" | "description" | "external_url") => (event: React.ChangeEvent<HTMLInputElement>) => setForm((current) => ({ ...current, metadata: { ...current.metadata, [key]: event.target.value || null } }));
-  async function submit(event: FormEvent) { event.preventDefault(); setError(null); if (!token) { setError("Sign in again to save this draft."); return; } setSaving(true); let persistedId = savedAssetId; try { const saved = persistedId ? await updateAssetDraft(token, persistedId, form) : await createAssetDraft(token, form); persistedId = saved.asset_id; setSavedAssetId(saved.asset_id); setForm(saved.draft); if (imageFile) { const withImage = await uploadAssetImage(token, saved.asset_id, imageFile); setForm(withImage.draft); setImagePreview(withImage.draft.metadata.image_uri); setImageFile(null); } router.push("/issuer"); } catch (reason) { if (persistedId && !assetId) router.replace(`/issuer/assets/${encodeURIComponent(persistedId)}/edit`); const message = reason instanceof Error ? reason.message : "Could not save the asset draft."; setError(persistedId && imageFile ? `The draft was saved, but its image was not uploaded. ${message}` : message); } finally { setSaving(false); } }
+  async function submit(event: FormEvent) { event.preventDefault(); setError(null); if (!userId) { setError("Sign in again to save this draft."); return; } setSaving(true); let persistedId = savedAssetId; try { const saved = persistedId ? await updateAssetDraft(persistedId, form) : await createAssetDraft(form); persistedId = saved.asset_id; setSavedAssetId(saved.asset_id); setForm(saved.draft); if (imageFile) { const withImage = await uploadAssetImage(saved.asset_id, imageFile); setForm(withImage.draft); setImagePreview(withImage.draft.metadata.image_uri); setImageFile(null); } router.push("/issuer"); } catch (reason) { if (persistedId && !assetId) router.replace(`/issuer/assets/${encodeURIComponent(persistedId)}/edit`); const message = reason instanceof Error ? reason.message : "Could not save the asset draft."; setError(persistedId && imageFile ? `The draft was saved, but its image was not uploaded. ${message}` : message); } finally { setSaving(false); } }
   const metadataDocument = {
     name: form.metadata.name,
     symbol: form.metadata.symbol,
@@ -54,7 +54,7 @@ export function AssetDraftForm({ initialValue, assetId, deletable = false }: { i
   };
   const metadataJson = JSON.stringify(metadataDocument, null, 2);
   async function copyMetadata() { await navigator.clipboard.writeText(metadataJson); setCopied(true); window.setTimeout(() => setCopied(false), 1500); }
-  async function removeDraft() { if (!token || !assetId) return; setError(null); try { await deleteAssetDraft(token, assetId); router.push("/issuer"); router.refresh(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not delete this draft."); } }
+  async function removeDraft() { if (!userId || !assetId) return; setError(null); try { await deleteAssetDraft(assetId); router.push("/issuer"); router.refresh(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not delete this draft."); } }
 
   return <div className="mx-auto max-w-4xl space-y-6"><div><Button asChild variant="ghost" className="mb-2 -ml-3"><Link href="/issuer"><ArrowLeft />Issuer overview</Link></Button><p className="text-sm font-medium text-primary">Asset registry</p><h1 className="text-3xl font-semibold tracking-tight">{editing ? "Edit asset draft" : "Create asset draft"}</h1><p className="mt-2 text-muted-foreground">Define the simulated instrument and metadata. Saving does not create a mint or issue inventory.</p></div>
     <form onSubmit={submit} className="space-y-6"><Card><CardHeader><CardTitle>Instrument</CardTitle><CardDescription>Stable identity, classification, and authorized supply.</CardDescription></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">

@@ -51,12 +51,12 @@ export function RegisterForm() {
     try {
       if (useMockApi) {
         const user = await mockRegister(values);
-        login(user, `mock_token_${user.id}`);
+        login(user);
         router.push("/verify");
       } else {
-        const { access_token } = await registerWithPassword(values.fullName, values.email, values.password);
-        const user = await fetchCurrentUser(access_token);
-        login(user, access_token);
+        await registerWithPassword(values.fullName, values.email, values.password);
+        const user = await fetchCurrentUser();
+        login(user);
         router.push(homeForRole(user.role));
       }
       toast.success("Account created.");

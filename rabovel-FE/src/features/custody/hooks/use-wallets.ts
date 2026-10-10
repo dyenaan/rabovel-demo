@@ -31,21 +31,21 @@ function encodeBase64(bytes: Uint8Array): string {
 }
 
 export function useWallets() {
-  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.user?.id);
   return useQuery({
     queryKey: queryKeys.custody.wallets(),
-    queryFn: () => getWallets(token!),
-    enabled: Boolean(token),
+    queryFn: () => getWallets(),
+    enabled: Boolean(userId),
     staleTime: QUERY_STALE_TIME.medium,
   });
 }
 
 export function useConnectWallet() {
   const queryClient = useQueryClient();
-  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.user?.id);
   return useMutation({
     mutationFn: async () => {
-      if (!token) throw new Error("Sign in before linking a wallet.");
+      if (!userId) throw new Error("Sign in before linking a wallet.");
       const provider = phantomProvider();
       const connection = await provider.connect();
       const address = connection.publicKey.toString();
@@ -55,9 +55,9 @@ export function useConnectWallet() {
         mockWallets.push(wallet);
         return wallet;
       }
-      const challenge = await createSolanaChallenge(token, address);
+      const challenge = await createSolanaChallenge(address);
       const signed = await provider.signMessage(new TextEncoder().encode(challenge.message), "utf8");
-      return completeSolanaWalletLink(token, challenge.challenge_id, encodeBase64(signed.signature));
+      return completeSolanaWalletLink(challenge.challenge_id, encodeBase64(signed.signature));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.custody.wallets() });

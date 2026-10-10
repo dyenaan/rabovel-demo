@@ -21,7 +21,14 @@ pub(crate) fn build(state: GatewayState) -> Router {
         .merge(features::wallets::routes())
         .merge(features::kyc::routes())
         .merge(features::portfolio::routes())
-        .merge(features::tokenization::routes())
+        .merge(features::tokenization::routes());
+    // Sandbox/debug routes are unavailable behind the session gateway.
+    let routes = if state.gateway_secret.is_none() {
+        add_debug_routes(routes)
+    } else {
+        routes
+    };
+    routes
         .layer(DefaultBodyLimit::max(16 * 1024))
         .layer(
             CorsLayer::new()
@@ -44,7 +51,6 @@ pub(crate) fn build(state: GatewayState) -> Router {
         .layer(middleware::from_fn_with_state(
             state.clone(),
             ip_rate_limit_middleware,
-        ));
-
-    add_debug_routes(routes).with_state(state)
+        ))
+        .with_state(state)
 }

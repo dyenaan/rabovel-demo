@@ -10,18 +10,18 @@ import { Decimal, formatMoney } from "@/lib/formatters";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function PaymentAssetStatusCard() {
-  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.user?.id);
   const [status, setStatus] = useState<PaymentAssetStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
 
   async function loadStatus() {
-    if (!token) return;
+    if (!userId) return;
     setIsLoading(true);
     setError(null);
     try {
-      setStatus(await fetchCngnPaymentAsset(token));
+      setStatus(await fetchCngnPaymentAsset());
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Could not load the cNGN payment rail.");
     } finally {
@@ -30,11 +30,11 @@ export function PaymentAssetStatusCard() {
   }
 
   async function createAccount() {
-    if (!token) return;
+    if (!userId) return;
     setIsCreating(true);
     setError(null);
     try {
-      setStatus(await createBrokerCngnAccount(token));
+      setStatus(await createBrokerCngnAccount());
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Could not create the issuer settlement cNGN account.");
     } finally {
@@ -43,9 +43,9 @@ export function PaymentAssetStatusCard() {
   }
 
   useEffect(() => {
-    if (!token) return;
+    if (!userId) return;
     let active = true;
-    void fetchCngnPaymentAsset(token)
+    void fetchCngnPaymentAsset()
       .then((paymentAsset) => {
         if (active) setStatus(paymentAsset);
       })
@@ -56,9 +56,9 @@ export function PaymentAssetStatusCard() {
         if (active) setIsLoading(false);
       });
     return () => { active = false; };
-  }, [token]);
+  }, [userId]);
 
-  return <Card className="md:col-span-2"><CardHeader><div className="flex flex-wrap items-start justify-between gap-3"><div><CardTitle>CNGN payment rail</CardTitle><CardDescription className="mt-1">Fund the Admin wallet with test SOL, create the issuer settlement wallet’s associated cNGN account, then fund that token-account address from the faucet.</CardDescription></div><div className="flex flex-wrap items-center gap-2"><Badge variant={status?.ready ? "success" : "warning"}>{status?.ready ? "Ready" : "Not ready"}</Badge>{status && !status.broker_account_verified && <Button type="button" size="sm" disabled={isCreating || isLoading || !status.mint_verified} onClick={() => void createAccount()}>{isCreating && <RefreshCw className="animate-spin" />}{isCreating ? "Creating…" : "Create settlement cNGN account"}</Button>}<Button type="button" variant="outline" size="sm" disabled={isLoading || isCreating || !token} onClick={() => void loadStatus()}><RefreshCw className={isLoading ? "animate-spin" : undefined} />Refresh</Button></div></div></CardHeader><CardContent className="grid gap-4 text-sm sm:grid-cols-2"><Detail label="Network" value={status?.network ?? (isLoading ? "Loading…" : "Unavailable")} /><Detail label="Token program" value={status?.token_program ?? "Unverified"} /><Detail label="Decimals" value={status?.decimals?.toString() ?? "Unverified"} /><Detail label="Issuer cNGN balance" value={displayNairaBalance(status)} /><AddressDetail label="Admin fee-payer wallet" address={status?.fee_payer_address} hint="Send test SOL here. The backend uses it to pay transaction and account-creation fees." /><AddressDetail label="Issuer settlement wallet (owner)" address={status?.broker_owner_address} hint="This is the Solana keypair’s public address and owns the token account below." /><AddressDetail label="Issuer settlement cNGN token account" address={status?.broker_token_account} hint="Use this address as the faucet recipient once the account is created." /><AddressDetail label="cNGN mint" address={status?.mint_address} />{error && <p role="alert" className="sm:col-span-2 text-destructive">{error}</p>}{status?.error && <p className="sm:col-span-2 text-amber-700 dark:text-amber-300">{status.error}</p>}</CardContent></Card>;
+  return <Card className="md:col-span-2"><CardHeader><div className="flex flex-wrap items-start justify-between gap-3"><div><CardTitle>CNGN payment rail</CardTitle><CardDescription className="mt-1">Fund the Admin wallet with test SOL, create the issuer settlement wallet’s associated cNGN account, then fund that token-account address from the faucet.</CardDescription></div><div className="flex flex-wrap items-center gap-2"><Badge variant={status?.ready ? "success" : "warning"}>{status?.ready ? "Ready" : "Not ready"}</Badge>{status && !status.broker_account_verified && <Button type="button" size="sm" disabled={isCreating || isLoading || !status.mint_verified} onClick={() => void createAccount()}>{isCreating && <RefreshCw className="animate-spin" />}{isCreating ? "Creating…" : "Create settlement cNGN account"}</Button>}<Button type="button" variant="outline" size="sm" disabled={isLoading || isCreating || !userId} onClick={() => void loadStatus()}><RefreshCw className={isLoading ? "animate-spin" : undefined} />Refresh</Button></div></div></CardHeader><CardContent className="grid gap-4 text-sm sm:grid-cols-2"><Detail label="Network" value={status?.network ?? (isLoading ? "Loading…" : "Unavailable")} /><Detail label="Token program" value={status?.token_program ?? "Unverified"} /><Detail label="Decimals" value={status?.decimals?.toString() ?? "Unverified"} /><Detail label="Issuer cNGN balance" value={displayNairaBalance(status)} /><AddressDetail label="Admin fee-payer wallet" address={status?.fee_payer_address} hint="Send test SOL here. The backend uses it to pay transaction and account-creation fees." /><AddressDetail label="Issuer settlement wallet (owner)" address={status?.broker_owner_address} hint="This is the Solana keypair’s public address and owns the token account below." /><AddressDetail label="Issuer settlement cNGN token account" address={status?.broker_token_account} hint="Use this address as the faucet recipient once the account is created." /><AddressDetail label="cNGN mint" address={status?.mint_address} />{error && <p role="alert" className="sm:col-span-2 text-destructive">{error}</p>}{status?.error && <p className="sm:col-span-2 text-amber-700 dark:text-amber-300">{status.error}</p>}</CardContent></Card>;
 }
 
 function displayNairaBalance(status: PaymentAssetStatus | null): string {

@@ -1,4 +1,4 @@
-import { env } from "@/lib/env";
+import { gatewayFetch } from "@/lib/api/gateway-fetch";
 import type { UserRole } from "@/types";
 import type { AuthUser } from "../types/auth.types";
 
@@ -10,7 +10,7 @@ type CurrentUserDto = {
   roles: BackendRole[];
   onboarding_status: "approved" | "requires_review" | "blocked";
 };
-type SessionDto = { access_token: string };
+type SessionDto = { expires_in: number };
 export type IssuerOrganization = {
   legal_name: string;
   organization_type: string;
@@ -79,7 +79,7 @@ const roleMap: Record<BackendRole, UserRole> = {
 const precedence: UserRole[] = ["ADMIN", "COMPLIANCE", "OPERATIONS", "ISSUER", "INVESTOR"];
 
 async function directRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(new URL(path, env.NEXT_PUBLIC_API_BASE_URL), {
+  const response = await gatewayFetch(path, {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
@@ -117,90 +117,87 @@ export async function registerWithPassword(displayName: string, email: string, p
   return directRequest<SessionDto>("/auth/register", { method: "POST", body: JSON.stringify({ display_name: displayName, email, password }) });
 }
 
-export async function fetchCurrentUser(token: string) {
-  return adaptCurrentUser(await directRequest<CurrentUserDto>("/auth/me", { headers: { Authorization: `Bearer ${token}` } }));
+export async function fetchCurrentUser() {
+  return adaptCurrentUser(await directRequest<CurrentUserDto>("/auth/me"));
 }
 
-export async function revokeSession(token: string) {
-  await directRequest<null>("/auth/logout", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+export async function revokeSession() {
+  await directRequest<null>("/auth/logout", { method: "POST" });
 }
 
-export async function fetchIssuerOverview(token: string) {
-  return directRequest<IssuerOverview>("/issuer/overview", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function fetchIssuerOverview() {
+  return directRequest<IssuerOverview>("/issuer/overview");
 }
 
-export async function submitIssuerOnboarding(token: string, submission: IssuerOnboardingSubmission) {
+export async function submitIssuerOnboarding(submission: IssuerOnboardingSubmission) {
   return directRequest<IssuerOverview>("/issuer/onboarding", {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(submission),
   });
 }
 
-export async function createAssetDraft(token: string, submission: AssetDraftSubmission) {
-  return directRequest<AssetDraft>("/issuer/assets", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(submission) });
+export async function createAssetDraft(submission: AssetDraftSubmission) {
+  return directRequest<AssetDraft>("/issuer/assets", { method: "POST", body: JSON.stringify(submission) });
 }
 
-export async function fetchIssuerAssets(token: string) {
-  return (await directRequest<AssetDraft[]>("/issuer/assets", { headers: { Authorization: `Bearer ${token}` } })).map(adaptListingStatus);
+export async function fetchIssuerAssets() {
+  return (await directRequest<AssetDraft[]>("/issuer/assets")).map(adaptListingStatus);
 }
 
-export async function fetchIssuerAsset(token: string, assetId: string) {
-  return adaptListingStatus(await directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}`, { headers: { Authorization: `Bearer ${token}` } }));
+export async function fetchIssuerAsset(assetId: string) {
+  return adaptListingStatus(await directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}`));
 }
 
-export async function updateAssetDraft(token: string, assetId: string, submission: AssetDraftSubmission) {
-  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}`, { method: "PATCH", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(submission) });
+export async function updateAssetDraft(assetId: string, submission: AssetDraftSubmission) {
+  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}`, { method: "PATCH", body: JSON.stringify(submission) });
 }
 
-export async function deleteAssetDraft(token: string, assetId: string) {
-  return directRequest<null>(`/issuer/assets/${encodeURIComponent(assetId)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+export async function deleteAssetDraft(assetId: string) {
+  return directRequest<null>(`/issuer/assets/${encodeURIComponent(assetId)}`, { method: "DELETE", });
 }
 
-export async function submitAssetForDemoReview(token: string, assetId: string) {
-  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/submit`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+export async function submitAssetForDemoReview(assetId: string) {
+  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/submit`, { method: "POST" });
 }
 
-export async function fetchAssetSetup(token: string, assetId: string) {
-  return directRequest<AssetSetupOperation>(`/issuer/assets/${encodeURIComponent(assetId)}/setup`, { headers: { Authorization: `Bearer ${token}` } });
+export async function fetchAssetSetup(assetId: string) {
+  return directRequest<AssetSetupOperation>(`/issuer/assets/${encodeURIComponent(assetId)}/setup`);
 }
 
-export async function startAssetSetup(token: string, assetId: string) {
-  return directRequest<AssetSetupOperation>(`/issuer/assets/${encodeURIComponent(assetId)}/setup`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+export async function startAssetSetup(assetId: string) {
+  return directRequest<AssetSetupOperation>(`/issuer/assets/${encodeURIComponent(assetId)}/setup`, { method: "POST" });
 }
 
-export async function fetchInitialInventory(token: string, assetId: string) {
-  return directRequest<InitialInventory>(`/issuer/assets/${encodeURIComponent(assetId)}/inventory`, { headers: { Authorization: `Bearer ${token}` } });
+export async function fetchInitialInventory(assetId: string) {
+  return directRequest<InitialInventory>(`/issuer/assets/${encodeURIComponent(assetId)}/inventory`);
 }
 
-export async function issueInitialInventory(token: string, assetId: string) {
-  return directRequest<InitialInventory>(`/issuer/assets/${encodeURIComponent(assetId)}/inventory`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+export async function issueInitialInventory(assetId: string) {
+  return directRequest<InitialInventory>(`/issuer/assets/${encodeURIComponent(assetId)}/inventory`, { method: "POST" });
 }
 
-export async function submitAssetBacking(token: string, assetId: string, summary: string, file: File) {
-  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/backing`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify({ summary, document_name: file.name, content_type: file.type, size_bytes: file.size }) });
+export async function submitAssetBacking(assetId: string, summary: string, file: File) {
+  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/backing`, { method: "POST", body: JSON.stringify({ summary, document_name: file.name, content_type: file.type, size_bytes: file.size }) });
 }
 
-export async function publishAssetListing(token: string, assetId: string) {
-  return adaptListingStatus(await directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/listing`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }));
+export async function publishAssetListing(assetId: string) {
+  return adaptListingStatus(await directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/listing`, { method: "POST" }));
 }
 
 function adaptListingStatus(asset: AssetDraft): AssetDraft {
   return asset.draft.listing_status === "live" ? { ...asset, status: "listed" } : asset;
 }
 
-export async function fetchCngnPaymentAsset(token: string) {
-  return directRequest<PaymentAssetStatus>("/payment-assets/cngn", { headers: { Authorization: `Bearer ${token}` } });
+export async function fetchCngnPaymentAsset() {
+  return directRequest<PaymentAssetStatus>("/payment-assets/cngn");
 }
 
-export async function createBrokerCngnAccount(token: string) {
-  return directRequest<PaymentAssetStatus>("/payment-assets/cngn", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+export async function createBrokerCngnAccount() {
+  return directRequest<PaymentAssetStatus>("/payment-assets/cngn", { method: "POST" });
 }
 
-export async function uploadAssetImage(token: string, assetId: string, file: File) {
-  const ticket = await directRequest<{ signed_url: string; object_path: string }>(`/issuer/assets/${encodeURIComponent(assetId)}/image-upload`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify({ content_type: file.type, size: file.size }) });
+export async function uploadAssetImage(assetId: string, file: File) {
+  const ticket = await directRequest<{ signed_url: string; object_path: string }>(`/issuer/assets/${encodeURIComponent(assetId)}/image-upload`, { method: "POST", body: JSON.stringify({ content_type: file.type, size: file.size }) });
   const body = new FormData(); body.append("cacheControl", "3600"); body.append("", file);
   let uploaded: Response;
   try {
@@ -209,5 +206,5 @@ export async function uploadAssetImage(token: string, assetId: string, file: Fil
     throw new Error("Could not reach Supabase Storage. Check the signed upload URL and Storage CORS configuration.");
   }
   if (!uploaded.ok) throw new Error("The image could not be uploaded to storage.");
-  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/image-upload/confirm`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify({ object_path: ticket.object_path, content_type: file.type }) });
+  return directRequest<AssetDraft>(`/issuer/assets/${encodeURIComponent(assetId)}/image-upload/confirm`, { method: "POST", body: JSON.stringify({ object_path: ticket.object_path, content_type: file.type }) });
 }

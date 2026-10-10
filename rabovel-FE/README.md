@@ -23,7 +23,7 @@ flowchart LR
 - **Issuer workspace:** onboarding, asset creation/editing, simulated backing submission/review, mint setup, inventory issuance and live-listing status.
 - **Investor workspace:** readiness guidance, Phantom ownership verification, cNGN setup, live assets, simulated prices, quotes, purchases and current holdings.
 - **Operations UI:** admin, compliance, settlement and reconciliation screens remain largely fixture-backed demonstrations.
-- **State:** TanStack Query manages server data and invalidation; Zustand persists the browser session; React Hook Form and Zod handle forms.
+- **State:** TanStack Query manages server data and invalidation; Zustand keeps the user view in memory; the gateway holds the session in an HttpOnly cookie; React Hook Form and Zod handle forms.
 
 ## Solana interaction
 
@@ -45,11 +45,13 @@ Create `.env.local` as needed:
 
 ```dotenv
 NEXT_PUBLIC_USE_MOCK_API=false
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+RABOVEL_API_URL=http://localhost:8080
+RABOVEL_PUBLIC_ORIGIN=http://localhost:3001
+RABOVEL_GATEWAY_SECRET=replace-with-the-same-64-hex-secret-as-the-backend
 NEXT_PUBLIC_ENVIRONMENT=development
 ```
 
-`NEXT_PUBLIC_USE_MOCK_API` defaults to `true`. Real demo auth, wallet, issuer and purchase flows require it to be `false` and the backend to be running. Browser-exposed variables must never contain secrets.
+`NEXT_PUBLIC_USE_MOCK_API` defaults to `true` in development and `false` in production; production rejects mock authentication. Real demo auth, wallet, issuer and purchase flows require it to be `false` and the backend to be running. The three `RABOVEL_*` values are server-only. Generate the shared secret with `openssl rand -hex 32`; never prefix it with `NEXT_PUBLIC_`. Browser requests use `/api/*`. See the [rollout and remaining hardening slices](../rabovel-BE/docs/plans/public-demo-hardening.md).
 
 See [commands](docs/commands.md) for verification and [architecture](docs/architecture.md) for source boundaries.
 
@@ -61,7 +63,7 @@ See [commands](docs/commands.md) for verification and [architecture](docs/archit
 | `src/features` | Feature components, hooks and API adapters |
 | `src/components` | Shared layout, UI and financial presentation |
 | `src/types` | Frontend contracts |
-| `src/stores` | Persisted browser state |
+| `src/stores` | In-memory auth and browser preferences |
 | `src/mocks` | Fixture data for incomplete/mock experiences |
 
 ## Known gaps
