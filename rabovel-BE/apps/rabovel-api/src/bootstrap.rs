@@ -25,8 +25,7 @@ use domain::auth::BrokerageSecurityPolicy;
 
 /// Build the production API composition from process configuration.
 pub async fn router_from_env() -> Result<Router, String> {
-    let deployment =
-        crate::deployment::Deployment::validate(&env::vars().collect(), !cfg!(debug_assertions))?;
+    let deployment = crate::deployment::Deployment::validate(&env::vars().collect())?;
     let origin = deployment.origin;
     if deployment.hosted {
         let rpc_url = env::var("RABOVEL_SOLANA_RPC_URL").map_err(|_| "RPC URL is required")?;

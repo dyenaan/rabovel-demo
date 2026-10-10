@@ -4,9 +4,9 @@ This runbook covers slice 4. Issuer quotas are intentionally excluded at the use
 
 ## Deployment settings
 
-Set Render `RABOVEL_DEPLOYMENT=public-devnet` before deploying this slice. Hosted origins otherwise fail startup. The profile requires a release binary, HTTPS frontend origin, gateway secret, Postgres, Redis, Supabase, all existing Solana signer/derivation settings, cNGN mint, `RABOVEL_DEMO_MODE=true` and `RABOVEL_SOLANA_NETWORK=devnet`. Kafka must be unset. It validates configuration and checks the RPC's devnet genesis hash before running database migrations. An unavailable or non-devnet RPC prevents startup. The genesis check trusts the configured RPC provider and is performed at startup, not continuously.
+Set Render `RABOVEL_DEPLOYMENT=public-devnet` before deploying this slice. Hosted origins otherwise fail startup. The profile requires an HTTPS frontend origin, gateway secret, Postgres, Redis, Supabase, all existing Solana signer/derivation settings, cNGN mint, `RABOVEL_DEMO_MODE=true` and `RABOVEL_SOLANA_NETWORK=devnet`. Kafka must be unset. It validates configuration and checks the RPC's devnet genesis hash before running database migrations. An unavailable or non-devnet RPC prevents startup. The genesis check trusts the configured RPC provider and is performed at startup, not continuously.
 
-For native Render hosting, build with `cargo build -p rabovel-api --release --locked` and start `./target/release/rabovel-api`. Set the health-check path to `/health`. The API uses Render's `PORT` unless `RABOVEL_BIND_ADDR` explicitly overrides it; local default remains 8080. See [Render health checks](https://render.com/docs/health-checks).
+Debug and release builds are both supported. For native Render hosting, you can start with `cargo run -p rabovel-api`, or build with `cargo build -p rabovel-api --release --locked` and start `./target/release/rabovel-api`. Set the health-check path to `/health`. The API uses Render's `PORT` unless `RABOVEL_BIND_ADDR` explicitly overrides it; local default remains 8080. See [Render health checks](https://render.com/docs/health-checks).
 
 In Vercel retain the slice-1 server environment (`RABOVEL_API_URL`, `RABOVEL_PUBLIC_ORIGIN`, `RABOVEL_GATEWAY_SECRET`) and `NEXT_PUBLIC_USE_MOCK_API=false`. Add server-only `RABOVEL_STORAGE_ORIGIN=https://<your-project>.supabase.co`, matching the backend Supabase origin, to permit direct signed image uploads. No storage secret belongs in frontend configuration. If absent, external upload connections are blocked by CSP. An optional `NEXT_PUBLIC_WS_URL` must use WSS in production; omit it when no WebSocket server is deployed.
 
@@ -42,7 +42,7 @@ Configure external monitoring for `/health` and the frontend `/api/instruments` 
 
 ## Recovery
 
-1. For a failed rollout, inspect the deployment error and request IDs. Missing profile settings, release mode or RPC identity failures must be corrected; do not disable the hosted profile to force startup.
+1. For a failed rollout, inspect the deployment error and request IDs. Missing profile settings or RPC identity failures must be corrected; do not disable the hosted profile to force startup.
 2. For KV exhaustion/outage, restore availability or capacity and inspect TTL/memory behavior. Do not flush all keys or enable eviction as a routine fix. Expired sessions can require users to log in again; issued wallet challenges must never be restored from a stale snapshot.
 3. For database failure, pause user actions and restore connectivity. Restore a verified backup into an isolated database first and verify schema/migration state before switching the service. Redis sessions are separate from Postgres backups.
 4. For a leaked gateway secret, rotate it on both Vercel and Render in a coordinated maintenance window and verify direct-API rejection. For credential/session compromise, revoke the affected sessions through an operator-controlled process. No public bulk-revocation endpoint is introduced.

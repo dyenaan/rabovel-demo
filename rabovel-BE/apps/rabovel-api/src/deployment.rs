@@ -9,7 +9,7 @@ pub(crate) struct Deployment {
     pub hosted: bool,
 }
 impl Deployment {
-    pub fn validate(values: &HashMap<String, String>, release: bool) -> Result<Self, String> {
+    pub fn validate(values: &HashMap<String, String>) -> Result<Self, String> {
         let required = |key: &str| -> Result<&str, String> {
             values
                 .get(key)
@@ -50,9 +50,6 @@ impl Deployment {
             origin.host_str(),
         )?;
         if hosted {
-            if !release {
-                return Err("public-devnet requires a release build".into());
-            }
             if required("RABOVEL_DEMO_MODE")? != "true" {
                 return Err("public-devnet requires RABOVEL_DEMO_MODE=true".into());
             }
@@ -138,14 +135,11 @@ mod tests {
     #[test]
     fn hosted_configuration_cannot_fall_back_to_memory_or_wrong_network() {
         let env = hosted();
-        assert!(Deployment::validate(&env, true).unwrap().hosted);
+        assert!(Deployment::validate(&env).unwrap().hosted);
         for key in env.keys() {
             let mut missing = env.clone();
             missing.remove(key);
-            assert!(
-                Deployment::validate(&missing, true).is_err(),
-                "missing {key}"
-            );
+            assert!(Deployment::validate(&missing).is_err(), "missing {key}");
         }
         for (key, value) in [
             ("RABOVEL_SOLANA_NETWORK", "mainnet-beta"),
@@ -157,9 +151,8 @@ mod tests {
         ] {
             let mut invalid = env.clone();
             invalid.insert(key.into(), value.into());
-            assert!(Deployment::validate(&invalid, true).is_err());
+            assert!(Deployment::validate(&invalid).is_err());
         }
-        assert!(Deployment::validate(&env, false).is_err());
         assert!(validate_genesis(DEVNET_GENESIS).is_ok());
         assert!(validate_genesis("mainnet-or-unknown").is_err());
     }
@@ -169,7 +162,7 @@ mod tests {
             "RABOVEL_PUBLIC_ORIGIN".into(),
             "http://localhost:3001".into(),
         )]);
-        assert!(!Deployment::validate(&env, false).unwrap().hosted);
+        assert!(!Deployment::validate(&env).unwrap().hosted);
         for origin in [
             "https://demo.example.com",
             "ftp://localhost",
@@ -178,7 +171,7 @@ mod tests {
             "https://demo.example.com?x=1",
         ] {
             env.insert("RABOVEL_PUBLIC_ORIGIN".into(), origin.into());
-            assert!(Deployment::validate(&env, false).is_err());
+            assert!(Deployment::validate(&env).is_err());
         }
     }
 }
