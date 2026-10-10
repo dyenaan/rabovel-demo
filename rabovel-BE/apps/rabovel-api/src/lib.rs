@@ -3482,7 +3482,7 @@ mod tests {
                     .method("OPTIONS")
                     .uri("/auth/google/start")
                     .header("origin", "http://localhost:3001")
-                    .header("access-control-request-method", "GET")
+                    .header("access-control-request-method", "DELETE")
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -3496,6 +3496,13 @@ mod tests {
                 .unwrap(),
             "http://localhost:3001"
         );
+        assert!(response
+            .headers()
+            .get("access-control-allow-methods")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .contains("DELETE"));
     }
 
     #[tokio::test]

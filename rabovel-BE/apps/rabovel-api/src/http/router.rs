@@ -27,7 +27,13 @@ pub(crate) fn build(state: GatewayState) -> Router {
                 .allow_origin(
                     HeaderValue::from_str(&state.public_origin).expect("validated public origin"),
                 )
-                .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::OPTIONS])
+                .allow_methods([
+                    Method::GET,
+                    Method::POST,
+                    Method::PATCH,
+                    Method::DELETE,
+                    Method::OPTIONS,
+                ])
                 .allow_headers([
                     header::AUTHORIZATION,
                     header::CONTENT_TYPE,

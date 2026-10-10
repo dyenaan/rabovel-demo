@@ -1,0 +1,4592 @@
+{
+  "researchDate": "2026-10-07",
+  "pitchSeconds": 165,
+  "sources": {
+    "S1": [
+      "Colosseum FAQ",
+      "https://colosseum.com/hackathon"
+    ],
+    "S3": [
+      "Crypto World’s Fair rules",
+      "https://colosseum.com/legal/Crypto%20World%27s%20Fair%20Hackathon%20Rules.pdf"
+    ],
+    "S4": [
+      "NGX distribution report",
+      "https://ngxgroup.com/the-quiet-digital-revolution-reshaping-nigerias-capital-market/"
+    ],
+    "S5": [
+      "NGX Invest",
+      "https://www.invest.ngxgroup.com/"
+    ],
+    "S6": [
+      "NASD N-DSP announcement",
+      "https://nasdng.com/news/blockchain-technology/"
+    ],
+    "S7": [
+      "Dinari",
+      "https://dinari.com/"
+    ],
+    "S8": [
+      "xStocks distribution",
+      "https://xstocks.com/partner"
+    ],
+    "S9": [
+      "CSCS T+2 announcement",
+      "https://www.cscs.ng/2025/11/cscs-announces-go-live-of-t2-settlement-cycle-in-capital-market/"
+    ],
+    "S10": [
+      "CSCS settlement explanation",
+      "https://www.cscs.ng/ngt2/common-questions/"
+    ],
+    "S11": [
+      "SEC capital circular",
+      "https://sec.gov.ng/for-investors/keep-track-of-circulars/revised-minimum-capital-mc-for-regulated-capital-market-entities/"
+    ],
+    "S14": [
+      "cNGN documentation",
+      "https://docs.cngn.co/"
+    ],
+    "S15": [
+      "cNGN going live",
+      "https://docs.cngn.co/going-live"
+    ],
+    "S17": [
+      "NGX broker directory",
+      "https://ngxgroup.com/ngx-download/status-of-trading-license-holders-2/"
+    ],
+    "S18": [
+      "Crafts full project record",
+      "https://colosseum.com/projects/explore/crafts-1"
+    ],
+    "S19": [
+      "Credible Finance full project record",
+      "https://colosseum.com/projects/explore/credible-finance-1"
+    ]
+  },
+  "slides": [
+    {
+      "kind": "cover",
+      "section": "Company hypothesis",
+      "title": "Broker infrastructure for\ncNGN-funded distribution",
+      "seconds": 12,
+      "lead": "First customer: a Nigerian broker or issuing intermediary.",
+      "facts": [
+        "Funding",
+        "Asset delivery",
+        "Reconciled operations"
+      ],
+      "prompt": "Describe the buyer and one job Rabovel helps it complete.",
+      "notes": "Founder-selected customer. Business positioning is a working hypothesis. Product is demo-only; no commercial activity established. Replace outline phrasing with your own account of the company."
+    },
+    {
+      "kind": "flow",
+      "section": "Customer problem",
+      "title": "Which part of the workflow is costly?",
+      "seconds": 18,
+      "lead": "The customer pain still needs firsthand evidence.",
+      "cards": [
+        [
+          "01",
+          "Funding",
+          "When are funds usable?\nWho matches the deposit?"
+        ],
+        [
+          "02",
+          "Allocation",
+          "Who determines entitlement?\nWhat happens to refunds?"
+        ],
+        [
+          "03",
+          "Delivery",
+          "Which record proves ownership?\nWhat can fail?"
+        ],
+        [
+          "04",
+          "Reconciliation",
+          "Which records disagree?\nHow do operators repair them?"
+        ]
+      ],
+      "prompt": "Add one observed workflow, its baseline and the person responsible.",
+      "notes": "These are customer-discovery questions, not measured pain claims. Separate primary-offer allotment from a sale of already allocated inventory. No invented user quote or savings metric."
+    },
+    {
+      "kind": "cards",
+      "section": "Insight to test",
+      "title": "Three ingredients; one advantage to prove",
+      "seconds": 18,
+      "lead": "Test the complete workflow against bank-payment/API automation.",
+      "cards": [
+        [
+          "Digital distribution",
+          "An existing Nigerian market",
+          "NGX Invest and broker channels already distribute offers. Digitization is the baseline."
+        ],
+        [
+          "cNGN funding",
+          "A local-currency onchain leg",
+          "Provider docs describe funding and redemption. Rabovel has no live merchant connection."
+        ],
+        [
+          "Paired transfers",
+          "One onchain transaction",
+          "Payment and token delivery can share a transaction when funds and inventory are prepared."
+        ]
+      ],
+      "prompt": "Explain the expected benefit, added prefunding cost and how you will measure both.",
+      "refs": [
+        "S4",
+        "S5",
+        "S14",
+        "S15"
+      ],
+      "notes": "Market activity does not prove demand for Rabovel. The cNGN and paired-transfer advantage is a hypothesis. Banking, eligibility, allocation and legal ownership are separate boundaries."
+    },
+    {
+      "kind": "product",
+      "section": "Product and execution",
+      "title": "Inspect the two legs of a demo purchase",
+      "seconds": 24,
+      "lead": "Implemented in code; a verified recording is still required.",
+      "facts": [
+        "Investor → broker: cNGN payment",
+        "Issuer → investor: whole-unit Token-2022 delivery"
+      ],
+      "prompt": "Insert a verified capture, public transaction ID and before/after balances.",
+      "notes": "Source: rabovel-BE/apps/rabovel-api/src/mint_setup.rs, purchase transaction around lines 751–805; docs/settlement-flow.md. Issuer partial signature and investor Phantom signature. Investor fee payer needs SOL. Eligibility preparation is a separate transaction. Zero-decimal mint: whole units. No network purchase was run during this research. Backing, pricing and identity checks are simulated. No custom Rabovel program or active transfer hook. Production ledger and recovery remain missing."
+    },
+    {
+      "kind": "table",
+      "section": "Competitive position",
+      "title": "Win an operator workflow, not a token category",
+      "seconds": 17,
+      "lead": "Potential differentiation: cNGN + delivery + reconciled intermediary operations.",
+      "headers": [
+        "Alternative",
+        "Existing overlap",
+        "Evidence Rabovel needs"
+      ],
+      "rows": [
+        [
+          "Broker tools / NGX Invest",
+          "Digital primary distribution",
+          "Measured integration and operations benefit"
+        ],
+        [
+          "NASD N-DSP",
+          "Local tokenized securities infrastructure",
+          "A specific unmet job or partner path"
+        ],
+        [
+          "Dinari / xStocks",
+          "Equities infrastructure and distribution",
+          "Clear local asset rights and lifecycle"
+        ],
+        [
+          "Crafts / Credible Finance",
+          "Equity rights / local-fiat operations",
+          "Reliable execution and buyer demand"
+        ]
+      ],
+      "prompt": "Name the buyer’s current alternative and the outcome that would justify switching.",
+      "refs": [
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S18",
+        "S19"
+      ],
+      "notes": "Direct local alternatives and adjacent analogues are different categories. Crafts: Frontier winner; equity-linked startup fundraising, not Nigerian brokerage. Credible Finance: Cypherpunk stablecoins runner-up, C4 accelerator; remittance infrastructure, not securities permission. Their archived demos had execution limits. No feature scorecard or inferred market leadership."
+    },
+    {
+      "kind": "market",
+      "section": "Market and business model",
+      "title": "Start with buyer economics",
+      "seconds": 18,
+      "lead": "186 active broker entries are a buyer universe, not qualified demand.",
+      "cards": [
+        [
+          "3 firms",
+          "Annual target capacity"
+        ],
+        [
+          "₦6m / firm",
+          "Assumed annual fee"
+        ],
+        [
+          "₦5bn × 5 bps",
+          "Aggregate annual value fee"
+        ]
+      ],
+      "result": "₦20.5m / year",
+      "prompt": "Validate qualified firms, budgets, annual supported value and direct costs.",
+      "refs": [
+        "S17"
+      ],
+      "notes": "Arithmetic: 3×₦6m + ₦5bn×0.0005 = ₦20.5m. Hypothetical capacity, not forecast, pipeline or traction. Five bps = 0.05%. Costs, taxes, integration revenue and partner payouts excluded. Active broker directory count does not include all issuing firms or prove eligibility. PDF header October 5 versus filename September 21 discrepancy recorded. Full-universe subscription sensitivity: 186×₦6m = ₦1.116bn/year, not validated TAM. Expansion and repeat use required to substantiate venture-scale opportunity."
+    },
+    {
+      "kind": "gtm",
+      "section": "Go to market",
+      "title": "Earn one scoped design partner",
+      "seconds": 17,
+      "lead": "Proposed discovery targets; no completed customer pipeline claimed.",
+      "cards": [
+        [
+          "5",
+          "Workflow interviews",
+          "Find the costly step and budget owner."
+        ],
+        [
+          "2",
+          "Process walkthroughs",
+          "Compare records, timing and bank APIs."
+        ],
+        [
+          "1",
+          "Scoped partner proposal",
+          "Agree instrument, responsibilities and price test."
+        ]
+      ],
+      "prompt": "Identify who can introduce the team and what a buyer must commit to.",
+      "notes": "Qualify ten intermediaries from the directory and genuine team access. Targets shown are planned, not traction. Begin historical/anonymized replay and sandbox work. Measure operator minutes per 100 transactions, exception rate, full timing and cost. A proposed 30% time reduction is an acceptance target to negotiate, not a measured result. No outreach sent."
+    },
+    {
+      "kind": "team",
+      "section": "Founder and market fit",
+      "title": "Connect experience to the next milestone",
+      "seconds": 15,
+      "lead": "Founder-reported experience; names and specific contributions still needed.",
+      "cards": [
+        [
+          "Technical founder",
+          "BNB Chain internship\nNeo Financial junior developer",
+          "Add one relevant task, build contribution and motivation."
+        ],
+        [
+          "Finance teammates",
+          "Experience in Nigeria’s finance industry",
+          "Add names, roles, observed workflow and actual customer access."
+        ],
+        [
+          "Team execution",
+          "September 24–25 development history",
+          "Issuance, funding UI, listing, purchase and portfolio refresh; verify the demo."
+        ]
+      ],
+      "prompt": "Explain each person’s role and the work completed during this event.",
+      "notes": "These are user-reported employment experiences, not endorsements or partnerships. Do not imply seniority or regulatory credentials. Repository commit dates are shipping evidence, not traction or proof of eligibility. Disclose pre-September-14 code and third-party composition."
+    },
+    {
+      "kind": "roadmap",
+      "section": "Traction and viability",
+      "title": "Demo today. Evidence gates next.",
+      "seconds": 16,
+      "lead": "Current status: no real activity, revenue or commercial traction established.",
+      "cards": [
+        [
+          "Days 1–30",
+          "Buyer + operating model",
+          "Observed pain, defined rights and a workable partner path."
+        ],
+        [
+          "Days 31–60",
+          "Durable operations",
+          "Ledger, retries, ambiguous outcome recovery and reconciliation."
+        ],
+        [
+          "Days 61–90",
+          "Scoped commercial test",
+          "Price discussion, agreed pilot and authorization before live funds."
+        ]
+      ],
+      "prompt": "Describe what must be proven at each gate before advancing.",
+      "notes": "Day ranges are proposed post-submission stages, conditional on prior evidence. No regulatory approval or production launch promised in 90 days. Need cNGN terms, actual custody/register model, partner costs and repeat use. Token controls do not create legal ownership."
+    },
+    {
+      "kind": "close",
+      "section": "Next milestone",
+      "title": "One instrument. One intermediary.\nOne measurable workflow.",
+      "seconds": 10,
+      "lead": "The next goal is a scoped design partnership, not an invented traction headline.",
+      "cards": [
+        [
+          "Buyer owner",
+          "A person accountable for the operational problem."
+        ],
+        [
+          "Operating structure",
+          "Rights, funds, asset control and responsibilities agreed."
+        ],
+        [
+          "Sandbox benchmark",
+          "Matched cost, timing and reconciliation evidence."
+        ]
+      ],
+      "prompt": "State the specific help you need and the evidence you will deliver next.",
+      "notes": "Use a founder-owned closing. Do not add a fundraising amount without an actual financing plan. This remains a proposed milestone, not an existing partnership."
+    },
+    {
+      "kind": "rights",
+      "appendix": true,
+      "section": "Appendix · Operating model",
+      "title": "Define what the token represents",
+      "lead": "Issuer-native equity, custodied beneficial interest or contractual exposure: unresolved.",
+      "headers": [
+        "Responsibility",
+        "Decision still required"
+      ],
+      "rows": [
+        [
+          "Instrument + investor rights",
+          "Issuer, voting/dividends, restrictions, exit and insolvency"
+        ],
+        [
+          "Underlying assets + register",
+          "Custodian, backing evidence and authoritative ownership record"
+        ],
+        [
+          "Client funds + signatures",
+          "Wallet control, escrow/allotment, approvals and segregation"
+        ],
+        [
+          "Operating permissions",
+          "Map actual functions with counsel and authorized partners"
+        ],
+        [
+          "cNGN connection",
+          "Provider eligibility, fees, liquidity and live approval"
+        ]
+      ],
+      "prompt": "Technology-provider positioning does not determine licensing obligations.",
+      "refs": [
+        "S11",
+        "S14",
+        "S15"
+      ],
+      "notes": "SEC January 2026 circular includes RATOP/DAOP ₦1bn, DAPO/DAI ₦500m, digital-asset exchange/custodian ₦2bn, compliance deadline June 30 2027. Classification of Rabovel unresolved. These are capital requirements, not integration costs. Investor self-signing, server issuer signing and broker payment destination describe demo mechanics, not a completed custody model."
+    },
+    {
+      "kind": "table",
+      "appendix": true,
+      "section": "Appendix · Separate demo",
+      "title": "Show proof in 2 minutes 40 seconds",
+      "lead": "Verify a real integrated devnet run before recording.",
+      "headers": [
+        "Segment",
+        "Time",
+        "On-screen evidence"
+      ],
+      "rows": [
+        [
+          "Environment + baseline",
+          "15s",
+          "Devnet, mocks disabled, starting balances"
+        ],
+        [
+          "Issuer inventory",
+          "25s",
+          "Prepared mint, inventory and live listing"
+        ],
+        [
+          "Purchase quote",
+          "25s",
+          "Whole units, price, cNGN total and fee roles"
+        ],
+        [
+          "Sign + submit",
+          "45s",
+          "Investor signature and explorer transaction"
+        ],
+        [
+          "Result",
+          "30s",
+          "Both transfers and corresponding balance changes"
+        ],
+        [
+          "Limits",
+          "20s",
+          "Simulated inputs; legal and recovery boundaries"
+        ]
+      ],
+      "prompt": "A transaction explorer proves onchain effects; it does not prove legal share ownership.",
+      "refs": [
+        "S1"
+      ],
+      "notes": "Total 160 seconds; separate from 165-second pitch. Some preparation may be prerecorded but must be disclosed. Do not present fixture screens as functional integration. Eligibility preparation occurs separately. Confirmed commitment, bank timing and legal register updates are different concepts. Record only identifiers actually produced by the verified run."
+    },
+    {
+      "kind": "economics",
+      "appendix": true,
+      "section": "Appendix · Economics",
+      "title": "Capacity scenarios, not forecasts",
+      "lead": "Annual software + settled-value fees. All commercial inputs are assumptions.",
+      "headers": [
+        "Scenario",
+        "Firms",
+        "Fee / firm",
+        "Value / year",
+        "Revenue / year"
+      ],
+      "rows": [
+        [
+          "Initial target",
+          "3",
+          "₦6m",
+          "₦5bn",
+          "₦20.5m"
+        ],
+        [
+          "Established niche",
+          "20",
+          "₦6m",
+          "₦50bn",
+          "₦145m"
+        ],
+        [
+          "Expanded capacity",
+          "60",
+          "₦12m",
+          "₦500bn",
+          "₦970m"
+        ]
+      ],
+      "prompt": "Direct costs and margins are unknown. Obtain partner quotes before stating profitability.",
+      "notes": "Annual revenue = firms×annual fee + aggregate annual settled value×0.0005 (five basis points). Integration fees, taxes and partner payouts excluded. Contribution = revenue − direct cost. Break-even requires positive contribution and fixed operating costs. Directory universe sensitivity is not qualified SAM. Do not annualize cumulative NGX fundraising or use market capitalization as revenue TAM."
+    },
+    {
+      "kind": "judging",
+      "appendix": true,
+      "section": "Appendix · Judging",
+      "title": "Match each claim to evidence",
+      "lead": "No public numerical weights found. Address both FAQ and formal event criteria.",
+      "headers": [
+        "FAQ factor",
+        "Available evidence",
+        "Gap to close"
+      ],
+      "rows": [
+        [
+          "Founder + market fit",
+          "Employment + finance experience",
+          "Specific roles and observed problem"
+        ],
+        [
+          "Insight",
+          "Testable workflow hypothesis",
+          "Firsthand customer and bank/API comparison"
+        ],
+        [
+          "Product + execution",
+          "Purchase code + shipping history",
+          "Verified run, feedback and recovery"
+        ],
+        [
+          "Market size",
+          "Buyer universe + price sensitivity",
+          "Qualified buyers, budgets and volume"
+        ],
+        [
+          "Communication",
+          "Customer-first outline",
+          "Founder voice and precise asset rights"
+        ],
+        [
+          "Viability",
+          "Partner model + fee scenarios",
+          "Permissions, costs and repeat use"
+        ],
+        [
+          "Traction",
+          "Explicit demo-only disclosure",
+          "Actual demand and later paid usage"
+        ]
+      ],
+      "prompt": "Formal rules also call for functionality, impact, novelty, UX and open-source composition.",
+      "refs": [
+        "S1",
+        "S3"
+      ],
+      "notes": "This is an evidence checklist, not a numerical grade. Describe Solana/Token-2022/ACL composition accurately, provide repository access and disclose pre-existing code. Winner analogues do not substitute for Rabovel customer evidence."
+    },
+    {
+      "kind": "sources",
+      "appendix": true,
+      "section": "Appendix · Research",
+      "title": "Sources and limits",
+      "lead": "Research cut: 7 October 2026. Full source register accompanies this deck.",
+      "refs": [
+        "S1",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S14",
+        "S15",
+        "S17",
+        "S18",
+        "S19"
+      ],
+      "prompt": "Company pages describe their products; they do not independently establish performance.",
+      "notes": "Public sources, full Copilot project records and Grid discovery were cross-checked. No customer interviews were conducted, no live network purchase was executed and no external outreach was sent. The NGX report is republished press; broker directory has a filename/header date discrepancy. Forecasts and licenses are not established. Deadline October 12 11:59 p.m. PT / October 13 12:59 a.m. Edmonton; submit earlier on October 12 locally. Event rules specify winners by December 5."
+    }
+  ],
+  "geometry": [
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "COMPANY HYPOTHESIS",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "Broker infrastructure for\ncNGN-funded distribution",
+      "x": 0.55,
+      "y": 0.72,
+      "w": 12.15,
+      "h": 1.1
+    },
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "First customer: a Nigerian broker or issuing intermediary.",
+      "x": 0.55,
+      "y": 1.94,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "12s  ·  01",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 1,
+      "type": "shape",
+      "x": 0.55,
+      "y": 3.23,
+      "w": 7.74,
+      "h": 2.46
+    },
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "FUNDING  →  DELIVERY  →  OPERATIONS",
+      "x": 0.85,
+      "y": 3.57,
+      "w": 7.12,
+      "h": 0.4
+    },
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "Build around the intermediary’s\nmeasurable operational job.",
+      "x": 0.85,
+      "y": 4.21,
+      "w": 7.08,
+      "h": 1.08
+    },
+    {
+      "slide": 1,
+      "type": "shape",
+      "x": 8.62,
+      "y": 2.4,
+      "w": 4.12,
+      "h": 3.29
+    },
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "DEMO ONLY",
+      "x": 8.94,
+      "y": 2.77,
+      "w": 3.4,
+      "h": 0.32
+    },
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "No real activity or\ncommercial traction\nestablished.",
+      "x": 8.94,
+      "y": 3.46,
+      "w": 3.4,
+      "h": 1.34
+    },
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "Evidence + hypotheses + founder prompts",
+      "x": 8.94,
+      "y": 5.04,
+      "w": 3.2,
+      "h": 0.39
+    },
+    {
+      "slide": 1,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 1,
+      "type": "text",
+      "text": "Describe the buyer and one job Rabovel helps it complete.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "CUSTOMER PROBLEM",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "Which part of the workflow is costly?",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "The customer pain still needs firsthand evidence.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "18s  ·  02",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 2,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.52,
+      "w": 2.885,
+      "h": 3.3
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "01",
+      "x": 0.77,
+      "y": 2.75,
+      "w": 2.445,
+      "h": 0.6
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "Funding",
+      "x": 0.77,
+      "y": 3.44,
+      "w": 2.445,
+      "h": 1.1
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "When are funds usable?\nWho matches the deposit?",
+      "x": 0.77,
+      "y": 4.6,
+      "w": 2.445,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 2,
+      "type": "shape",
+      "x": 3.6550000000000002,
+      "y": 2.52,
+      "w": 2.885,
+      "h": 3.3
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "02",
+      "x": 3.8750000000000004,
+      "y": 2.75,
+      "w": 2.445,
+      "h": 0.6
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "Allocation",
+      "x": 3.8750000000000004,
+      "y": 3.44,
+      "w": 2.445,
+      "h": 1.1
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "Who determines entitlement?\nWhat happens to refunds?",
+      "x": 3.8750000000000004,
+      "y": 4.6,
+      "w": 2.445,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 2,
+      "type": "shape",
+      "x": 6.76,
+      "y": 2.52,
+      "w": 2.885,
+      "h": 3.3
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "03",
+      "x": 6.9799999999999995,
+      "y": 2.75,
+      "w": 2.445,
+      "h": 0.6
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "Delivery",
+      "x": 6.9799999999999995,
+      "y": 3.44,
+      "w": 2.445,
+      "h": 1.1
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "Which record proves ownership?\nWhat can fail?",
+      "x": 6.9799999999999995,
+      "y": 4.6,
+      "w": 2.445,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 2,
+      "type": "shape",
+      "x": 9.865,
+      "y": 2.52,
+      "w": 2.885,
+      "h": 3.3
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "04",
+      "x": 10.085,
+      "y": 2.75,
+      "w": 2.445,
+      "h": 0.6
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "Reconciliation",
+      "x": 10.085,
+      "y": 3.44,
+      "w": 2.445,
+      "h": 1.1
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "Which records disagree?\nHow do operators repair them?",
+      "x": 10.085,
+      "y": 4.6,
+      "w": 2.445,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 2,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 2,
+      "type": "text",
+      "text": "Add one observed workflow, its baseline and the person responsible.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "INSIGHT TO TEST",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "Three ingredients; one advantage to prove",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "Test the complete workflow against bank-payment/API automation.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "18s  ·  03",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 3,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "Digital distribution",
+      "x": 0.77,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "An existing Nigerian market",
+      "x": 0.77,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "NGX Invest and broker channels already distribute offers. Digitization is the baseline.",
+      "x": 0.77,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 3,
+      "type": "shape",
+      "x": 4.6899999999999995,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "cNGN funding",
+      "x": 4.909999999999999,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "A local-currency onchain leg",
+      "x": 4.909999999999999,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "Provider docs describe funding and redemption. Rabovel has no live merchant connection.",
+      "x": 4.909999999999999,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 3,
+      "type": "shape",
+      "x": 8.83,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "Paired transfers",
+      "x": 9.05,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "One onchain transaction",
+      "x": 9.05,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "Payment and token delivery can share a transaction when funds and inventory are prepared.",
+      "x": 9.05,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 3,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "Explain the expected benefit, added prefunding cost and how you will measure both.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "Sources",
+      "x": 0.58,
+      "y": 6.88,
+      "w": 0.58,
+      "h": 0.2
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "S4",
+      "x": 1.2,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "S5",
+      "x": 1.72,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "S14",
+      "x": 2.24,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 3,
+      "type": "text",
+      "text": "S15",
+      "x": 2.7600000000000002,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "PRODUCT AND EXECUTION",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "Inspect the two legs of a demo purchase",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "Implemented in code; a verified recording is still required.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "24s  ·  04",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 4,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.5,
+      "w": 5.58,
+      "h": 2.91
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "ONE SOLANA TRANSACTION",
+      "x": 0.8,
+      "y": 2.74,
+      "w": 5.03,
+      "h": 0.28
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "Investor → broker: cNGN payment",
+      "x": 0.8,
+      "y": 3.35,
+      "w": 5.02,
+      "h": 0.62
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "+",
+      "x": 0.8,
+      "y": 4.05,
+      "w": 0.3,
+      "h": 0.35
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "Issuer → investor: whole-unit Token-2022 delivery",
+      "x": 0.8,
+      "y": 4.49,
+      "w": 5.02,
+      "h": 0.66
+    },
+    {
+      "slide": 4,
+      "type": "shape",
+      "x": 6.39,
+      "y": 2.5,
+      "w": 6.36,
+      "h": 2.91
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "ADD VERIFIED PRODUCT CAPTURE",
+      "x": 6.71,
+      "y": 2.86,
+      "w": 5.7,
+      "h": 0.44
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "Transaction ID\nStarting + resulting balances\nActual integrated devnet UI",
+      "x": 6.71,
+      "y": 3.58,
+      "w": 5.7,
+      "h": 1.31
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "Separate boundaries: eligibility preparation · banking · legal ownership",
+      "x": 0.58,
+      "y": 5.67,
+      "w": 12.1,
+      "h": 0.28
+    },
+    {
+      "slide": 4,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 4,
+      "type": "text",
+      "text": "Insert a verified capture, public transaction ID and before/after balances.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "COMPETITIVE POSITION",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Win an operator workflow, not a token category",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Potential differentiation: cNGN + delivery + reconciled intermediary operations.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "17s  ·  05",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.45,
+      "w": 3.06,
+      "h": 0.43
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Alternative",
+      "x": 0.68,
+      "y": 2.54,
+      "w": 2.8,
+      "h": 0.27
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 3.6100000000000003,
+      "y": 2.45,
+      "w": 4.14,
+      "h": 0.43
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Existing overlap",
+      "x": 3.74,
+      "y": 2.54,
+      "w": 3.88,
+      "h": 0.27
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 7.75,
+      "y": 2.45,
+      "w": 5,
+      "h": 0.43
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Evidence Rabovel needs",
+      "x": 7.88,
+      "y": 2.54,
+      "w": 4.74,
+      "h": 0.27
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.8800000000000003,
+      "w": 3.06,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Broker tools / NGX Invest",
+      "x": 0.68,
+      "y": 3.0100000000000002,
+      "w": 2.8,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 3.6100000000000003,
+      "y": 2.8800000000000003,
+      "w": 4.14,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Digital primary distribution",
+      "x": 3.74,
+      "y": 3.0100000000000002,
+      "w": 3.88,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 7.75,
+      "y": 2.8800000000000003,
+      "w": 5,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Measured integration and operations benefit",
+      "x": 7.88,
+      "y": 3.0100000000000002,
+      "w": 4.74,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 0.55,
+      "y": 3.6500000000000004,
+      "w": 3.06,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "NASD N-DSP",
+      "x": 0.68,
+      "y": 3.7800000000000002,
+      "w": 2.8,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 3.6100000000000003,
+      "y": 3.6500000000000004,
+      "w": 4.14,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Local tokenized securities infrastructure",
+      "x": 3.74,
+      "y": 3.7800000000000002,
+      "w": 3.88,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 7.75,
+      "y": 3.6500000000000004,
+      "w": 5,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "A specific unmet job or partner path",
+      "x": 7.88,
+      "y": 3.7800000000000002,
+      "w": 4.74,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 0.55,
+      "y": 4.42,
+      "w": 3.06,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Dinari / xStocks",
+      "x": 0.68,
+      "y": 4.55,
+      "w": 2.8,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 3.6100000000000003,
+      "y": 4.42,
+      "w": 4.14,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Equities infrastructure and distribution",
+      "x": 3.74,
+      "y": 4.55,
+      "w": 3.88,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 7.75,
+      "y": 4.42,
+      "w": 5,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Clear local asset rights and lifecycle",
+      "x": 7.88,
+      "y": 4.55,
+      "w": 4.74,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 0.55,
+      "y": 5.19,
+      "w": 3.06,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Crafts / Credible Finance",
+      "x": 0.68,
+      "y": 5.32,
+      "w": 2.8,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 3.6100000000000003,
+      "y": 5.19,
+      "w": 4.14,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Equity rights / local-fiat operations",
+      "x": 3.74,
+      "y": 5.32,
+      "w": 3.88,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 7.75,
+      "y": 5.19,
+      "w": 5,
+      "h": 0.77
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Reliable execution and buyer demand",
+      "x": 7.88,
+      "y": 5.32,
+      "w": 4.74,
+      "h": 0.5900000000000001
+    },
+    {
+      "slide": 5,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Name the buyer’s current alternative and the outcome that would justify switching.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "Sources",
+      "x": 0.58,
+      "y": 6.88,
+      "w": 0.58,
+      "h": 0.2
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "S5",
+      "x": 1.2,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "S6",
+      "x": 1.72,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "S7",
+      "x": 2.24,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "S8",
+      "x": 2.7600000000000002,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "S18",
+      "x": 3.2800000000000002,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 5,
+      "type": "text",
+      "text": "S19",
+      "x": 3.8000000000000003,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "MARKET AND BUSINESS MODEL",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "Start with buyer economics",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "186 active broker entries are a buyer universe, not qualified demand.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "18s  ·  06",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 6,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.48,
+      "w": 3.92,
+      "h": 1.3
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "3 firms",
+      "x": 0.75,
+      "y": 2.68,
+      "w": 3.52,
+      "h": 0.42
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "Annual target capacity",
+      "x": 0.75,
+      "y": 3.29,
+      "w": 3.52,
+      "h": 0.28
+    },
+    {
+      "slide": 6,
+      "type": "shape",
+      "x": 4.6899999999999995,
+      "y": 2.48,
+      "w": 3.92,
+      "h": 1.3
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "₦6m / firm",
+      "x": 4.89,
+      "y": 2.68,
+      "w": 3.52,
+      "h": 0.42
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "Assumed annual fee",
+      "x": 4.89,
+      "y": 3.29,
+      "w": 3.52,
+      "h": 0.28
+    },
+    {
+      "slide": 6,
+      "type": "shape",
+      "x": 8.83,
+      "y": 2.48,
+      "w": 3.92,
+      "h": 1.3
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "₦5bn × 5 bps",
+      "x": 9.03,
+      "y": 2.68,
+      "w": 3.52,
+      "h": 0.42
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "Aggregate annual value fee",
+      "x": 9.03,
+      "y": 3.29,
+      "w": 3.52,
+      "h": 0.28
+    },
+    {
+      "slide": 6,
+      "type": "shape",
+      "x": 0.55,
+      "y": 4.02,
+      "w": 12.2,
+      "h": 1.47
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "₦20.5m / year",
+      "x": 0.82,
+      "y": 4.23,
+      "w": 5.54,
+      "h": 0.6
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "HYPOTHETICAL ANNUAL REVENUE\nNot current revenue or a forecast. Costs excluded.",
+      "x": 6.68,
+      "y": 4.35,
+      "w": 5.74,
+      "h": 0.74
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "Nigeria-only subscriptions have a finite ceiling. Repeat use and expansion remain unproven.",
+      "x": 0.58,
+      "y": 5.67,
+      "w": 12,
+      "h": 0.3
+    },
+    {
+      "slide": 6,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "Validate qualified firms, budgets, annual supported value and direct costs.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "Sources",
+      "x": 0.58,
+      "y": 6.88,
+      "w": 0.58,
+      "h": 0.2
+    },
+    {
+      "slide": 6,
+      "type": "text",
+      "text": "S17",
+      "x": 1.2,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "GO TO MARKET",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "Earn one scoped design partner",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "Proposed discovery targets; no completed customer pipeline claimed.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "17s  ·  07",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 7,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "5",
+      "x": 0.77,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "Workflow interviews",
+      "x": 0.77,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "Find the costly step and budget owner.",
+      "x": 0.77,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 7,
+      "type": "shape",
+      "x": 4.6899999999999995,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "2",
+      "x": 4.909999999999999,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "Process walkthroughs",
+      "x": 4.909999999999999,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "Compare records, timing and bank APIs.",
+      "x": 4.909999999999999,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 7,
+      "type": "shape",
+      "x": 8.83,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "1",
+      "x": 9.05,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "Scoped partner proposal",
+      "x": 9.05,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "Agree instrument, responsibilities and price test.",
+      "x": 9.05,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 7,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 7,
+      "type": "text",
+      "text": "Identify who can introduce the team and what a buyer must commit to.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "FOUNDER AND MARKET FIT",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "Connect experience to the next milestone",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "Founder-reported experience; names and specific contributions still needed.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "15s  ·  08",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 8,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "Technical founder",
+      "x": 0.77,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "BNB Chain internship\nNeo Financial junior developer",
+      "x": 0.77,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "Add one relevant task, build contribution and motivation.",
+      "x": 0.77,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 8,
+      "type": "shape",
+      "x": 4.6899999999999995,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "Finance teammates",
+      "x": 4.909999999999999,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "Experience in Nigeria’s finance industry",
+      "x": 4.909999999999999,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "Add names, roles, observed workflow and actual customer access.",
+      "x": 4.909999999999999,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 8,
+      "type": "shape",
+      "x": 8.83,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "Team execution",
+      "x": 9.05,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "September 24–25 development history",
+      "x": 9.05,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "Issuance, funding UI, listing, purchase and portfolio refresh; verify the demo.",
+      "x": 9.05,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 8,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 8,
+      "type": "text",
+      "text": "Explain each person’s role and the work completed during this event.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "TRACTION AND VIABILITY",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Demo today. Evidence gates next.",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Current status: no real activity, revenue or commercial traction established.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "16s  ·  09",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 9,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Days 1–30",
+      "x": 0.77,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Buyer + operating model",
+      "x": 0.77,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Observed pain, defined rights and a workable partner path.",
+      "x": 0.77,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 9,
+      "type": "shape",
+      "x": 4.6899999999999995,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Days 31–60",
+      "x": 4.909999999999999,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Durable operations",
+      "x": 4.909999999999999,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Ledger, retries, ambiguous outcome recovery and reconciliation.",
+      "x": 4.909999999999999,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 9,
+      "type": "shape",
+      "x": 8.83,
+      "y": 2.52,
+      "w": 3.92,
+      "h": 3.3
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Days 61–90",
+      "x": 9.05,
+      "y": 2.75,
+      "w": 3.48,
+      "h": 0.6
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Scoped commercial test",
+      "x": 9.05,
+      "y": 3.44,
+      "w": 3.48,
+      "h": 1.1
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Price discussion, agreed pilot and authorization before live funds.",
+      "x": 9.05,
+      "y": 4.6,
+      "w": 3.48,
+      "h": 1.0999999999999996
+    },
+    {
+      "slide": 9,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 9,
+      "type": "text",
+      "text": "Describe what must be proven at each gate before advancing.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "NEXT MILESTONE",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "One instrument. One intermediary.\nOne measurable workflow.",
+      "x": 0.55,
+      "y": 0.72,
+      "w": 12.15,
+      "h": 1.1
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "The next goal is a scoped design partnership, not an invented traction headline.",
+      "x": 0.55,
+      "y": 1.94,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "10s  ·  10",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 10,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.61,
+      "w": 12.2,
+      "h": 0.81
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "01",
+      "x": 0.8,
+      "y": 2.78,
+      "w": 0.52,
+      "h": 0.37
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "Buyer owner",
+      "x": 1.54,
+      "y": 2.81,
+      "w": 3,
+      "h": 0.34
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "A person accountable for the operational problem.",
+      "x": 4.7,
+      "y": 2.83,
+      "w": 7.7,
+      "h": 0.38
+    },
+    {
+      "slide": 10,
+      "type": "shape",
+      "x": 0.55,
+      "y": 3.59,
+      "w": 12.2,
+      "h": 0.81
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "02",
+      "x": 0.8,
+      "y": 3.76,
+      "w": 0.52,
+      "h": 0.37
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "Operating structure",
+      "x": 1.54,
+      "y": 3.79,
+      "w": 3,
+      "h": 0.34
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "Rights, funds, asset control and responsibilities agreed.",
+      "x": 4.7,
+      "y": 3.81,
+      "w": 7.7,
+      "h": 0.38
+    },
+    {
+      "slide": 10,
+      "type": "shape",
+      "x": 0.55,
+      "y": 4.57,
+      "w": 12.2,
+      "h": 0.81
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "03",
+      "x": 0.8,
+      "y": 4.74,
+      "w": 0.52,
+      "h": 0.37
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "Sandbox benchmark",
+      "x": 1.54,
+      "y": 4.7700000000000005,
+      "w": 3,
+      "h": 0.34
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "Matched cost, timing and reconciliation evidence.",
+      "x": 4.7,
+      "y": 4.79,
+      "w": 7.7,
+      "h": 0.38
+    },
+    {
+      "slide": 10,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 10,
+      "type": "text",
+      "text": "State the specific help you need and the evidence you will deliver next.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "APPENDIX · OPERATING MODEL",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Define what the token represents",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Issuer-native equity, custodied beneficial interest or contractual exposure: unresolved.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "APPENDIX  ·  11",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.4,
+      "w": 3.3,
+      "h": 0.43
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Responsibility",
+      "x": 0.68,
+      "y": 2.4899999999999998,
+      "w": 3.04,
+      "h": 0.27
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 3.8499999999999996,
+      "y": 2.4,
+      "w": 8.9,
+      "h": 0.43
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Decision still required",
+      "x": 3.9799999999999995,
+      "y": 2.4899999999999998,
+      "w": 8.64,
+      "h": 0.27
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.83,
+      "w": 3.3,
+      "h": 0.64
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Instrument + investor rights",
+      "x": 0.68,
+      "y": 2.96,
+      "w": 3.04,
+      "h": 0.46
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 3.8499999999999996,
+      "y": 2.83,
+      "w": 8.9,
+      "h": 0.64
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Issuer, voting/dividends, restrictions, exit and insolvency",
+      "x": 3.9799999999999995,
+      "y": 2.96,
+      "w": 8.64,
+      "h": 0.46
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 0.55,
+      "y": 3.47,
+      "w": 3.3,
+      "h": 0.64
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Underlying assets + register",
+      "x": 0.68,
+      "y": 3.6,
+      "w": 3.04,
+      "h": 0.46
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 3.8499999999999996,
+      "y": 3.47,
+      "w": 8.9,
+      "h": 0.64
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Custodian, backing evidence and authoritative ownership record",
+      "x": 3.9799999999999995,
+      "y": 3.6,
+      "w": 8.64,
+      "h": 0.46
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 0.55,
+      "y": 4.11,
+      "w": 3.3,
+      "h": 0.64
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Client funds + signatures",
+      "x": 0.68,
+      "y": 4.24,
+      "w": 3.04,
+      "h": 0.46
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 3.8499999999999996,
+      "y": 4.11,
+      "w": 8.9,
+      "h": 0.64
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Wallet control, escrow/allotment, approvals and segregation",
+      "x": 3.9799999999999995,
+      "y": 4.24,
+      "w": 8.64,
+      "h": 0.46
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 0.55,
+      "y": 4.75,
+      "w": 3.3,
+      "h": 0.64
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Operating permissions",
+      "x": 0.68,
+      "y": 4.88,
+      "w": 3.04,
+      "h": 0.46
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 3.8499999999999996,
+      "y": 4.75,
+      "w": 8.9,
+      "h": 0.64
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Map actual functions with counsel and authorized partners",
+      "x": 3.9799999999999995,
+      "y": 4.88,
+      "w": 8.64,
+      "h": 0.46
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 0.55,
+      "y": 5.390000000000001,
+      "w": 3.3,
+      "h": 0.64
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "cNGN connection",
+      "x": 0.68,
+      "y": 5.5200000000000005,
+      "w": 3.04,
+      "h": 0.46
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 3.8499999999999996,
+      "y": 5.390000000000001,
+      "w": 8.9,
+      "h": 0.64
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Provider eligibility, fees, liquidity and live approval",
+      "x": 3.9799999999999995,
+      "y": 5.5200000000000005,
+      "w": 8.64,
+      "h": 0.46
+    },
+    {
+      "slide": 11,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Technology-provider positioning does not determine licensing obligations.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "Sources",
+      "x": 0.58,
+      "y": 6.88,
+      "w": 0.58,
+      "h": 0.2
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "S11",
+      "x": 1.2,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "S14",
+      "x": 1.72,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 11,
+      "type": "text",
+      "text": "S15",
+      "x": 2.24,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "APPENDIX · SEPARATE DEMO",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Show proof in 2 minutes 40 seconds",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Verify a real integrated devnet run before recording.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "APPENDIX  ·  12",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.45,
+      "w": 2.65,
+      "h": 0.43
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Segment",
+      "x": 0.68,
+      "y": 2.54,
+      "w": 2.3899999999999997,
+      "h": 0.27
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 3.2,
+      "y": 2.45,
+      "w": 0.8,
+      "h": 0.43
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Time",
+      "x": 3.33,
+      "y": 2.54,
+      "w": 0.54,
+      "h": 0.27
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 4,
+      "y": 2.45,
+      "w": 8.75,
+      "h": 0.43
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "On-screen evidence",
+      "x": 4.13,
+      "y": 2.54,
+      "w": 8.49,
+      "h": 0.27
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.8800000000000003,
+      "w": 2.65,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Environment + baseline",
+      "x": 0.68,
+      "y": 3.0100000000000002,
+      "w": 2.3899999999999997,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 3.2,
+      "y": 2.8800000000000003,
+      "w": 0.8,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "15s",
+      "x": 3.33,
+      "y": 3.0100000000000002,
+      "w": 0.54,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 4,
+      "y": 2.8800000000000003,
+      "w": 8.75,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Devnet, mocks disabled, starting balances",
+      "x": 4.13,
+      "y": 3.0100000000000002,
+      "w": 8.49,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 0.55,
+      "y": 3.3600000000000003,
+      "w": 2.65,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Issuer inventory",
+      "x": 0.68,
+      "y": 3.49,
+      "w": 2.3899999999999997,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 3.2,
+      "y": 3.3600000000000003,
+      "w": 0.8,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "25s",
+      "x": 3.33,
+      "y": 3.49,
+      "w": 0.54,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 4,
+      "y": 3.3600000000000003,
+      "w": 8.75,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Prepared mint, inventory and live listing",
+      "x": 4.13,
+      "y": 3.49,
+      "w": 8.49,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 0.55,
+      "y": 3.8400000000000003,
+      "w": 2.65,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Purchase quote",
+      "x": 0.68,
+      "y": 3.97,
+      "w": 2.3899999999999997,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 3.2,
+      "y": 3.8400000000000003,
+      "w": 0.8,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "25s",
+      "x": 3.33,
+      "y": 3.97,
+      "w": 0.54,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 4,
+      "y": 3.8400000000000003,
+      "w": 8.75,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Whole units, price, cNGN total and fee roles",
+      "x": 4.13,
+      "y": 3.97,
+      "w": 8.49,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 0.55,
+      "y": 4.32,
+      "w": 2.65,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Sign + submit",
+      "x": 0.68,
+      "y": 4.45,
+      "w": 2.3899999999999997,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 3.2,
+      "y": 4.32,
+      "w": 0.8,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "45s",
+      "x": 3.33,
+      "y": 4.45,
+      "w": 0.54,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 4,
+      "y": 4.32,
+      "w": 8.75,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Investor signature and explorer transaction",
+      "x": 4.13,
+      "y": 4.45,
+      "w": 8.49,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 0.55,
+      "y": 4.800000000000001,
+      "w": 2.65,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Result",
+      "x": 0.68,
+      "y": 4.930000000000001,
+      "w": 2.3899999999999997,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 3.2,
+      "y": 4.800000000000001,
+      "w": 0.8,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "30s",
+      "x": 3.33,
+      "y": 4.930000000000001,
+      "w": 0.54,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 4,
+      "y": 4.800000000000001,
+      "w": 8.75,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Both transfers and corresponding balance changes",
+      "x": 4.13,
+      "y": 4.930000000000001,
+      "w": 8.49,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 0.55,
+      "y": 5.28,
+      "w": 2.65,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Limits",
+      "x": 0.68,
+      "y": 5.41,
+      "w": 2.3899999999999997,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 3.2,
+      "y": 5.28,
+      "w": 0.8,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "20s",
+      "x": 3.33,
+      "y": 5.41,
+      "w": 0.54,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 4,
+      "y": 5.28,
+      "w": 8.75,
+      "h": 0.48
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Simulated inputs; legal and recovery boundaries",
+      "x": 4.13,
+      "y": 5.41,
+      "w": 8.49,
+      "h": 0.3
+    },
+    {
+      "slide": 12,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "A transaction explorer proves onchain effects; it does not prove legal share ownership.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "Sources",
+      "x": 0.58,
+      "y": 6.88,
+      "w": 0.58,
+      "h": 0.2
+    },
+    {
+      "slide": 12,
+      "type": "text",
+      "text": "S1",
+      "x": 1.2,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "APPENDIX · ECONOMICS",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Capacity scenarios, not forecasts",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Annual software + settled-value fees. All commercial inputs are assumptions.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "APPENDIX  ·  13",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.45,
+      "w": 3.3,
+      "h": 0.43
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Scenario",
+      "x": 0.68,
+      "y": 2.54,
+      "w": 3.04,
+      "h": 0.27
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 3.8499999999999996,
+      "y": 2.45,
+      "w": 1,
+      "h": 0.43
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Firms",
+      "x": 3.9799999999999995,
+      "y": 2.54,
+      "w": 0.74,
+      "h": 0.27
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 4.85,
+      "y": 2.45,
+      "w": 2.3,
+      "h": 0.43
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Fee / firm",
+      "x": 4.9799999999999995,
+      "y": 2.54,
+      "w": 2.04,
+      "h": 0.27
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 7.1499999999999995,
+      "y": 2.45,
+      "w": 2.4,
+      "h": 0.43
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Value / year",
+      "x": 7.279999999999999,
+      "y": 2.54,
+      "w": 2.1399999999999997,
+      "h": 0.27
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 9.549999999999999,
+      "y": 2.45,
+      "w": 3.2,
+      "h": 0.43
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Revenue / year",
+      "x": 9.68,
+      "y": 2.54,
+      "w": 2.9400000000000004,
+      "h": 0.27
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.8800000000000003,
+      "w": 3.3,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Initial target",
+      "x": 0.68,
+      "y": 3.0100000000000002,
+      "w": 3.04,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 3.8499999999999996,
+      "y": 2.8800000000000003,
+      "w": 1,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "3",
+      "x": 3.9799999999999995,
+      "y": 3.0100000000000002,
+      "w": 0.74,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 4.85,
+      "y": 2.8800000000000003,
+      "w": 2.3,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "₦6m",
+      "x": 4.9799999999999995,
+      "y": 3.0100000000000002,
+      "w": 2.04,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 7.1499999999999995,
+      "y": 2.8800000000000003,
+      "w": 2.4,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "₦5bn",
+      "x": 7.279999999999999,
+      "y": 3.0100000000000002,
+      "w": 2.1399999999999997,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 9.549999999999999,
+      "y": 2.8800000000000003,
+      "w": 3.2,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "₦20.5m",
+      "x": 9.68,
+      "y": 3.0100000000000002,
+      "w": 2.9400000000000004,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 0.55,
+      "y": 3.5300000000000002,
+      "w": 3.3,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Established niche",
+      "x": 0.68,
+      "y": 3.66,
+      "w": 3.04,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 3.8499999999999996,
+      "y": 3.5300000000000002,
+      "w": 1,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "20",
+      "x": 3.9799999999999995,
+      "y": 3.66,
+      "w": 0.74,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 4.85,
+      "y": 3.5300000000000002,
+      "w": 2.3,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "₦6m",
+      "x": 4.9799999999999995,
+      "y": 3.66,
+      "w": 2.04,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 7.1499999999999995,
+      "y": 3.5300000000000002,
+      "w": 2.4,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "₦50bn",
+      "x": 7.279999999999999,
+      "y": 3.66,
+      "w": 2.1399999999999997,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 9.549999999999999,
+      "y": 3.5300000000000002,
+      "w": 3.2,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "₦145m",
+      "x": 9.68,
+      "y": 3.66,
+      "w": 2.9400000000000004,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 0.55,
+      "y": 4.180000000000001,
+      "w": 3.3,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Expanded capacity",
+      "x": 0.68,
+      "y": 4.3100000000000005,
+      "w": 3.04,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 3.8499999999999996,
+      "y": 4.180000000000001,
+      "w": 1,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "60",
+      "x": 3.9799999999999995,
+      "y": 4.3100000000000005,
+      "w": 0.74,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 4.85,
+      "y": 4.180000000000001,
+      "w": 2.3,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "₦12m",
+      "x": 4.9799999999999995,
+      "y": 4.3100000000000005,
+      "w": 2.04,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 7.1499999999999995,
+      "y": 4.180000000000001,
+      "w": 2.4,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "₦500bn",
+      "x": 7.279999999999999,
+      "y": 4.3100000000000005,
+      "w": 2.1399999999999997,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 9.549999999999999,
+      "y": 4.180000000000001,
+      "w": 3.2,
+      "h": 0.65
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "₦970m",
+      "x": 9.68,
+      "y": 4.3100000000000005,
+      "w": 2.9400000000000004,
+      "h": 0.47000000000000003
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Revenue = firms × annual fee + aggregate annual value × 0.0005",
+      "x": 0.62,
+      "y": 5.02,
+      "w": 12,
+      "h": 0.44
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "No cost quotes, margin claim, integration revenue or partner payout assumption.",
+      "x": 0.62,
+      "y": 5.62,
+      "w": 12,
+      "h": 0.35
+    },
+    {
+      "slide": 13,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 13,
+      "type": "text",
+      "text": "Direct costs and margins are unknown. Obtain partner quotes before stating profitability.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "APPENDIX · JUDGING",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Match each claim to evidence",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "No public numerical weights found. Address both FAQ and formal event criteria.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "APPENDIX  ·  14",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.45,
+      "w": 2.71,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "FAQ factor",
+      "x": 0.68,
+      "y": 2.54,
+      "w": 2.45,
+      "h": 0.27
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 3.26,
+      "y": 2.45,
+      "w": 4.42,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Available evidence",
+      "x": 3.3899999999999997,
+      "y": 2.54,
+      "w": 4.16,
+      "h": 0.27
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 7.68,
+      "y": 2.45,
+      "w": 5.07,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Gap to close",
+      "x": 7.81,
+      "y": 2.54,
+      "w": 4.8100000000000005,
+      "h": 0.27
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 0.55,
+      "y": 2.8800000000000003,
+      "w": 2.71,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Founder + market fit",
+      "x": 0.68,
+      "y": 3.0100000000000002,
+      "w": 2.45,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 3.26,
+      "y": 2.8800000000000003,
+      "w": 4.42,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Employment + finance experience",
+      "x": 3.3899999999999997,
+      "y": 3.0100000000000002,
+      "w": 4.16,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 7.68,
+      "y": 2.8800000000000003,
+      "w": 5.07,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Specific roles and observed problem",
+      "x": 7.81,
+      "y": 3.0100000000000002,
+      "w": 4.8100000000000005,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 0.55,
+      "y": 3.3100000000000005,
+      "w": 2.71,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Insight",
+      "x": 0.68,
+      "y": 3.4400000000000004,
+      "w": 2.45,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 3.26,
+      "y": 3.3100000000000005,
+      "w": 4.42,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Testable workflow hypothesis",
+      "x": 3.3899999999999997,
+      "y": 3.4400000000000004,
+      "w": 4.16,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 7.68,
+      "y": 3.3100000000000005,
+      "w": 5.07,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Firsthand customer and bank/API comparison",
+      "x": 7.81,
+      "y": 3.4400000000000004,
+      "w": 4.8100000000000005,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 0.55,
+      "y": 3.74,
+      "w": 2.71,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Product + execution",
+      "x": 0.68,
+      "y": 3.87,
+      "w": 2.45,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 3.26,
+      "y": 3.74,
+      "w": 4.42,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Purchase code + shipping history",
+      "x": 3.3899999999999997,
+      "y": 3.87,
+      "w": 4.16,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 7.68,
+      "y": 3.74,
+      "w": 5.07,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Verified run, feedback and recovery",
+      "x": 7.81,
+      "y": 3.87,
+      "w": 4.8100000000000005,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 0.55,
+      "y": 4.17,
+      "w": 2.71,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Market size",
+      "x": 0.68,
+      "y": 4.3,
+      "w": 2.45,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 3.26,
+      "y": 4.17,
+      "w": 4.42,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Buyer universe + price sensitivity",
+      "x": 3.3899999999999997,
+      "y": 4.3,
+      "w": 4.16,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 7.68,
+      "y": 4.17,
+      "w": 5.07,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Qualified buyers, budgets and volume",
+      "x": 7.81,
+      "y": 4.3,
+      "w": 4.8100000000000005,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 0.55,
+      "y": 4.6000000000000005,
+      "w": 2.71,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Communication",
+      "x": 0.68,
+      "y": 4.73,
+      "w": 2.45,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 3.26,
+      "y": 4.6000000000000005,
+      "w": 4.42,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Customer-first outline",
+      "x": 3.3899999999999997,
+      "y": 4.73,
+      "w": 4.16,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 7.68,
+      "y": 4.6000000000000005,
+      "w": 5.07,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Founder voice and precise asset rights",
+      "x": 7.81,
+      "y": 4.73,
+      "w": 4.8100000000000005,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 0.55,
+      "y": 5.03,
+      "w": 2.71,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Viability",
+      "x": 0.68,
+      "y": 5.16,
+      "w": 2.45,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 3.26,
+      "y": 5.03,
+      "w": 4.42,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Partner model + fee scenarios",
+      "x": 3.3899999999999997,
+      "y": 5.16,
+      "w": 4.16,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 7.68,
+      "y": 5.03,
+      "w": 5.07,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Permissions, costs and repeat use",
+      "x": 7.81,
+      "y": 5.16,
+      "w": 4.8100000000000005,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 0.55,
+      "y": 5.460000000000001,
+      "w": 2.71,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Traction",
+      "x": 0.68,
+      "y": 5.590000000000001,
+      "w": 2.45,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 3.26,
+      "y": 5.460000000000001,
+      "w": 4.42,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Explicit demo-only disclosure",
+      "x": 3.3899999999999997,
+      "y": 5.590000000000001,
+      "w": 4.16,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 7.68,
+      "y": 5.460000000000001,
+      "w": 5.07,
+      "h": 0.43
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Actual demand and later paid usage",
+      "x": 7.81,
+      "y": 5.590000000000001,
+      "w": 4.8100000000000005,
+      "h": 0.25
+    },
+    {
+      "slide": 14,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.12,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.24,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Formal rules also call for functionality, impact, novelty, UX and open-source composition.",
+      "x": 2.48,
+      "y": 6.24,
+      "w": 10,
+      "h": 0.4
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "Sources",
+      "x": 0.58,
+      "y": 6.88,
+      "w": 0.58,
+      "h": 0.2
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "S1",
+      "x": 1.2,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 14,
+      "type": "text",
+      "text": "S3",
+      "x": 1.72,
+      "y": 6.88,
+      "w": 0.42,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "APPENDIX · RESEARCH",
+      "x": 0.55,
+      "y": 0.32,
+      "w": 11.9,
+      "h": 0.24
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "Sources and limits",
+      "x": 0.55,
+      "y": 0.8,
+      "w": 12.15,
+      "h": 0.8
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "Research cut: 7 October 2026. Full source register accompanies this deck.",
+      "x": 0.55,
+      "y": 1.7,
+      "w": 12.1,
+      "h": 0.36
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "RABOVEL  /  RESEARCH BLUEPRINT  /  07 OCT 2026",
+      "x": 0.55,
+      "y": 7.08,
+      "w": 8,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "APPENDIX  ·  15",
+      "x": 11.3,
+      "y": 7.06,
+      "w": 1.5,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S1",
+      "x": 0.65,
+      "y": 2.44,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "Colosseum FAQ",
+      "x": 1.23,
+      "y": 2.44,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S3",
+      "x": 6.8500000000000005,
+      "y": 2.44,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "Crypto World’s Fair rules",
+      "x": 7.430000000000001,
+      "y": 2.44,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S4",
+      "x": 0.65,
+      "y": 2.84,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "NGX distribution report",
+      "x": 1.23,
+      "y": 2.84,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S5",
+      "x": 6.8500000000000005,
+      "y": 2.84,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "NGX Invest",
+      "x": 7.430000000000001,
+      "y": 2.84,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S6",
+      "x": 0.65,
+      "y": 3.24,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "NASD N-DSP announcement",
+      "x": 1.23,
+      "y": 3.24,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S7",
+      "x": 6.8500000000000005,
+      "y": 3.24,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "Dinari",
+      "x": 7.430000000000001,
+      "y": 3.24,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S8",
+      "x": 0.65,
+      "y": 3.64,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "xStocks distribution",
+      "x": 1.23,
+      "y": 3.64,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S9",
+      "x": 6.8500000000000005,
+      "y": 3.64,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "CSCS T+2 announcement",
+      "x": 7.430000000000001,
+      "y": 3.64,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S10",
+      "x": 0.65,
+      "y": 4.04,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "CSCS settlement explanation",
+      "x": 1.23,
+      "y": 4.04,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S11",
+      "x": 6.8500000000000005,
+      "y": 4.04,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "SEC capital circular",
+      "x": 7.430000000000001,
+      "y": 4.04,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S14",
+      "x": 0.65,
+      "y": 4.4399999999999995,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "cNGN documentation",
+      "x": 1.23,
+      "y": 4.4399999999999995,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S15",
+      "x": 6.8500000000000005,
+      "y": 4.4399999999999995,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "cNGN going live",
+      "x": 7.430000000000001,
+      "y": 4.4399999999999995,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S17",
+      "x": 0.65,
+      "y": 4.84,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "NGX broker directory",
+      "x": 1.23,
+      "y": 4.84,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S18",
+      "x": 6.8500000000000005,
+      "y": 4.84,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "Crafts full project record",
+      "x": 7.430000000000001,
+      "y": 4.84,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "S19",
+      "x": 0.65,
+      "y": 5.24,
+      "w": 0.55,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "Credible Finance full project record",
+      "x": 1.23,
+      "y": 5.24,
+      "w": 5.3,
+      "h": 0.2
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "Local evidence: repository inspection + founder report. Customer and legal validation remain pending.",
+      "x": 0.62,
+      "y": 5.85,
+      "w": 12,
+      "h": 0.25
+    },
+    {
+      "slide": 15,
+      "type": "shape",
+      "x": 0.55,
+      "y": 6.23,
+      "w": 12.2,
+      "h": 0.68
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "FOUNDER PROMPT",
+      "x": 0.75,
+      "y": 6.3500000000000005,
+      "w": 1.68,
+      "h": 0.18
+    },
+    {
+      "slide": 15,
+      "type": "text",
+      "text": "Company pages describe their products; they do not independently establish performance.",
+      "x": 2.48,
+      "y": 6.3500000000000005,
+      "w": 10,
+      "h": 0.4
+    }
+  ]
+}

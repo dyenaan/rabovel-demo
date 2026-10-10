@@ -1,0 +1,4 @@
+scenario,annual_customers,assumed_annual_fee_ngn_per_customer,aggregate_annual_settled_value_ngn,assumed_value_fee_bps,annual_subscription_revenue_ngn,annual_value_fee_revenue_ngn,total_annual_revenue_ngn,evidence_status
+Initial target,3,6000000,5000000000,5,18000000,2500000,20500000,Hypothetical capacity; not traction or forecast; costs excluded
+Established Nigerian niche,20,6000000,50000000000,5,120000000,25000000,145000000,Hypothetical capacity; not traction or forecast; costs excluded
+Expanded capacity,60,12000000,500000000000,5,720000000,250000000,970000000,Hypothetical capacity; not traction or forecast; costs excluded
