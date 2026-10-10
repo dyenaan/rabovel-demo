@@ -65,7 +65,7 @@ export function DataTable<TData extends RowData>({
   }
 
   return (
-    <div className={cn("rounded-lg border", className)}>
+    <div className={cn("min-w-0 max-w-full rounded-lg border", className)}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

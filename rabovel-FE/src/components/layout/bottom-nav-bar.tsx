@@ -21,7 +21,12 @@ export function BottomNavBar({
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 flex border-t bg-background/95 backdrop-blur-sm md:hidden"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      aria-label="Main navigation"
+      style={{
+        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingLeft: "env(safe-area-inset-left)",
+        paddingRight: "env(safe-area-inset-right)",
+      }}
     >
       {items.map((item) => {
         const isActive = isNavPathActive(pathname, item.href);

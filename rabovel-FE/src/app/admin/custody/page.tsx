@@ -40,7 +40,7 @@ export default function AdminCustodyPage() {
       <Card>
         <CardContent className="divide-y pt-6">
           {mockWallets.map((wallet) => (
-            <div key={wallet.walletId} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+            <div key={wallet.walletId} className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center py-3 first:pt-0 last:pb-0">
               <div className="flex items-center gap-3">
                 <NetworkBadge blockchain={wallet.blockchain} />
                 <div>

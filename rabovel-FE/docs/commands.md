@@ -36,3 +36,15 @@ pnpm build
 ```
 
 Gateway tests use Node's built-in runner and TypeScript stripping (verified with Node 24); they exercise mock upstream responses, not a deployed backend. Replace the sample lint path with affected files. A clean checkout may need `./node_modules/.bin/next typegen` before checking generated route types. No automated browser suite covers the full devnet journey; smoke-test login, reload, logout and the issuer/investor flows after coordinated deployment.
+
+## Responsive layout verification
+
+Check at 320, 390, 768, and 1280 CSS pixels, including phone landscape:
+
+- Marketing, login, onboarding, investor, issuer, and admin routes should fit the viewport. Wide financial tables scroll inside their own container.
+- Use every bottom navigation item and the More drawer; issuer Overview and Verification links remain available on phones.
+- On Trade, Place Order stays above the bottom navigation. Open its sheet, scroll the entire form, and check it with the software keyboard open.
+- Open purchase/confirmation dialogs and long tab lists. Content and actions remain reachable with large text and short viewports.
+- Check notched-device safe areas, form focus without automatic zoom, and both themes.
+
+Type checks and production builds do not substitute for these browser checks.

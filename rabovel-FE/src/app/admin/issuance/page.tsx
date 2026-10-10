@@ -25,7 +25,7 @@ export default function AdminIssuancePage() {
           <CardContent className="pb-6">
             <ul className="divide-y">
               {mockAssets.map((asset) => (
-                <li key={asset.assetId} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                <li key={asset.assetId} className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center py-3 first:pt-0 last:pb-0">
                   <div>
                     <p className="text-sm font-medium text-foreground">{asset.name}</p>
                     <Badge variant="secondary" className="mt-1 text-[10px]">

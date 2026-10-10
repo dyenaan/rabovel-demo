@@ -32,7 +32,7 @@ export function TradingTerminal({ marketId }: { marketId: string }) {
       <MarketHeader market={market} onMarketChange={handleMarketChange} />
 
       {/* Desktop layout */}
-      <div className="hidden gap-4 lg:grid lg:grid-cols-[1fr_320px]">
+      <div className="hidden gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card>
           <CardContent className="pt-6">{market && <PriceChart marketId={market.marketId} />}</CardContent>
         </Card>

@@ -21,7 +21,7 @@ export function MobileTradingView({ market }: { market: Market }) {
       <PriceChart marketId={market.marketId} />
 
       <Tabs defaultValue="book">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-3 [&>button]:px-1 [&>button]:text-xs sm:[&>button]:text-sm">
           <TabsTrigger value="book">Order Book</TabsTrigger>
           <TabsTrigger value="trades">Trades</TabsTrigger>
           <TabsTrigger value="orders">My Orders</TabsTrigger>
@@ -37,7 +37,7 @@ export function MobileTradingView({ market }: { market: Market }) {
         </TabsContent>
       </Tabs>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background p-3">
+      <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 md:bottom-0 border-t bg-background p-3">
         <Button className="w-full" size="lg" onClick={() => setOrderSheetOpen(true)}>
           <ShoppingCart className="size-4" />
           Place Order
@@ -45,7 +45,7 @@ export function MobileTradingView({ market }: { market: Market }) {
       </div>
 
       <Sheet open={orderSheetOpen} onOpenChange={setOrderSheetOpen}>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-xl">
+        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-xl">
           <SheetHeader>
             <SheetTitle>{market.symbol}</SheetTitle>
           </SheetHeader>

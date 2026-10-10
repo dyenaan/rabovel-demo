@@ -67,7 +67,7 @@ export function AppHeader() {
             <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-primary" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80">
+        <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-2rem)]">
           <DropdownMenuLabel>Recent activity</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {mockActivity.slice(0, 4).map((event) => (

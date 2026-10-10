@@ -9,9 +9,9 @@ const stages = [
 ];
 
 export function AssetLifecycle({ current = 0 }: { current?: number }) {
-  return <div className="overflow-x-auto pb-2"><ol className="grid min-w-[720px] grid-cols-5">
+  return <div className="overflow-x-auto pb-2"><ol className="grid gap-4 md:min-w-[720px] md:grid-cols-5 md:gap-0">
     {stages.map((stage, index) => { const Icon = stage.icon; const complete = index < current; const active = index === current; return <li key={stage.label} className="relative pr-3">
-      {index < stages.length - 1 && <div className={`absolute left-10 right-0 top-5 h-px ${complete ? "bg-primary" : "bg-border"}`} />}
+      {index < stages.length - 1 && <div className={`absolute hidden left-10 right-0 top-5 h-px md:block ${complete ? "bg-primary" : "bg-border"}`} />}
       <div className="relative flex items-start gap-3"><div className={`z-10 flex size-10 shrink-0 items-center justify-center rounded-full border bg-card ${active ? "border-primary text-primary ring-4 ring-primary/10" : complete ? "border-primary bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{complete ? <Check className="size-4" /> : active ? <Icon className="size-4" /> : <CircleDashed className="size-4" />}</div><div className="pt-0.5"><p className={`text-sm font-medium ${active ? "text-primary" : !complete ? "text-muted-foreground" : ""}`}>{stage.label}</p><p className="mt-0.5 text-xs text-muted-foreground">{stage.detail}</p>{active && <span className="mt-2 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">Current stage</span>}</div></div>
     </li>; })}
   </ol></div>;

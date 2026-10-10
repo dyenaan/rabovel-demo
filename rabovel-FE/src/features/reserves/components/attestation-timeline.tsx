@@ -21,7 +21,7 @@ export function AttestationTimeline() {
             <li key={attestation.attestationId} className="flex items-start gap-3">
               <div className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
               <div className="flex-1">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
                   <p className="text-sm font-medium text-foreground">{attestation.attestor}</p>
                   <Badge variant={STATUS_VARIANT[attestation.verificationStatus]}>
                     {attestation.verificationStatus}

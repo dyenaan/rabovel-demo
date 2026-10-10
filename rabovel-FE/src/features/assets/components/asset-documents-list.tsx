@@ -23,7 +23,7 @@ export function AssetDocumentsList({ documents }: { documents?: AssetDocument[] 
         ) : (
           <ul className="divide-y">
             {documents.map((doc) => (
-              <li key={doc.documentId} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+              <li key={doc.documentId} className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center py-3 first:pt-0 last:pb-0">
                 <div className="flex items-center gap-3">
                   <div className="flex size-9 items-center justify-center rounded-md bg-muted">
                     <FileText className="size-4 text-muted-foreground" />

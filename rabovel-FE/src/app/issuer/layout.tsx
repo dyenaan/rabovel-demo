@@ -25,7 +25,8 @@ export default function IssuerLayout({ children }: LayoutProps<"/issuer">) {
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="flex h-16 items-center border-b px-4 sm:px-6"><span className="font-medium md:hidden">Issuer</span><div className="ml-auto flex items-center gap-3"><span className="hidden text-sm text-muted-foreground sm:inline">{user?.email}</span><Button variant="ghost" size="sm" onClick={async () => { await logout(); router.push("/login"); }}><LogOut className="size-4" />Log out</Button></div></header>
-          <main className="flex-1 p-4 sm:p-6">{children}</main>
+          <nav aria-label="Issuer navigation" className="flex flex-wrap gap-2 border-b p-3 md:hidden"><Button asChild variant="outline" size="sm"><Link href="/issuer"><Building2 className="size-4" />Overview</Link></Button><Button asChild variant="outline" size="sm"><Link href="/issuer/onboarding"><FileCheck2 className="size-4" />Verification</Link></Button></nav>
+          <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
         </div>
       </div>
     </RoleGuard>

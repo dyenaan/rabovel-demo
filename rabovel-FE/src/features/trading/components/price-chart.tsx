@@ -32,7 +32,7 @@ export function PriceChart({ marketId }: { marketId: string }) {
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm font-medium text-foreground">Price Chart</p>
         <Tabs value={range} onValueChange={(v) => setRange(v as typeof range)}>
           <TabsList>

@@ -233,3 +233,32 @@
     transform: translate3d(0, -18px, 0) scale(1.06);
   }
 }
+
+/* Preserve readable forms and usable touch targets on phone browsers. */
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: 1rem;
+  }
+
+  [data-slot="button"] {
+    height: auto;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  [data-slot="button"],
+  [data-slot="input"],
+  [data-slot="select-trigger"],
+  [data-slot="tabs-trigger"] {
+    min-height: 2.75rem;
+  }
+}
+
+@layer base {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}

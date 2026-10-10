@@ -9,7 +9,7 @@ import { NetworkBadge } from "./network-badge";
 export function WalletCard({ wallet }: { wallet: Wallet }) {
   return (
     <Card>
-      <CardContent className="flex items-center justify-between pt-6">
+      <CardContent className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center pt-6">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium text-foreground">{wallet.label}</p>

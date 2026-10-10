@@ -12,7 +12,7 @@ export default function PrimaryMarketLayout({ children }: LayoutProps<"/">) {
       <MobileNavigation />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 pb-16 md:pb-0">
+        <main className="min-w-0 flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
           <RoleGuard allow={["INVESTOR"]} fallback={<AccessRestricted />}>{children}</RoleGuard>
         </main>
       </div>

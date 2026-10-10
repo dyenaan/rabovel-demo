@@ -22,8 +22,8 @@ export function MarketHeader({
   }
 
   return (
-    <div className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col gap-4 border-b pb-4 xl:flex-row xl:items-center xl:justify-between">
+      <div className="flex min-w-0 flex-wrap items-center gap-4">
         <Select value={market.marketId} onValueChange={onMarketChange}>
           <SelectTrigger className="w-44">
             <SelectValue />

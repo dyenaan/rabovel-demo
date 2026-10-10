@@ -21,7 +21,7 @@ export function InvestorRestrictions() {
         ) : (
           <ul className="divide-y">
             {restricted.map((investor) => (
-              <li key={investor.investorId} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+              <li key={investor.investorId} className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center py-3 first:pt-0 last:pb-0">
                 <div>
                   <p className="text-sm font-medium text-foreground">{investor.fullName}</p>
                   <p className="text-xs text-muted-foreground">{investor.jurisdiction}</p>

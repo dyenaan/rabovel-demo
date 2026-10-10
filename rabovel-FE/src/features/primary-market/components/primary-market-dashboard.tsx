@@ -43,7 +43,7 @@ export function PrimaryMarketDashboard() {
           ) : (
             <ul className="divide-y">
               {subscriptions?.map((s) => (
-                <li key={s.subscriptionId} className="flex items-center justify-between py-3 first:pt-0">
+                <li key={s.subscriptionId} className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center py-3 first:pt-0">
                   <div>
                     <p className="text-sm font-medium text-foreground">Subscription — {s.assetName}</p>
                     <p className="text-xs text-muted-foreground">{formatDate(s.submittedAt)}</p>
@@ -55,7 +55,7 @@ export function PrimaryMarketDashboard() {
                 </li>
               ))}
               {redemptions?.map((r) => (
-                <li key={r.redemptionId} className="flex items-center justify-between py-3 last:pb-0">
+                <li key={r.redemptionId} className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center py-3 last:pb-0">
                   <div>
                     <p className="text-sm font-medium text-foreground">Redemption — {r.assetName}</p>
                     <p className="text-xs text-muted-foreground">{formatDate(r.submittedAt)}</p>

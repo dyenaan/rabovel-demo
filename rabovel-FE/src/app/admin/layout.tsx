@@ -10,7 +10,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
       <AdminSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AdminHeader />
-        <main className="flex-1 pb-16 md:pb-0">
+        <main className="min-w-0 flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
           <RoleGuard allow={["ADMIN", "COMPLIANCE", "OPERATIONS"]} fallback={<AccessRestricted />}>
             {children}
           </RoleGuard>
