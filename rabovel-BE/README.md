@@ -16,7 +16,7 @@ flowchart LR
   API --> SB[Supabase metadata]
 ```
 
-- **Identity and access:** email/password demo authentication, bearer sessions, trusted demo-role assignment, rate limiting, Solana wallet challenges and ownership proof. EVM SIWE is also supported; legacy Google OIDC routes are retained but are not initialized by the current startup composition.
+- **Identity and access:** email/password demo authentication, bearer sessions, explicit investor/issuer signup, rate limiting, Solana wallet challenges and ownership proof. EVM SIWE is also supported; legacy Google OIDC routes are retained but are not initialized by the current startup composition.
 - **Issuer lifecycle:** onboarding, asset drafts, simulated document-backed verification, metadata publishing, replay-safe mint setup, initial inventory issuance and explicit listing activation.
 - **Investor lifecycle:** live-asset catalog, verified-backing summary, simulated price feed, wallet/cNGN/equity balance checks, expiring quotes and purchase settlement.
 - **Instrument catalog:** `GET /instruments` serves a deterministic NGX-shaped demo catalog through an injectable provider. Its response is explicitly marked simulated; it does not fetch exchange data or authorize token issuance.
@@ -68,8 +68,6 @@ RABOVEL_PUBLIC_ORIGIN=http://localhost:3001
 RABOVEL_GATEWAY_SECRET=replace-with-64-hex-characters
 
 RABOVEL_DEMO_MODE=true
-RABOVEL_DEMO_ISSUER_EMAIL=issuer@example.com
-RABOVEL_DEMO_ADMIN_EMAIL=admin@example.com
 
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SECRET_KEY=replace-me
@@ -108,6 +106,12 @@ Run the frontend on port `3001` (`pnpm dev --port 3001`), set its server-only `R
 If containers from the previous Compose setup still run, use `docker compose up -d --wait --remove-orphans` once to remove the retired API/WAF/Kafka containers. This preserves their named volumes. Avoid `docker compose down -v` when retaining local data.
 
 For source development and verification commands, see [docs/commands.md](docs/commands.md).
+
+## Signup and roles
+
+`POST /auth/register` requires `account_type` equal to `investor` or `issuer`, plus name, email and password. Each new account receives exactly one public role (`trader` internally for investors). Administrative, compliance and operations roles are not selectable. Password login preserves the stored role. `RABOVEL_DEMO_ISSUER_EMAIL` and `RABOVEL_DEMO_ADMIN_EMAIL` no longer assign roles and can be removed from deployment settings.
+
+Issuer signup still requires organization onboarding before creating assets. Organization and backing review remain simulated. Migration `0006` removes historical privileged grants from password accounts while preserving issuer accounts and asset data; existing password admins become investors. It also replaces password-account permissions with the public-role permission set. Active sessions use current database roles. No password-based admin provisioning endpoint is provided; trusted OIDC identity assignment remains a separate internal capability, not enabled by the current startup composition.
 
 ## Main API surfaces
 

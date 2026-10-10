@@ -22,7 +22,7 @@ use crate::{
     mint_setup::SolanaMintSetupExecutor, payment_assets::SolanaPaymentAssetRegistry,
     router_with_state, GatewayStateBuilder,
 };
-use domain::auth::{BrokerageSecurityPolicy, UserRole};
+use domain::auth::BrokerageSecurityPolicy;
 
 /// Build the production API composition from process configuration.
 pub async fn router_from_env() -> Result<Router, String> {
@@ -46,21 +46,7 @@ pub async fn router_from_env() -> Result<Router, String> {
     let mut builder = GatewayStateBuilder::default()
         .wallet_proof(Arc::new(SiweWalletProofVerifier))
         .siwe_domain(origin.authority().to_string())
-        .public_origin(browser_origin)
-        .trusted_email_roles(
-            [
-                env::var("RABOVEL_DEMO_ISSUER_EMAIL")
-                    .ok()
-                    .map(|email| (email.trim().to_ascii_lowercase(), UserRole::Issuer)),
-                env::var("RABOVEL_DEMO_ADMIN_EMAIL")
-                    .ok()
-                    .map(|email| (email.trim().to_ascii_lowercase(), UserRole::Admin)),
-            ]
-            .into_iter()
-            .flatten()
-            .filter(|(email, _)| !email.is_empty())
-            .collect(),
-        );
+        .public_origin(browser_origin);
 
     if let Some(secret) = gateway_secret {
         builder = builder.gateway_secret(&secret);

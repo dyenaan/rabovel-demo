@@ -53,13 +53,14 @@ export async function mockLogin(email: string, password: string): Promise<AuthUs
 export async function mockRegister(input: {
   fullName: string;
   email: string;
+  accountType: "investor" | "issuer";
 }): Promise<AuthUser> {
   await mockDelay(700);
   return {
     id: `usr_${Date.now()}`,
     name: input.fullName,
     email: input.email,
-    role: "INVESTOR",
-    investorId: `inv_${Date.now()}`,
+    role: input.accountType === "issuer" ? "ISSUER" : "INVESTOR",
+    investorId: input.accountType === "investor" ? `inv_${Date.now()}` : undefined,
   };
 }

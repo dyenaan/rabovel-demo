@@ -36,6 +36,7 @@ export function RegisterForm() {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      accountType: "investor",
       fullName: "",
       email: "",
       password: "",
@@ -52,9 +53,9 @@ export function RegisterForm() {
       if (useMockApi) {
         const user = await mockRegister(values);
         login(user);
-        router.push("/verify");
+        router.push(user.role === "ISSUER" ? homeForRole(user.role) : "/verify");
       } else {
-        await registerWithPassword(values.fullName, values.email, values.password);
+        await registerWithPassword(values.fullName, values.email, values.password, values.accountType);
         const user = await fetchCurrentUser();
         login(user);
         router.push(homeForRole(user.role));
@@ -70,14 +71,30 @@ export function RegisterForm() {
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl tracking-tight">Request institutional access</CardTitle>
+        <CardTitle className="text-2xl tracking-tight">Create a demo account</CardTitle>
         <CardDescription>
-          Create your account, then complete onboarding to unlock trading and custody.
+          Choose whether to explore investing or issue simulated assets on devnet.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            <FormField
+              control={form.control}
+              name="accountType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Account type</FormLabel>
+                  <FormControl>
+                    <select {...field} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                      <option value="investor">Investor</option>
+                      <option value="issuer">Issuer</option>
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="fullName"

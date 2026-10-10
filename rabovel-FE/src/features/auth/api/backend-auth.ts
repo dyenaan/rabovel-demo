@@ -113,8 +113,8 @@ export async function loginWithPassword(email: string, password: string) {
   return directRequest<SessionDto>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
 }
 
-export async function registerWithPassword(displayName: string, email: string, password: string) {
-  return directRequest<SessionDto>("/auth/register", { method: "POST", body: JSON.stringify({ display_name: displayName, email, password }) });
+export async function registerWithPassword(displayName: string, email: string, password: string, accountType: "investor" | "issuer") {
+  return directRequest<SessionDto>("/auth/register", { method: "POST", body: JSON.stringify({ display_name: displayName, email, password, account_type: accountType }) });
 }
 
 export async function fetchCurrentUser() {
