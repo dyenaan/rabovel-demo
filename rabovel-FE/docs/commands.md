@@ -18,6 +18,7 @@ pnpm start --port 3001
 | `RABOVEL_API_URL` | Server-only backend origin, locally `http://localhost:8080`. |
 | `RABOVEL_PUBLIC_ORIGIN` | Exact frontend origin, locally `http://localhost:3001`. |
 | `RABOVEL_GATEWAY_SECRET` | Server-only 64 hexadecimal characters, identical to backend setting. |
+| `RABOVEL_STORAGE_ORIGIN` | Server-only HTTPS Supabase origin permitted by browser CSP for signed uploads. |
 | `NEXT_PUBLIC_USE_MOCK_API` | `true` or `false`; defaults on in development, off in production. Production rejects `true`. |
 | `NEXT_PUBLIC_WS_URL` | Optional WebSocket URL. |
 | `NEXT_PUBLIC_ENVIRONMENT` | `development`, `staging` or `production`. |
@@ -28,6 +29,7 @@ Production gateway origins require HTTPS. The old `NEXT_PUBLIC_API_BASE_URL` set
 
 ```bash
 pnpm test:gateway
+pnpm test:security
 ./node_modules/.bin/tsc --noEmit --incremental false
 pnpm lint -- src/lib/server/session-gateway.ts
 pnpm build

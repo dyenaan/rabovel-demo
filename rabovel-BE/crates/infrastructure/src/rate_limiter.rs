@@ -144,7 +144,7 @@ return allowed
                 .arg(window_secs.saturating_mul(2).max(1))
                 .invoke_async(&mut conn)
                 .await
-                .map_err(|e| AuthError::PolicyViolation(format!("redis error: {e}")))?;
+                .map_err(|_| AuthError::ServiceUnavailable)?;
             if allowed == 1 {
                 Ok(())
             } else {

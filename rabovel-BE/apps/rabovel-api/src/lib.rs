@@ -2,10 +2,12 @@
 mod authorization_tests;
 mod bootstrap;
 mod config;
+mod deployment;
 mod http;
 mod ingress;
 mod instrument_provider;
 mod mint_setup;
+mod observability;
 mod payment_assets;
 mod price_feed;
 
@@ -544,7 +546,9 @@ impl From<AuthError> for ApiError {
             | AuthError::OnboardingIncomplete
             | AuthError::MfaRequired => StatusCode::FORBIDDEN,
             AuthError::ReplayDetected => StatusCode::CONFLICT,
-            AuthError::InvalidProvider => StatusCode::SERVICE_UNAVAILABLE,
+            AuthError::InvalidProvider | AuthError::ServiceUnavailable => {
+                StatusCode::SERVICE_UNAVAILABLE
+            }
             AuthError::InvalidIdentityProof
             | AuthError::UnverifiedEmail
             | AuthError::InvalidWalletProof => StatusCode::UNAUTHORIZED,
@@ -594,8 +598,16 @@ impl IntoResponse for ApiError {
         (
             self.status,
             Json(ApiErrorResponse {
-                code: self.error.code().to_string(),
-                message: self.error.to_string(),
+                code: if self.status.is_server_error() {
+                    "service_unavailable".into()
+                } else {
+                    self.error.code().to_string()
+                },
+                message: if self.status.is_server_error() {
+                    "The service is temporarily unavailable.".into()
+                } else {
+                    self.error.to_string()
+                },
             }),
         )
             .into_response()
@@ -1475,10 +1487,7 @@ async fn get_initial_inventory_handler(
         .await
         .map(initial_inventory_response)
         .map(Json)
-        .map_err(|error| ApiError {
-            status: StatusCode::SERVICE_UNAVAILABLE,
-            error: AuthError::PolicyViolation(error.message),
-        })
+        .map_err(|_| ApiError::from(AuthError::ServiceUnavailable))
 }
 
 #[utoipa::path(post, path = "/issuer/assets/{asset_id}/inventory", responses((status = 200, body = InitialInventoryResponse), (status = 403, body = ApiErrorResponse), (status = 409, body = ApiErrorResponse), (status = 503, body = ApiErrorResponse)))]
@@ -1500,7 +1509,10 @@ async fn issue_initial_inventory_handler(
             } else {
                 StatusCode::SERVICE_UNAVAILABLE
             },
-            error: AuthError::PolicyViolation(error.message),
+            error: AuthError::PolicyViolation(
+                "The chain operation could not be completed. Check its status before retrying."
+                    .into(),
+            ),
         })
 }
 
@@ -1580,10 +1592,7 @@ async fn publish_asset_listing_handler(
         .mint_setup
         .initial_inventory(&asset, &operation, false)
         .await
-        .map_err(|error| ApiError {
-            status: StatusCode::SERVICE_UNAVAILABLE,
-            error: AuthError::PolicyViolation(error.message),
-        })?;
+        .map_err(|_| ApiError::from(AuthError::ServiceUnavailable))?;
     if !inventory.issuance_complete {
         return Err(ApiError {
             status: StatusCode::CONFLICT,
@@ -2530,10 +2539,7 @@ async fn investor_catalog_handler(
             .mint_setup
             .initial_inventory(&asset, &operation, false)
             .await
-            .map_err(|error| ApiError {
-                status: StatusCode::SERVICE_UNAVAILABLE,
-                error: AuthError::PolicyViolation(error.message),
-            })?;
+            .map_err(|_| ApiError::from(AuthError::ServiceUnavailable))?;
         if !inventory.issuance_complete {
             continue;
         }
@@ -2541,10 +2547,7 @@ async fn investor_catalog_handler(
             .mint_setup
             .investor_position(&operation, wallet.address())
             .await
-            .map_err(|error| ApiError {
-                status: StatusCode::SERVICE_UNAVAILABLE,
-                error: AuthError::PolicyViolation(error.message),
-            })?;
+            .map_err(|_| ApiError::from(AuthError::ServiceUnavailable))?;
         let price_decimals = cngn.decimals.unwrap_or(6);
         let price = state
             .price_feed
@@ -2707,10 +2710,7 @@ async fn create_investor_quote(
         .mint_setup
         .initial_inventory(&asset, &operation, false)
         .await
-        .map_err(|error| ApiError {
-            status: StatusCode::SERVICE_UNAVAILABLE,
-            error: AuthError::PolicyViolation(error.message),
-        })?;
+        .map_err(|_| ApiError::from(AuthError::ServiceUnavailable))?;
 
     if !inventory.issuance_complete {
         return Err(ApiError {
@@ -2724,10 +2724,7 @@ async fn create_investor_quote(
         .mint_setup
         .investor_position(&operation, wallet.address())
         .await
-        .map_err(|error| ApiError {
-            status: StatusCode::SERVICE_UNAVAILABLE,
-            error: AuthError::PolicyViolation(error.message),
-        })?;
+        .map_err(|_| ApiError::from(AuthError::ServiceUnavailable))?;
 
     // Validate based on side
     let (price_per_unit, payment_mint, payment_token_account, equity_token_account) = match request
@@ -2955,10 +2952,7 @@ async fn prepare_investor_purchase_handler(
             },
         )
         .await
-        .map_err(|error| ApiError {
-            status: StatusCode::SERVICE_UNAVAILABLE,
-            error: AuthError::PolicyViolation(error.message),
-        })?;
+        .map_err(|_| ApiError::from(AuthError::ServiceUnavailable))?;
     Ok(Json(PreparedPurchaseResponse {
         transaction_base64: BASE64.encode(transaction),
         quote,
@@ -2990,7 +2984,10 @@ async fn submit_investor_purchase_handler(
             } else {
                 StatusCode::SERVICE_UNAVAILABLE
             },
-            error: AuthError::PolicyViolation(error.message),
+            error: AuthError::PolicyViolation(
+                "The chain operation could not be completed. Check its status before retrying."
+                    .into(),
+            ),
         })?;
     Ok(Json(PurchaseSettlementResponse {
         signature,

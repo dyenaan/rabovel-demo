@@ -31,11 +31,11 @@ function getQueryClient() {
   return browserQueryClient;
 }
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({ children, nonce }: { children: ReactNode; nonce?: string }) {
   const [queryClient] = useState(getQueryClient);
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <ThemeProvider nonce={nonce} attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <TooltipProvider>

@@ -32,3 +32,7 @@ The gateway stores backend bearer credentials in a host-only HttpOnly, SameSite=
 `RequireAuth` and `RoleGuard` are presentation controls. Backend authorization remains necessary on every protected route. Gateway authentication proves the request came through the frontend server; it does not grant a user role. Query caches are cleared on login/logout. Existing sessions persisted only in localStorage require a fresh login after deployment.
 
 See the [hardening rollout](../../rabovel-BE/docs/plans/public-demo-hardening.md). Role assignment, public issuer safeguards, spend quotas and browser security policy remain later slices. WebSocket transport and fixture-backed screens are not enabled by this gateway.
+
+## Browser security boundary
+
+`src/proxy.ts` generates a fresh script nonce and CSP for page requests. The root layout reads the nonce, making pages dynamic, and passes it through to next-themes. Nonce-bearing HTML is private/no-store. Baseline headers are configured in `next.config.ts`. External browser connections are limited to the configured storage origin and optional WebSocket origin; issuer images remain HTTPS-capable. Inline styles remain permitted for existing UI libraries, while production inline scripts require a nonce. See the [operations runbook](../../rabovel-BE/docs/public-demo-operations.md) for deployment settings and browser verification.

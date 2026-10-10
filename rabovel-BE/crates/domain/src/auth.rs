@@ -121,6 +121,7 @@ impl SupportedChain {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AuthError {
+    ServiceUnavailable,
     InvalidProvider,
     UnverifiedEmail,
     InvalidIdentityProof,
@@ -141,6 +142,7 @@ pub enum AuthError {
 impl AuthError {
     pub fn code(&self) -> &'static str {
         match self {
+            Self::ServiceUnavailable => "service_unavailable",
             Self::InvalidProvider => "invalid_provider",
             Self::UnverifiedEmail => "unverified_email",
             Self::InvalidIdentityProof => "invalid_identity_proof",
@@ -163,6 +165,7 @@ impl AuthError {
 impl std::fmt::Display for AuthError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::ServiceUnavailable => write!(f, "the service is temporarily unavailable"),
             Self::InvalidProvider => write!(f, "authentication provider is not enabled"),
             Self::UnverifiedEmail => write!(f, "a verified email is required"),
             Self::InvalidIdentityProof => write!(f, "identity proof could not be verified"),

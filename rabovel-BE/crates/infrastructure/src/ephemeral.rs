@@ -9,7 +9,7 @@ use domain::auth::{AuthError, SupportedChain, WalletProvider};
 use serde::{Deserialize, Serialize};
 
 fn state_unavailable() -> AuthError {
-    AuthError::PolicyViolation("ephemeral state unavailable".to_string())
+    AuthError::ServiceUnavailable
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -272,8 +272,8 @@ pub mod redis_store {
     fn ser_error(_: serde_json::Error) -> AuthError {
         AuthError::PolicyViolation("failed to encode ephemeral state".to_string())
     }
-    fn redis_error(e: redis::RedisError) -> AuthError {
-        AuthError::PolicyViolation(format!("redis error: {e}"))
+    fn redis_error(_e: redis::RedisError) -> AuthError {
+        AuthError::ServiceUnavailable
     }
 
     /// Redis-backed ephemeral state. Keys are namespaced by kind so a single

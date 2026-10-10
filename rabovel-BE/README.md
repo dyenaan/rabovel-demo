@@ -107,6 +107,8 @@ If containers from the previous Compose setup still run, use `docker compose up 
 
 For source development and verification commands, see [docs/commands.md](docs/commands.md).
 
+For hosted deployment, security headers, monitoring and recovery, see the [public-demo operations runbook](docs/public-demo-operations.md). Hosted deployment requires `RABOVEL_DEPLOYMENT=public-devnet`.
+
 ## Signup and roles
 
 `POST /auth/register` requires `account_type` equal to `investor` or `issuer`, plus name, email and password. Each new account receives exactly one public role (`trader` internally for investors). Administrative, compliance and operations roles are not selectable. Password login preserves the stored role. `RABOVEL_DEMO_ISSUER_EMAIL` and `RABOVEL_DEMO_ADMIN_EMAIL` no longer assign roles and can be removed from deployment settings.

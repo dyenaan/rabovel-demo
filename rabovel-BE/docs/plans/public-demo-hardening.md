@@ -59,9 +59,16 @@ This test uses temporary tables in a rolled-back transaction; it does not migrat
 
 Account/IP signup abuse controls, spend limits and quotas remain slice 3. Do not treat this slice as approval to advertise unrestricted signup before those controls are deployed.
 
-## Remaining slices
+## Slice 3: deferred by user
 
-- Slice 3: Turnstile, account/IP abuse controls, small issuer quotas and devnet transaction/spend limits, including failure behavior when the 25 MB KV store is full.
-- Slice 4: explicit hosted demo configuration, CSP/security headers, secrets and private-network checks, monitoring, recovery and operational smoke tests.
+The user explicitly requested no issuer limits and asked to proceed to slice 4. No slice-3 code was implemented. Turnstile, additional account/IP abuse controls, quotas and transaction/spend controls remain deferred. Existing limits are unchanged.
+
+## Slice 4: hosted profile, browser policy and operations
+
+Implemented an explicit fail-closed `public-devnet` startup profile, startup RPC genesis validation, Render PORT support, nonce-based browser CSP and security headers, safe dependency failures, metadata-only API request logs and a public smoke script. See [deployment, verification, monitoring and recovery](../public-demo-operations.md).
+
+Required deployment additions: Render `RABOVEL_DEPLOYMENT=public-devnet`; Vercel `RABOVEL_STORAGE_ORIGIN` for the project's Supabase origin. Hosted profile validation and the RPC identity check run before migrations. No production settings, firewall rules, monitoring account, data or deployment were changed by this slice.
+
+Verification: frontend route type generation, TypeScript, ESLint, three browser-policy tests and all 13 existing gateway tests passed. Backend checks passed: 34 API tests, 11 domain tests, four infrastructure tests, strict Clippy on all targets of the changed crates, formatting and diff whitespace checks. The smoke script passed syntax/lint checks but was not run against a deployed instance. Production frontend build remains unverified due the previously blocked font download and declined network retry; it was not rerun. Live CSP/Phantom, firewall, backup and monitoring setup checks remain required in the operations runbook. The broader `lib.rs` architecture refactor remains separate.
 
 Finish and review each slice in its own PR before beginning the next.

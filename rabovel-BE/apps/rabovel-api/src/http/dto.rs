@@ -148,6 +148,7 @@ pub struct AssetSetupOperationResponse {
     pub allow_list_address: Option<String>,
     pub block_list_address: Option<String>,
     pub thaw_extra_metas_address: Option<String>,
+    #[serde(serialize_with = "crate::observability::serialize_provider_error")]
     pub error: Option<String>,
     pub created_at: u64,
     pub updated_at: u64,

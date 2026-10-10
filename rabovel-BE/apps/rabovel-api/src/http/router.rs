@@ -52,5 +52,6 @@ pub(crate) fn build(state: GatewayState) -> Router {
             state.clone(),
             ip_rate_limit_middleware,
         ))
+        .layer(middleware::from_fn(crate::observability::observe))
         .with_state(state)
 }

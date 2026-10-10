@@ -16,7 +16,6 @@ use solana_adapter::{
 };
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;
-use url::Url;
 
 use crate::{
     mint_setup::SolanaMintSetupExecutor, payment_assets::SolanaPaymentAssetRegistry,
@@ -26,17 +25,20 @@ use domain::auth::BrokerageSecurityPolicy;
 
 /// Build the production API composition from process configuration.
 pub async fn router_from_env() -> Result<Router, String> {
-    let public_origin = env::var("RABOVEL_PUBLIC_ORIGIN")
-        .map_err(|_| "RABOVEL_PUBLIC_ORIGIN is required".to_string())?;
-    let origin = Url::parse(&public_origin)
-        .map_err(|_| "RABOVEL_PUBLIC_ORIGIN must be an absolute URL".to_string())?;
-    if origin.scheme() != "https" && origin.host_str() != Some("localhost") {
-        return Err("RABOVEL_PUBLIC_ORIGIN must use HTTPS outside localhost".to_string());
-    }
-    if origin.path() != "/" || origin.query().is_some() || origin.fragment().is_some() {
-        return Err(
-            "RABOVEL_PUBLIC_ORIGIN must contain only scheme, host, and optional port".to_string(),
+    let deployment =
+        crate::deployment::Deployment::validate(&env::vars().collect(), !cfg!(debug_assertions))?;
+    let origin = deployment.origin;
+    if deployment.hosted {
+        let rpc_url = env::var("RABOVEL_SOLANA_RPC_URL").map_err(|_| "RPC URL is required")?;
+        let rpc = solana_client::nonblocking::rpc_client::RpcClient::new_with_timeout(
+            rpc_url,
+            std::time::Duration::from_secs(10),
         );
+        let hash = rpc
+            .get_genesis_hash()
+            .await
+            .map_err(|_| "could not verify devnet RPC genesis".to_string())?;
+        crate::deployment::validate_genesis(&hash.to_string())?;
     }
     let browser_origin = format!("{}://{}", origin.scheme(), origin.authority());
 

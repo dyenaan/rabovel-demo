@@ -33,6 +33,7 @@ pub struct PaymentAssetStatus {
     pub mint_verified: bool,
     pub broker_account_verified: bool,
     pub ready: bool,
+    #[serde(serialize_with = "crate::observability::serialize_provider_error")]
     pub error: Option<String>,
 }
 
@@ -49,6 +50,7 @@ pub struct WalletPaymentAssetStatus {
     pub balance_base_units: Option<String>,
     pub account_verified: bool,
     pub ready: bool,
+    #[serde(serialize_with = "crate::observability::serialize_provider_error")]
     pub error: Option<String>,
 }
 

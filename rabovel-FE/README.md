@@ -53,6 +53,8 @@ NEXT_PUBLIC_ENVIRONMENT=development
 
 `NEXT_PUBLIC_USE_MOCK_API` defaults to `true` in development and `false` in production; production rejects mock authentication. Real demo auth, wallet, issuer and purchase flows require it to be `false` and the backend to be running. The three `RABOVEL_*` values are server-only. Generate the shared secret with `openssl rand -hex 32`; never prefix it with `NEXT_PUBLIC_`. Browser requests use `/api/*`. See the [rollout and remaining hardening slices](../rabovel-BE/docs/plans/public-demo-hardening.md).
 
+Production uses a nonce-based CSP and dynamic page rendering. Configure server-only `RABOVEL_STORAGE_ORIGIN` to permit signed uploads to your Supabase project; see the [operations runbook](../rabovel-BE/docs/public-demo-operations.md).
+
 See [commands](docs/commands.md) for verification and [architecture](docs/architecture.md) for source boundaries.
 
 ## Source layout

@@ -42,8 +42,8 @@ impl PgRepository {
     }
 }
 
-fn db_error(context: &str) -> impl Fn(sqlx::Error) -> AuthError + '_ {
-    move |e| AuthError::PolicyViolation(format!("{context}: {e}"))
+fn db_error(_context: &str) -> impl Fn(sqlx::Error) -> AuthError + '_ {
+    |_| AuthError::ServiceUnavailable
 }
 
 /// Reuses `T`'s own `serde` impl to encode/decode the enum column as the
