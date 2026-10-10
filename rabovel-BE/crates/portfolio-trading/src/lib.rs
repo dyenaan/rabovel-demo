@@ -1,29 +1,38 @@
-//! Contract-only crate for the portfolio trading API.
+//! Portfolio trading API contract and its implementations.
 //!
-//! This crate defines the [`PortfolioTradingApi`] trait and its associated DTOs,
-//! along with a deterministic stub implementation ([`StubPortfolioTradingService`]).
-//! Real trading/matching logic is out of scope here and will be provided by a
-//! separate matching-engine-backed implementation later.
+//! [`PortfolioTradingApi`] is what the gateway calls. [`EngineTradingService`]
+//! is the real implementation, backed by the principal matching engine in
+//! the `matching-engine` crate; [`StubPortfolioTradingService`] is a
+//! deterministic placeholder kept for tests that do not exercise trading.
+//! Amounts cross this boundary as decimal strings and are converted exactly to
+//! integer base units, never through floats.
+
+mod decimal;
+mod engine_service;
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+pub use engine_service::{
+    EngineTradingConfig, EngineTradingService, ReferencePrice, ReferencePriceSource,
+};
+pub use matching_engine::{EngineConfig, HouseLimits, InventoryMovement};
+
 /// The portfolio trading API contract.
-///
-/// Implementations are responsible for exposing a user's portfolio and for
-/// accepting/cancelling/listing orders. Amounts are represented as `String`
-/// rather than floats to avoid float-precision foot-guns in a financial
-/// context.
 #[async_trait::async_trait]
 pub trait PortfolioTradingApi: Send + Sync {
     async fn get_portfolio(&self, user_id: &str) -> Result<PortfolioSnapshot, TradingError>;
+    /// Executes the order immediately as far as liquidity allows. The returned
+    /// [`OrderExecution::trades`] are for event publication and must not be
+    /// returned to the client: they identify counterparties.
     async fn place_order(
         &self,
         user_id: &str,
         order: NewOrderRequest,
-    ) -> Result<OrderAck, TradingError>;
+    ) -> Result<OrderExecution, TradingError>;
     async fn cancel_order(&self, user_id: &str, order_id: &str) -> Result<(), TradingError>;
     async fn list_orders(&self, user_id: &str) -> Result<Vec<OrderStatus>, TradingError>;
+    async fn get_order(&self, user_id: &str, order_id: &str) -> Result<OrderStatus, TradingError>;
 }
 
 /// A snapshot of a user's portfolio at a point in time.
@@ -58,7 +67,8 @@ pub enum OrderType {
     Limit,
 }
 
-/// A request to place a new order.
+/// A request to place a new order. `quantity` is in whole units;
+/// `limit_price` is in payment-asset units (e.g. `"100.25"` cNGN).
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct NewOrderRequest {
     pub symbol: String,
@@ -68,20 +78,90 @@ pub struct NewOrderRequest {
     pub limit_price: Option<String>,
 }
 
-/// Acknowledgement returned after an order is accepted.
+/// Where a fill's liquidity came from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Liquidity {
+    /// Matched against another client's resting order.
+    Internalized,
+    /// Matched against the Rabovel house.
+    Principal,
+}
+
+/// One execution of the caller's order, without counterparty identity.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct OrderFill {
+    pub trade_id: String,
+    pub quantity: String,
+    pub price: String,
+    pub liquidity: Liquidity,
+}
+
+/// Acknowledgement returned after an order is accepted and executed.
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct OrderAck {
     pub order_id: String,
     pub accepted_at: u64,
+    pub state: OrderState,
+    pub filled_quantity: String,
+    /// Quantity left resting on the book (limit orders).
+    pub resting_quantity: String,
+    /// Quantity that could not be filled and was dropped (market orders).
+    pub cancelled_quantity: String,
+    pub average_price: Option<String>,
+    pub fills: Vec<OrderFill>,
+    /// Why `cancelled_quantity` was not filled, e.g. `house_risk_limit`.
+    pub unfilled_reason: Option<String>,
+}
+
+/// A party to an executed trade.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case", tag = "type")]
+pub enum TradeParty {
+    Client { user_id: String, order_id: String },
+    House,
+}
+
+/// Internal record of one execution, for settlement and reconciliation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExecutedTrade {
+    pub trade_id: String,
+    /// Gap-free engine sequence, for replay and ordering.
+    pub sequence: u64,
+    pub symbol: String,
+    /// Whole token units.
+    pub quantity: u64,
+    /// Payment-asset base units per token unit.
+    pub price_base_units: u64,
+    pub price_decimals: u8,
+    pub buyer: TradeParty,
+    pub seller: TradeParty,
+    pub liquidity: Liquidity,
+    pub aggressor: OrderSide,
+    /// For principal trades, how the house side moves tokens on-chain.
+    pub house_inventory: Option<InventoryMovement>,
+    pub executed_at: u64,
+}
+
+/// Result of placing an order.
+#[derive(Debug, Clone, PartialEq)]
+pub struct OrderExecution {
+    pub ack: OrderAck,
+    /// Every trade this request caused, including fills of other clients'
+    /// resting orders triggered by a reference-price update.
+    pub trades: Vec<ExecutedTrade>,
 }
 
 /// The lifecycle state of an order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum OrderState {
+    /// Resting on the book with nothing filled.
     Accepted,
     PartiallyFilled,
     Filled,
+    /// Cancelled by the client, dropped unfilled (market remainder) or
+    /// cancelled by self-trade prevention; may carry a partial fill.
     Cancelled,
 }
 
@@ -91,9 +171,15 @@ pub struct OrderStatus {
     pub order_id: String,
     pub symbol: String,
     pub side: OrderSide,
+    pub order_type: OrderType,
+    pub limit_price: Option<String>,
     pub quantity: String,
     pub filled_quantity: String,
+    pub remaining_quantity: String,
+    pub average_price: Option<String>,
     pub state: OrderState,
+    pub created_at: u64,
+    pub updated_at: u64,
 }
 
 /// Errors that can occur while interacting with the portfolio trading API.
@@ -103,17 +189,28 @@ pub enum TradingError {
     OrderNotFound,
     #[error("invalid quantity: {0}")]
     InvalidQuantity(String),
+    #[error("invalid limit price: {0}")]
+    InvalidPrice(String),
+    #[error("invalid order: {0}")]
+    InvalidOrder(String),
+    #[error("unknown symbol: {0}")]
+    UnknownSymbol(String),
+    #[error("order too large: {0}")]
+    OrderTooLarge(String),
     #[error("service unavailable: {0}")]
     Unavailable(String),
 }
 
+fn now_secs() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+}
+
 /// A deterministic placeholder implementation of [`PortfolioTradingApi`].
 ///
-/// This stub does not perform any real trading or matching: orders are never
-/// actually matched, so there is nothing to persist or track beyond a
-/// monotonically increasing order-id counter. A colleague will replace this
-/// with a real matching-engine-backed implementation; the BFF route wiring
-/// around this trait does not need to change when that happens.
+/// Orders are acknowledged but never matched or persisted.
 #[derive(Debug, Default)]
 pub struct StubPortfolioTradingService {
     next_order_id: AtomicU64,
@@ -132,35 +229,42 @@ impl PortfolioTradingApi for StubPortfolioTradingService {
         &self,
         _user_id: &str,
         order: NewOrderRequest,
-    ) -> Result<OrderAck, TradingError> {
-        let quantity: f64 = order
-            .quantity
-            .parse()
-            .map_err(|_| TradingError::InvalidQuantity(order.quantity.clone()))?;
-        if quantity.is_nan() || quantity <= 0.0 {
-            return Err(TradingError::InvalidQuantity(order.quantity.clone()));
-        }
+    ) -> Result<OrderExecution, TradingError> {
+        decimal::parse_fixed(&order.quantity, 0)
+            .filter(|quantity| *quantity > 0)
+            .ok_or_else(|| TradingError::InvalidQuantity(order.quantity.clone()))?;
 
         let n = self.next_order_id.fetch_add(1, Ordering::SeqCst);
-        let accepted_at = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs();
-
-        Ok(OrderAck {
-            order_id: format!("ord_{n}"),
-            accepted_at,
+        Ok(OrderExecution {
+            ack: OrderAck {
+                order_id: format!("ord_{n}"),
+                accepted_at: now_secs(),
+                state: OrderState::Accepted,
+                filled_quantity: "0".into(),
+                resting_quantity: order.quantity,
+                cancelled_quantity: "0".into(),
+                average_price: None,
+                fills: vec![],
+                unfilled_reason: None,
+            },
+            trades: vec![],
         })
     }
 
     async fn cancel_order(&self, _user_id: &str, _order_id: &str) -> Result<(), TradingError> {
-        // Nothing is actually tracked yet, so there is nothing to cancel.
         Ok(())
     }
 
     async fn list_orders(&self, _user_id: &str) -> Result<Vec<OrderStatus>, TradingError> {
-        // No orders are persisted by this stub.
         Ok(vec![])
+    }
+
+    async fn get_order(
+        &self,
+        _user_id: &str,
+        _order_id: &str,
+    ) -> Result<OrderStatus, TradingError> {
+        Err(TradingError::OrderNotFound)
     }
 }
 
@@ -170,7 +274,7 @@ mod tests {
 
     fn sample_order(quantity: &str) -> NewOrderRequest {
         NewOrderRequest {
-            symbol: "BTC-USD".to_string(),
+            symbol: "DANGCEM".to_string(),
             side: OrderSide::Buy,
             order_type: OrderType::Market,
             quantity: quantity.to_string(),
@@ -179,7 +283,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_portfolio_returns_empty_balances() {
+    async fn stub_returns_empty_portfolio() {
         let svc = StubPortfolioTradingService::default();
         let snapshot = svc.get_portfolio("user-1").await.unwrap();
         assert_eq!(snapshot.user_id, "user-1");
@@ -187,50 +291,23 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn place_order_with_valid_quantity_returns_ack() {
+    async fn stub_acknowledges_valid_orders_with_distinct_ids() {
         let svc = StubPortfolioTradingService::default();
-        let ack = svc
-            .place_order("user-1", sample_order("1.5"))
-            .await
-            .unwrap();
-        assert!(!ack.order_id.is_empty());
+        let first = svc.place_order("user-1", sample_order("1")).await.unwrap();
+        let second = svc.place_order("user-1", sample_order("2")).await.unwrap();
+        assert_ne!(first.ack.order_id, second.ack.order_id);
+        assert!(first.trades.is_empty());
     }
 
     #[tokio::test]
-    async fn place_order_rejects_zero_quantity() {
+    async fn stub_rejects_invalid_quantities() {
         let svc = StubPortfolioTradingService::default();
-        let err = svc
-            .place_order("user-1", sample_order("0"))
-            .await
-            .unwrap_err();
-        assert!(matches!(err, TradingError::InvalidQuantity(_)));
-    }
-
-    #[tokio::test]
-    async fn place_order_rejects_negative_quantity() {
-        let svc = StubPortfolioTradingService::default();
-        let err = svc
-            .place_order("user-1", sample_order("-5"))
-            .await
-            .unwrap_err();
-        assert!(matches!(err, TradingError::InvalidQuantity(_)));
-    }
-
-    #[tokio::test]
-    async fn place_order_rejects_unparseable_quantity() {
-        let svc = StubPortfolioTradingService::default();
-        let err = svc
-            .place_order("user-1", sample_order("not-a-number"))
-            .await
-            .unwrap_err();
-        assert!(matches!(err, TradingError::InvalidQuantity(_)));
-    }
-
-    #[tokio::test]
-    async fn successive_place_order_calls_return_different_order_ids() {
-        let svc = StubPortfolioTradingService::default();
-        let ack1 = svc.place_order("user-1", sample_order("1")).await.unwrap();
-        let ack2 = svc.place_order("user-1", sample_order("2")).await.unwrap();
-        assert_ne!(ack1.order_id, ack2.order_id);
+        for bad in ["0", "-5", "1.5", "not-a-number"] {
+            let err = svc
+                .place_order("user-1", sample_order(bad))
+                .await
+                .unwrap_err();
+            assert!(matches!(err, TradingError::InvalidQuantity(_)), "{bad}");
+        }
     }
 }

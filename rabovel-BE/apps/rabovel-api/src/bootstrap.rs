@@ -8,6 +8,7 @@ use infrastructure::{
     rate_limiter::RedisTokenBucketRateLimiter,
 };
 use kyc::MockKycProvider;
+use portfolio_trading::EngineTradingConfig;
 use sha2::{Digest, Sha256};
 use solana_adapter::{
     authority_config::SignerConfig,
@@ -61,6 +62,7 @@ pub async fn router_from_env() -> Result<Router, String> {
     if demo_mode_enabled()? {
         builder = builder.security_policy(BrokerageSecurityPolicy::for_demo());
     }
+    builder = builder.trading_config(trading_config_from_env()?);
 
     if let Ok(database_url) = env::var("DATABASE_URL") {
         let repository = PgRepository::connect(&database_url).await?;
@@ -179,6 +181,66 @@ fn demo_mode_enabled() -> Result<bool, String> {
         }
         Ok(_) => Err("RABOVEL_DEMO_MODE must be true, false, 1, or 0".into()),
     }
+}
+
+/// Principal-desk settings for the matching engine; unset variables keep the
+/// `HouseLimits` defaults. `RABOVEL_HOUSE_FLOAT` pre-funds the treasury float
+/// per symbol, e.g. `DANGCEM=1000,GTCO=500`.
+fn trading_config_from_env() -> Result<EngineTradingConfig, String> {
+    fn number(name: &str) -> Result<Option<u64>, String> {
+        env::var(name)
+            .ok()
+            .map(|value| {
+                value
+                    .trim()
+                    .parse()
+                    .map_err(|_| format!("{name} must be a non-negative integer"))
+            })
+            .transpose()
+    }
+
+    let mut config = EngineTradingConfig::default();
+    let limits = &mut config.engine.default_limits;
+    if let Some(bps) = number("RABOVEL_HOUSE_HALF_SPREAD_BPS")? {
+        limits.half_spread_bps = u32::try_from(bps)
+            .ok()
+            .filter(|bps| *bps <= 10_000)
+            .ok_or("RABOVEL_HOUSE_HALF_SPREAD_BPS must be at most 10000")?;
+    }
+    if let Some(value) = number("RABOVEL_HOUSE_MAX_LONG")? {
+        limits.max_long = value;
+    }
+    if let Some(value) = number("RABOVEL_HOUSE_MAX_SHORT")? {
+        limits.max_short = value;
+    }
+    if let Some(value) = number("RABOVEL_HOUSE_MAX_MINTED_UNBACKED")? {
+        limits.max_minted_unbacked = value;
+    }
+    if let Some(value) = number("RABOVEL_HOUSE_MAX_ORDER_QUANTITY")? {
+        limits.max_order_quantity = value;
+    }
+    if let Some(value) = number("RABOVEL_HOUSE_MAX_PRICE_AGE_SECONDS")? {
+        config.max_price_age_secs = value;
+    }
+    if let Ok(raw) = env::var("RABOVEL_HOUSE_FLOAT") {
+        for entry in raw
+            .split(',')
+            .map(str::trim)
+            .filter(|entry| !entry.is_empty())
+        {
+            let (symbol, quantity) = entry
+                .split_once('=')
+                .and_then(|(symbol, quantity)| {
+                    Some((symbol.trim(), quantity.trim().parse::<u64>().ok()?))
+                })
+                .filter(|(symbol, _)| !symbol.is_empty())
+                .ok_or("RABOVEL_HOUSE_FLOAT must look like SYMBOL=QUANTITY,SYMBOL=QUANTITY")?;
+            config
+                .initial_float
+                .insert(symbol.to_ascii_uppercase(), quantity);
+        }
+    }
+    Ok(config)
 }
 
 fn decode_keypair(name: &str, value: &str) -> Result<Vec<u8>, String> {

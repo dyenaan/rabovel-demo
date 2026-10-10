@@ -110,7 +110,25 @@ services:
       rabovel:
         condition: service_healthy
 
+  # On-demand Rust test runner on the same toolchain as the Dockerfile/CI.
+  # Only starts when invoked explicitly (profile "test"), e.g.:
+  #   docker compose run --rm tests
+  #   docker compose run --rm tests cargo test --workspace --locked
+  # Source is bind-mounted; registry and build output live in named volumes
+  # so the Linux target dir never collides with a host-side Windows build.
+  tests:
+    image: rust:1.98-slim-bookworm
+    profiles: ["test"]
+    working_dir: /app
+    volumes:
+      - .:/app
+      - cargo_registry:/usr/local/cargo/registry
+      - cargo_target:/app/target
+    command: ["cargo", "test", "-p", "matching-engine", "--locked"]
+
 volumes:
   postgres_data:
   redis_data:
   kafka_data:
+  cargo_registry:
+  cargo_target:

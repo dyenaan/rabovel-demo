@@ -1,8 +1,18 @@
-import { apiClient, isMockApiEnabled } from "@/lib/api/client";
+import { isMockApiEnabled } from "@/lib/api/client";
 import { Decimal, formatPrice } from "@/lib/formatters";
 import { mockDelay } from "@/lib/api/mock-delay";
 import { mockOrders } from "@/mocks/orders.mock";
 import type { Order, OrderSide, OrderType } from "@/types";
+import {
+  adaptBackendOrder,
+  adaptOrderAck,
+  ordersRequest,
+  toBackendOrderType,
+  toBackendSide,
+  toBackendSymbol,
+  type BackendOrder,
+  type BackendOrderAck,
+} from "./backend-orders";
 
 export type PlaceOrderInput = {
   marketId: string;
@@ -36,10 +46,26 @@ export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
     return order;
   }
 
-  const { data } = await apiClient.post<Order>("/orders", input, {
-    idempotencyKey: input.idempotencyKey,
+  const symbol = toBackendSymbol(input.marketSymbol);
+  const ack = await ordersRequest<BackendOrderAck>("/orders", {
+    method: "POST",
+    headers: { "Idempotency-Key": input.idempotencyKey },
+    body: JSON.stringify({
+      symbol,
+      side: toBackendSide(input.side),
+      order_type: toBackendOrderType(input.orderType),
+      quantity: input.quantity,
+      limit_price: input.orderType === "MARKET" ? null : (input.limitPrice ?? null),
+    }),
   });
-  return data;
+  return adaptOrderAck(ack, {
+    symbol,
+    side: input.side,
+    orderType: input.orderType,
+    limitPrice: input.limitPrice,
+    quantity: input.quantity,
+    clientOrderId: input.idempotencyKey,
+  });
 }
 
 export async function cancelOrder(orderId: string, idempotencyKey: string): Promise<Order> {
@@ -52,12 +78,13 @@ export async function cancelOrder(orderId: string, idempotencyKey: string): Prom
     return order;
   }
 
-  const { data } = await apiClient.post<Order>(
-    `/orders/${orderId}/cancel`,
-    {},
-    { idempotencyKey },
+  await ordersRequest<void>(`/orders/${encodeURIComponent(orderId)}`, {
+    method: "DELETE",
+    headers: { "Idempotency-Key": idempotencyKey },
+  });
+  return adaptBackendOrder(
+    await ordersRequest<BackendOrder>(`/orders/${encodeURIComponent(orderId)}`),
   );
-  return data;
 }
 
 export function calculateOrderTotal(quantity: string, price?: string): string {

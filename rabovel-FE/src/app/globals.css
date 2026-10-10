@@ -204,6 +204,32 @@
   }
 
   .card-interactive {
-    @apply cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md active:translate-y-0 active:shadow-sm;
+    cursor: pointer;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+    border-color: rgb(148 163 184 / 0.2);
+  }
+
+  .card-interactive:hover {
+    transform: translateY(-4px);
+    border-color: rgb(120 119 198 / 0.35);
+    box-shadow: 0 16px 30px rgba(88, 86, 200, 0.08);
+  }
+
+  .animate-float {
+    animation: float 8s ease-in-out infinite;
+  }
+
+  .animate-float-slow {
+    animation: float 12s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -18px, 0) scale(1.06);
   }
 }

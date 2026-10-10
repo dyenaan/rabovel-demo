@@ -13,6 +13,7 @@ export class MockWebSocketTransport {
   private readonly channelListeners = new Map<ChannelName, Set<SocketListener>>();
   private readonly statusListeners = new Set<(status: ConnectionStatus) => void>();
   private readonly intervals = new Map<ChannelName, ReturnType<typeof setInterval>>();
+  private tradeSequence = 0;
 
   connect() {
     if (this.status === "open") return;
@@ -93,7 +94,11 @@ export class MockWebSocketTransport {
       message = {
         channel,
         type: "trade.print",
-        payload: { ...latest, executedAt: new Date().toISOString() },
+        payload: {
+          ...latest,
+          tradeId: `${latest.tradeId}_${++this.tradeSequence}`,
+          executedAt: new Date().toISOString(),
+        },
         timestamp: new Date().toISOString(),
       };
     }

@@ -16,6 +16,7 @@ pub(crate) fn build(state: GatewayState) -> Router {
         .route("/health", get(health_handler))
         .merge(features::auth::routes())
         .merge(features::issuer::routes())
+        .merge(features::instruments::routes())
         .merge(features::onboarding::routes())
         .merge(features::wallets::routes())
         .merge(features::kyc::routes())

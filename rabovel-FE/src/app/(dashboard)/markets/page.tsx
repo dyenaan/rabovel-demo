@@ -11,7 +11,7 @@ export default function MarketsPage() {
     <PageContainer>
       <PageHeader
         title="Markets"
-        description="Live pricing and 24-hour activity across all secondary markets."
+        description="Browse simulated NGX equities and demo markets. Prices are fixtures, not live exchange quotes."
       />
       <MarketsTable />
     </PageContainer>

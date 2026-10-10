@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+matching-engine = { path = "../matching-engine" }
 serde = { workspace = true }
 async-trait = { workspace = true }
 thiserror = { workspace = true }

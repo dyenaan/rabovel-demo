@@ -14,7 +14,8 @@ Rabovel uses a Cargo workspace with two package groups:
 | `domain` | I/O-free identity, onboarding and authorization rules. |
 | `identity` | Identity repository contract, records and provider ports. |
 | `kyc` | KYC provider contract and signed mock implementation. |
-| `portfolio-trading` | Portfolio/order contract and deterministic stub. |
+| `portfolio-trading` | Portfolio/order contract, the engine-backed `EngineTradingService` used by the API, and a test stub. |
+| `matching-engine` | I/O-free principal-backed matching: client book plus house quote, risk limits, float/mint inventory and hedge netting. See [plans/principal-matching-engine.md](plans/principal-matching-engine.md). |
 | Orchestrator crates | Business-service boundaries used by workers; currently skeletons. |
 | `events` | Transport-independent envelopes, payloads and topic names. |
 | `infrastructure` | Postgres, Redis, OIDC/SIWE, rate limiting, Kafka and in-memory adapters. |

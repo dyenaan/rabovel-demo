@@ -1,11 +1,11 @@
 use axum::{
-    routing::{delete, get, post},
+    routing::{get, post},
     Router,
 };
 
 use crate::{
-    cancel_order_handler, investor_catalog_handler, investor_quote_handler, list_orders_handler,
-    place_order_handler, portfolio_handler, prepare_investor_purchase_handler,
+    cancel_order_handler, get_order_handler, investor_catalog_handler, investor_quote_handler,
+    list_orders_handler, place_order_handler, portfolio_handler, prepare_investor_purchase_handler,
     submit_investor_purchase_handler, GatewayState,
 };
 
@@ -26,5 +26,8 @@ pub(crate) fn routes() -> Router<GatewayState> {
             "/orders",
             post(place_order_handler).get(list_orders_handler),
         )
-        .route("/orders/:order_id", delete(cancel_order_handler))
+        .route(
+            "/orders/:order_id",
+            get(get_order_handler).delete(cancel_order_handler),
+        )
 }

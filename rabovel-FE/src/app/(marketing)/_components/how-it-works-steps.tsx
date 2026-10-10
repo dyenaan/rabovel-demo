@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import { ShieldCheck, TrendingUp, Wallet2 } from "lucide-react";
 
 const steps = [
@@ -37,7 +40,15 @@ export function HowItWorksSteps() {
 
         <div className="mt-14 grid gap-8 md:grid-cols-3">
           {steps.map((step, index) => (
-            <div key={step.title} className="relative rounded-lg border bg-card p-6">
+            <motion.div
+              key={step.title}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.4, delay: index * 0.08 }}
+              whileHover={{ y: -6 }}
+              className="relative rounded-xl border border-border/80 bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+            >
               <div className="flex items-center gap-3">
                 <div className="flex size-10 items-center justify-center rounded-md bg-primary/10 text-primary">
                   <step.icon className="size-5" aria-hidden="true" />
@@ -48,7 +59,7 @@ export function HowItWorksSteps() {
               </div>
               <h3 className="mt-4 text-base font-semibold text-foreground">{step.title}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

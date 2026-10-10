@@ -1,6 +1,7 @@
 mod bootstrap;
 mod config;
 mod http;
+mod instrument_provider;
 mod mint_setup;
 mod payment_assets;
 mod price_feed;
@@ -38,15 +39,19 @@ use events::schema::{
     kyc::{KycCaseSubmitted, KycRiskTier, KycVerdictReceived},
     onboarding::{OnboardingStatus as EventOnboardingStatus, OnboardingStatusChanged},
     tokenization::TokenizationRequested,
-    trading::{OrderAccepted, OrderSide as EventOrderSide},
+    trading::{
+        HouseInventory, OrderAccepted, OrderSide as EventOrderSide, TradeExecuted, TradeLiquidity,
+        TradeParty as EventTradeParty,
+    },
     wallet::WalletLinked,
 };
 use infrastructure::messaging::{self, EventProducer};
 use infrastructure::metadata_storage::{DisabledMetadataStorage, MetadataStorage};
 use kyc::{KycError, KycProviderApi, KycSubmission, MockKycProvider};
 use portfolio_trading::{
+    EngineTradingConfig, EngineTradingService, ExecutedTrade, InventoryMovement, Liquidity,
     NewOrderRequest, OrderAck, OrderSide, OrderStatus, PortfolioSnapshot, PortfolioTradingApi,
-    StubPortfolioTradingService,
+    TradeParty,
 };
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -84,9 +89,12 @@ use payment_assets::{
     DisabledPaymentAssetRegistry, PaymentAssetRegistry, PaymentAssetStatus,
     WalletPaymentAssetStatus,
 };
-use price_feed::{PriceFeed, SimulatedPriceFeed};
+use price_feed::{CatalogReferencePrices, PriceFeed, SimulatedPriceFeed};
 
 pub use http::dto::*;
+pub use instrument_provider::{
+    Instrument, InstrumentCatalog, InstrumentProvider, SimulatedInstrumentProvider,
+};
 
 const OIDC_CHALLENGE_TTL_SECONDS: u64 = 300;
 const WALLET_CHALLENGE_TTL_SECONDS: u64 = 300;
@@ -110,11 +118,14 @@ pub struct GatewayStateBuilder {
     kyc_provider: Arc<dyn KycProviderApi>,
     #[cfg(debug_assertions)]
     sandbox_kyc: Option<Arc<MockKycProvider>>,
-    portfolio_trading: Arc<dyn PortfolioTradingApi>,
+    /// `None` builds the matching-engine service from `trading_config`.
+    portfolio_trading: Option<Arc<dyn PortfolioTradingApi>>,
+    trading_config: EngineTradingConfig,
     event_producer: Arc<dyn EventProducer>,
     metadata_storage: Arc<dyn MetadataStorage>,
     mint_setup: Arc<dyn MintSetupExecutor>,
     payment_assets: Arc<dyn PaymentAssetRegistry>,
+    instrument_provider: Arc<dyn InstrumentProvider>,
     price_feed: Arc<dyn PriceFeed>,
     siwe_domain: String,
     public_origin: String,
@@ -137,11 +148,13 @@ impl Default for GatewayStateBuilder {
             kyc_provider: mock_kyc.clone(),
             #[cfg(debug_assertions)]
             sandbox_kyc: Some(mock_kyc),
-            portfolio_trading: Arc::new(StubPortfolioTradingService::default()),
+            portfolio_trading: None,
+            trading_config: EngineTradingConfig::default(),
             event_producer: Arc::new(messaging::NoopEventProducer),
             metadata_storage: Arc::new(DisabledMetadataStorage),
             mint_setup: Arc::new(DisabledMintSetupExecutor),
             payment_assets: Arc::new(DisabledPaymentAssetRegistry),
+            instrument_provider: Arc::new(SimulatedInstrumentProvider),
             price_feed: Arc::new(SimulatedPriceFeed),
             siwe_domain: "localhost:3000".to_string(),
             public_origin: "http://localhost:3000".to_string(),
@@ -186,7 +199,12 @@ impl GatewayStateBuilder {
         self
     }
     pub fn portfolio_trading(mut self, portfolio_trading: Arc<dyn PortfolioTradingApi>) -> Self {
-        self.portfolio_trading = portfolio_trading;
+        self.portfolio_trading = Some(portfolio_trading);
+        self
+    }
+    /// House limits and float for the default matching-engine service.
+    pub fn trading_config(mut self, config: EngineTradingConfig) -> Self {
+        self.trading_config = config;
         self
     }
     pub fn event_producer(mut self, event_producer: Arc<dyn EventProducer>) -> Self {
@@ -203,6 +221,10 @@ impl GatewayStateBuilder {
     }
     pub fn payment_assets(mut self, payment_assets: Arc<dyn PaymentAssetRegistry>) -> Self {
         self.payment_assets = payment_assets;
+        self
+    }
+    pub fn instrument_provider(mut self, provider: Arc<dyn InstrumentProvider>) -> Self {
+        self.instrument_provider = provider;
         self
     }
     pub fn siwe_domain(mut self, siwe_domain: impl Into<String>) -> Self {
@@ -235,6 +257,16 @@ impl GatewayStateBuilder {
         } else {
             Arc::new(BrokerageAuthService::new(BrokerageSecurityPolicy::default()))
         };
+        let portfolio_trading = self.portfolio_trading.unwrap_or_else(|| {
+            let prices = CatalogReferencePrices::new(
+                self.instrument_provider.clone(),
+                self.price_feed.clone(),
+            );
+            Arc::new(EngineTradingService::new(
+                Arc::new(prices),
+                self.trading_config,
+            ))
+        });
         GatewayState {
             auth_service,
             repository: self.repository,
@@ -245,11 +277,12 @@ impl GatewayStateBuilder {
             kyc_provider: self.kyc_provider,
             #[cfg(debug_assertions)]
             sandbox_kyc: self.sandbox_kyc,
-            portfolio_trading: self.portfolio_trading,
+            portfolio_trading,
             event_producer: self.event_producer,
             metadata_storage: self.metadata_storage,
             mint_setup: self.mint_setup,
             payment_assets: self.payment_assets,
+            instrument_provider: self.instrument_provider,
             price_feed: self.price_feed,
             siwe_domain: self.siwe_domain.into(),
             public_origin: self.public_origin.into(),
@@ -275,6 +308,7 @@ pub struct GatewayState {
     metadata_storage: Arc<dyn MetadataStorage>,
     mint_setup: Arc<dyn MintSetupExecutor>,
     payment_assets: Arc<dyn PaymentAssetRegistry>,
+    instrument_provider: Arc<dyn InstrumentProvider>,
     price_feed: Arc<dyn PriceFeed>,
     siwe_domain: Arc<str>,
     public_origin: Arc<str>,
@@ -553,7 +587,11 @@ impl From<portfolio_trading::TradingError> for ApiError {
     fn from(error: portfolio_trading::TradingError) -> Self {
         let status = match error {
             portfolio_trading::TradingError::OrderNotFound => StatusCode::NOT_FOUND,
-            portfolio_trading::TradingError::InvalidQuantity(_) => StatusCode::BAD_REQUEST,
+            portfolio_trading::TradingError::InvalidQuantity(_)
+            | portfolio_trading::TradingError::InvalidPrice(_)
+            | portfolio_trading::TradingError::InvalidOrder(_)
+            | portfolio_trading::TradingError::UnknownSymbol(_)
+            | portfolio_trading::TradingError::OrderTooLarge(_) => StatusCode::BAD_REQUEST,
             portfolio_trading::TradingError::Unavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
         };
         Self {
@@ -613,6 +651,7 @@ impl IntoResponse for ApiError {
         investor_cngn_account_handler,
         create_investor_cngn_account_handler,
         investor_catalog_handler,
+        instruments_handler,
         prepare_investor_purchase_handler,
         submit_investor_purchase_handler
     ),
@@ -639,6 +678,8 @@ impl IntoResponse for ApiError {
         WalletPaymentAssetStatus,
         InvestorCatalogAssetResponse,
         InvestorCatalogResponse,
+        Instrument,
+        InstrumentCatalog,
         QuoteRequest,
         QuoteResponse,
         QuoteSide,
@@ -2556,6 +2597,21 @@ async fn investor_catalog_handler(
     }))
 }
 
+#[utoipa::path(get, path = "/instruments", responses((status = 200, body = InstrumentCatalog), (status = 503, body = ApiErrorResponse)))]
+async fn instruments_handler(
+    State(state): State<GatewayState>,
+) -> Result<Json<InstrumentCatalog>, ApiError> {
+    let catalog = state
+        .instrument_provider
+        .catalog()
+        .await
+        .map_err(|message| ApiError {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            error: AuthError::PolicyViolation(message),
+        })?;
+    Ok(Json(catalog))
+}
+
 #[utoipa::path(post, path = "/investor/quote", request_body = QuoteRequest, responses((status = 200, body = QuoteResponse), (status = 400, body = ApiErrorResponse), (status = 403, body = ApiErrorResponse), (status = 404, body = ApiErrorResponse), (status = 503, body = ApiErrorResponse)))]
 async fn investor_quote_handler(
     State(state): State<GatewayState>,
@@ -2973,12 +3029,15 @@ async fn place_order_handler(
     state
         .authorize_trading_action(&user, WalletAction::TradeSpot)
         .await?;
-    let ack = state
+    let execution = state
         .portfolio_trading
         .place_order(&user.user_id, request.clone())
         .await
         .map_err(ApiError::from)?;
+    let ack = execution.ack;
 
+    // Publication errors are discarded, as elsewhere; durable delivery needs
+    // the transactional outbox (see docs/settlement-flow.md).
     let _ = messaging::publish(
         state.event_producer.as_ref(),
         OrderAccepted {
@@ -2992,8 +3051,32 @@ async fn place_order_handler(
         "order-gateway",
     )
     .await;
+    for trade in execution.trades {
+        let _ = messaging::publish(
+            state.event_producer.as_ref(),
+            to_trade_executed(trade),
+            "matching-engine",
+        )
+        .await;
+    }
 
     Ok(Json(ack))
+}
+
+async fn get_order_handler(
+    State(state): State<GatewayState>,
+    user: AuthenticatedUser,
+    Path(order_id): Path<String>,
+) -> Result<Json<OrderStatus>, ApiError> {
+    state
+        .authorize_trading_action(&user, WalletAction::ViewPortfolio)
+        .await?;
+    let order = state
+        .portfolio_trading
+        .get_order(&user.user_id, &order_id)
+        .await
+        .map_err(ApiError::from)?;
+    Ok(Json(order))
 }
 
 async fn list_orders_handler(
@@ -3124,6 +3207,37 @@ fn to_event_order_side(side: OrderSide) -> EventOrderSide {
     match side {
         OrderSide::Buy => EventOrderSide::Buy,
         OrderSide::Sell => EventOrderSide::Sell,
+    }
+}
+
+fn to_trade_executed(trade: ExecutedTrade) -> TradeExecuted {
+    let party = |party: TradeParty| match party {
+        TradeParty::Client { user_id, order_id } => EventTradeParty::Client { user_id, order_id },
+        TradeParty::House => EventTradeParty::House,
+    };
+    TradeExecuted {
+        trade_id: trade.trade_id,
+        sequence: trade.sequence,
+        symbol: trade.symbol,
+        quantity: trade.quantity.to_string(),
+        price_base_units: trade.price_base_units.to_string(),
+        price_decimals: trade.price_decimals,
+        buyer: party(trade.buyer),
+        seller: party(trade.seller),
+        liquidity: match trade.liquidity {
+            Liquidity::Internalized => TradeLiquidity::Internalized,
+            Liquidity::Principal => TradeLiquidity::Principal,
+        },
+        aggressor: to_event_order_side(trade.aggressor),
+        house_inventory: trade.house_inventory.map(|movement| match movement {
+            InventoryMovement::HouseDelivers { from_float, minted } => {
+                HouseInventory::HouseDelivers { from_float, minted }
+            }
+            InventoryMovement::HouseReceives { to_float, retired } => {
+                HouseInventory::HouseReceives { to_float, retired }
+            }
+        }),
+        executed_at: trade.executed_at,
     }
 }
 
@@ -4333,6 +4447,150 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(quote.status(), StatusCode::NOT_FOUND);
+    }
+
+    async fn link_phantom_wallet(app: &Router, token: &str) {
+        let signing_key = ed25519_dalek::SigningKey::from_bytes(&[9_u8; 32]);
+        let address = bs58::encode(signing_key.verifying_key().as_bytes()).into_string();
+        let challenge = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/wallet/solana/challenges")
+                    .header("authorization", format!("Bearer {token}"))
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        serde_json::json!({ "address": address }).to_string(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let challenge = body_json(challenge).await;
+        let signature = ed25519_dalek::Signer::sign(
+            &signing_key,
+            challenge["message"].as_str().unwrap().as_bytes(),
+        );
+        let linked = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/wallet/link")
+                    .header("authorization", format!("Bearer {token}"))
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        serde_json::json!({
+                            "challenge_id": challenge["challenge_id"],
+                            "signature": BASE64.encode(signature.to_bytes())
+                        })
+                        .to_string(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(linked.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn orders_execute_against_the_matching_engine_and_publish_trades() {
+        let producer = Arc::new(messaging::InMemoryEventProducer::default());
+        let app = router_with_state(
+            GatewayStateBuilder::default()
+                .google(Arc::new(FakeGoogle))
+                .wallet_proof(Arc::new(FakeWalletProof))
+                .trusted_role_assignments(vec![TrustedRoleAssignment {
+                    issuer: "https://accounts.google.com".to_string(),
+                    subject: "subject-1".to_string(),
+                    role: UserRole::Trader,
+                }])
+                .security_policy(test_security_policy())
+                .event_producer(producer.clone())
+                .build(),
+        );
+        let (app, token) = login(app).await;
+        link_phantom_wallet(&app, &token).await;
+
+        let send = |method: &str, uri: String, body: Option<serde_json::Value>| {
+            let builder = Request::builder()
+                .method(method)
+                .uri(uri)
+                .header("authorization", format!("Bearer {token}"))
+                .header("content-type", "application/json");
+            let request = builder
+                .body(body.map_or_else(Body::empty, |body| Body::from(body.to_string())))
+                .unwrap();
+            app.clone().oneshot(request)
+        };
+
+        let placed = send(
+            "POST",
+            "/orders".into(),
+            Some(serde_json::json!({
+                "symbol": "dangcem",
+                "side": "buy",
+                "order_type": "market",
+                "quantity": "3",
+                "limit_price": null
+            })),
+        )
+        .await
+        .unwrap();
+        assert_eq!(placed.status(), StatusCode::OK);
+        let placed = body_json(placed).await;
+        assert_eq!(placed["state"], "filled");
+        assert_eq!(placed["filled_quantity"], "3");
+        assert_eq!(placed["fills"][0]["liquidity"], "principal");
+        // The response never reveals counterparties.
+        assert!(placed["fills"][0].get("seller").is_none());
+        let order_id = placed["order_id"].as_str().unwrap().to_string();
+
+        let order = send("GET", format!("/orders/{order_id}"), None)
+            .await
+            .unwrap();
+        assert_eq!(order.status(), StatusCode::OK);
+        assert_eq!(body_json(order).await["state"], "filled");
+        let orders = body_json(send("GET", "/orders".into(), None).await.unwrap()).await;
+        assert_eq!(orders.as_array().unwrap().len(), 1);
+        let portfolio = body_json(send("GET", "/portfolio".into(), None).await.unwrap()).await;
+        assert!(portfolio["balances"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|balance| balance["asset"] == "DANGCEM" && balance["total"] == "3"));
+
+        let unknown = send(
+            "POST",
+            "/orders".into(),
+            Some(serde_json::json!({
+                "symbol": "NOT-LISTED",
+                "side": "buy",
+                "order_type": "market",
+                "quantity": "1",
+                "limit_price": null
+            })),
+        )
+        .await
+        .unwrap();
+        assert_eq!(unknown.status(), StatusCode::BAD_REQUEST);
+
+        let trades: Vec<serde_json::Value> = producer
+            .published()
+            .await
+            .into_iter()
+            .filter(|(topic, _, _)| topic == events::topics::TRADING_TRADE_EXECUTED_V1)
+            .map(|(_, _, payload)| serde_json::from_slice(&payload).unwrap())
+            .collect();
+        assert_eq!(trades.len(), 1);
+        let trade = &trades[0]["payload"];
+        assert_eq!(trade["symbol"], "DANGCEM");
+        assert_eq!(trade["quantity"], "3");
+        assert_eq!(trade["seller"]["type"], "house");
+        assert_eq!(trade["buyer"]["order_id"], order_id.as_str());
+        assert_eq!(trade["house_inventory"]["type"], "house_delivers");
+        assert_eq!(trade["house_inventory"]["minted"], 3);
     }
 
     #[test]

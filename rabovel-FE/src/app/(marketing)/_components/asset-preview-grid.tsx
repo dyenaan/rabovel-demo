@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -34,30 +37,39 @@ export function AssetPreviewGrid() {
         </div>
 
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {featured.map((asset) => (
-            <Card key={asset.assetId} className="card-interactive">
-              <CardHeader>
-                <Badge variant="secondary" className="w-fit">
-                  {ASSET_CLASS_LABEL[asset.assetClass]}
-                </Badge>
-                <h3 className="mt-2 text-sm font-semibold text-foreground">{asset.name}</h3>
-                <p className="text-xs text-muted-foreground">{asset.symbol}</p>
-              </CardHeader>
-              <CardContent className="space-y-3 pb-6">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-xs text-muted-foreground">NAV</span>
-                  <Money value={asset.nav} className="text-sm font-medium" />
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-xs text-muted-foreground">Target Yield</span>
-                  <Percentage value={asset.yield} signed={false} className="text-sm font-medium" />
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-xs text-muted-foreground">Minimum</span>
-                  <Money value={asset.minimumInvestment} compact className="text-sm font-medium" />
-                </div>
-              </CardContent>
-            </Card>
+          {featured.map((asset, index) => (
+            <motion.div
+              key={asset.assetId}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.35, delay: index * 0.08 }}
+              whileHover={{ y: -8, scale: 1.01 }}
+            >
+              <Card className="card-interactive h-full">
+                <CardHeader>
+                  <Badge variant="secondary" className="w-fit">
+                    {ASSET_CLASS_LABEL[asset.assetClass]}
+                  </Badge>
+                  <h3 className="mt-2 text-sm font-semibold text-foreground">{asset.name}</h3>
+                  <p className="text-xs text-muted-foreground">{asset.symbol}</p>
+                </CardHeader>
+                <CardContent className="space-y-3 pb-6">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-muted-foreground">NAV</span>
+                    <Money value={asset.nav} className="text-sm font-medium" />
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-muted-foreground">Target Yield</span>
+                    <Percentage value={asset.yield} signed={false} className="text-sm font-medium" />
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-muted-foreground">Minimum</span>
+                    <Money value={asset.minimumInvestment} compact className="text-sm font-medium" />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
       </div>

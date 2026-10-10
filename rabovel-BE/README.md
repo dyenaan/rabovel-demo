@@ -21,6 +21,7 @@ flowchart LR
 - **Identity and access:** email/password demo authentication, bearer sessions, trusted demo-role assignment, rate limiting, Solana wallet challenges and ownership proof. EVM SIWE is also supported; legacy Google OIDC routes are retained but are not initialized by the current startup composition.
 - **Issuer lifecycle:** onboarding, asset drafts, simulated document-backed verification, metadata publishing, replay-safe mint setup, initial inventory issuance and explicit listing activation.
 - **Investor lifecycle:** live-asset catalog, verified-backing summary, simulated price feed, wallet/cNGN/equity balance checks, expiring quotes and purchase settlement.
+- **Instrument catalog:** `GET /instruments` serves a deterministic NGX-shaped demo catalog through an injectable provider. Its response is explicitly marked simulated; it does not fetch exchange data or authorize token issuance.
 - **Persistence:** Postgres stores users, wallets, KYC cases, issuer assets and setup operations; Redis stores sessions, challenges and rate-limit state. In-memory fallbacks are used when these services are not configured.
 - **Infrastructure:** Docker Compose runs Postgres, Redis, Kafka, the API and an OWASP ModSecurity reverse proxy. Debug builds expose Swagger UI.
 
@@ -47,7 +48,8 @@ See [Solana implementation notes](docs/solana.md) for the exact account and inst
 | `crates/domain` | Identity, roles, onboarding and authorization rules |
 | `crates/identity` / `crates/infrastructure` | Repository contracts and Postgres/Redis/Kafka/provider adapters |
 | `crates/solana-adapter` | Token-2022 minting, authorities, ACL/Gate instructions and RPC verification |
-| `crates/portfolio-trading` | Legacy portfolio/order contract with stub implementation |
+| `crates/matching-engine` | I/O-free principal-backed matching: client book, house quote, float/mint inventory and hedge netting |
+| `crates/portfolio-trading` | Portfolio/order contract; engine-backed service used by `/orders` and `/portfolio` |
 | `migrations` | Postgres schema |
 
 ## Run locally
@@ -81,6 +83,15 @@ RABOVEL_BROKER_KEYPAIR_BASE64=base64_keypair_json
 RABOVEL_ISSUER_KEYPAIR_BASE64=base64_keypair_json
 RABOVEL_MINT_DERIVATION_SECRET=at_least_64_hex_characters
 RABOVEL_CNGN_MINT_ADDRESS=replace-with-mint
+
+# Optional principal-desk settings (defaults in HouseLimits)
+RABOVEL_HOUSE_FLOAT=DANGCEM=1000,GTCO=500
+RABOVEL_HOUSE_HALF_SPREAD_BPS=50
+RABOVEL_HOUSE_MAX_LONG=100000
+RABOVEL_HOUSE_MAX_SHORT=100000
+RABOVEL_HOUSE_MAX_MINTED_UNBACKED=100000
+RABOVEL_HOUSE_MAX_ORDER_QUANTITY=10000
+RABOVEL_HOUSE_MAX_PRICE_AGE_SECONDS=60
 ```
 
 All six Solana setup variables must be supplied together. Base64 is encoding, not encryption; use development keys only and store them as deployment secrets.
@@ -103,7 +114,9 @@ For source development and verification commands, see [docs/commands.md](docs/co
 | Issuers | `/issuer/overview`, `/issuer/onboarding`, `/issuer/assets/*` |
 | Payment asset | `/payment-assets/cngn` |
 | Investors | `/investor/catalog`, `/investor/quote`, `/investor/purchase/prepare`, `/investor/purchase/submit` |
-| Legacy stubs | `/portfolio`, `/orders`, `/tokenization/requests` |
+| Instruments | `/instruments` |
+| Trading | `/orders` (place/list), `/orders/:order_id` (get/cancel), `/portfolio` |
+| Legacy stubs | `/tokenization/requests` |
 
 Authenticated routes use `Authorization: Bearer <token>`. The frontend demo should deploy with `RABOVEL_DEMO_MODE=true`: this bypasses onboarding checks that have no UI/endpoints yet, while preserving role, permission, linked-wallet, balance, inventory and transaction-signature checks.
 
@@ -112,7 +125,7 @@ Authenticated routes use `Authorization: Bearer <token>`. The frontend demo shou
 - Backing documents are metadata only; upload, custody evidence and admin review are simulated.
 - KYC approval and the deterministic market-price feed are simulated.
 - Purchase confirmation is real on-chain, but there is no durable purchase/settlement ledger, cost-basis history, reconciliation or automatic recovery after ambiguous RPC outcomes.
-- `/portfolio` and `/orders` remain legacy stubs; the demo dashboard derives current holdings from live on-chain catalog balances.
+- `/orders` executes instantly against the in-memory matching engine (catalog instruments only). Engine state is lost on restart, there are no buying-power/balance checks yet, and fills are not yet settled on-chain; `/portfolio` shows net matched-trade balances, not on-chain holdings. See [the plan](docs/plans/principal-matching-engine.md).
 - Kafka publishing is not transactional, and the settlement, reconciliation and tokenization workers are shells.
 - Strict policy requires MFA and trusted-device state, but enrollment endpoints do not exist; demo mode intentionally relaxes those checks.
 - Hosted keys are process secrets rather than HSM/MPC-backed production custody.

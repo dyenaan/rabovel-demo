@@ -22,6 +22,13 @@ cargo test --workspace --locked
 docker build -t rabovel/api:ci .
 ```
 
+To test in Docker on the pinned toolchain, use the on-demand `tests` compose service (profile `test`). It defaults to `matching-engine` and accepts any cargo command:
+
+```bash
+docker compose run --rm tests
+docker compose run --rm tests cargo test --workspace --locked
+```
+
 Use `cargo fmt -p <package>` to format a changed crate. `--offline` can be added to adapter tests/Clippy when dependencies are already cached, as in the existing ACL runbook.
 
 ## Development

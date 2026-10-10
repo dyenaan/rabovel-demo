@@ -1,4 +1,5 @@
 pub(crate) mod auth;
+pub(crate) mod instruments;
 pub(crate) mod issuer;
 pub(crate) mod kyc;
 pub(crate) mod onboarding;

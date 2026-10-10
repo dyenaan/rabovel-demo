@@ -3,9 +3,9 @@
 ## Implemented now
 
 1. The API authenticates the session and authorizes the order action (`place_order_handler` in `apps/rabovel-api/src/lib.rs`). Default onboarding currently prevents normal users from passing the financial gate; see [domain.md](domain.md).
-2. If authorized, `StubPortfolioTradingService` validates quantity minimally and returns a process-local order ID. No order is persisted, matched or executed.
-3. The gateway awaits publication of `OrderAccepted` through `events` and discards publication errors before returning the acknowledgment. A successful HTTP response does not establish durable event delivery.
-4. The order path ends there. No current worker consumes `OrderAccepted` to execute trades, and no matching engine publishes `TradeExecuted`.
+2. If authorized, `EngineTradingService` (`crates/portfolio-trading`) validates the order exactly in integer units. Only symbols in the instrument catalog are accepted, and the reference price comes from the price feed. The service then executes the order immediately on the in-memory principal matching engine (`crates/matching-engine`). Orders, fills and net balances are process-local and lost on restart.
+3. The gateway publishes `OrderAccepted`, then one fill-level `TradeExecuted` per trade (buyer/seller, liquidity source and house inventory movement). It discards publication errors before returning the acknowledgment, so a successful HTTP response does not establish durable event delivery.
+4. The order path ends there. The settlement worker only logs `TradeExecuted`; fills are not yet delivered on-chain.
 5. Separately, authorized tokenization requests publish `TokenizationRequested` and return an ID. The tokenization worker only logs requests; the HTTP status endpoint always says `pending`.
 6. The settlement worker only logs `TradeExecuted` and `TokenizationCompleted`. Reconciliation only logs those plus `PortfolioChanged`. These subscriptions do not create settlement state or submit chain transactions.
 

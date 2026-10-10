@@ -2302,6 +2302,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "matching-engine"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "matchit"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2851,6 +2859,7 @@ name = "portfolio-trading"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "matching-engine",
  "serde",
  "thiserror 1.0.69",
  "tokio",
