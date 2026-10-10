@@ -33,16 +33,24 @@ Use `cargo fmt -p <package>` to format a changed crate. `--offline` can be added
 
 ## Development
 
-Configure environment variables using [README configuration](../README.md#configuration) and [quick start](../README.md#quick-start), preserving existing local secrets. The source binary reads exported process variables, not `.env` automatically. Host-run services require localhost backend URLs; Compose service names apply inside its network.
+Configure the git-ignored `.env` using [Run locally](../README.md#run-locally), preserving existing local secrets. Use localhost URLs for Postgres and Redis, leave `KAFKA_BOOTSTRAP_SERVERS` unset, and match `RABOVEL_PUBLIC_ORIGIN` to the local frontend origin. The source binary does not load `.env` itself; Cargo Watch loads it for the child process.
 
 ```bash
-docker compose up -d --build
-curl -s http://localhost:3000/health
+docker compose up -d --wait
+cargo watch --env-file .env -x 'run -p rabovel-api --locked'
 ```
 
-For a source-run API, start dependencies with `docker compose up -d postgres redis kafka`, export the required configuration, then run `cargo run -p rabovel-api`. Migrations run on API startup when Postgres is configured. Debug builds expose `/swagger-ui`; release builds do not.
+In another terminal:
 
-With Kafka running, worker binaries can be run individually:
+```bash
+curl -f http://localhost:8080/health
+```
+
+Default Compose startup runs only Postgres and Redis, bound to localhost. Redis has a 25 MB memory limit and `noeviction`; the test runner remains opt-in. The API runs in the terminal and migrations run at startup. Debug builds expose `/swagger-ui`; release builds do not. Point the frontend at `http://localhost:8080` and disable its mock API mode.
+
+If `cargo watch` is missing, install it with `cargo install cargo-watch --locked`. Restart Cargo Watch after changing `.env`. If a parent shell exports `KAFKA_BOOTSTRAP_SERVERS`, unset it there too. To retire containers left from the previous stack without deleting named volumes, run `docker compose up -d --wait --remove-orphans` once. Do not use `down -v` to preserve data.
+
+Kafka is not provisioned by this Compose file. If you separately provision a broker, the optional worker shells can be run individually:
 
 ```bash
 RUST_LOG=info KAFKA_BOOTSTRAP_SERVERS=localhost:9092 cargo run -p settlement-worker

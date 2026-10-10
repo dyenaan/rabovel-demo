@@ -8,14 +8,11 @@ This is a working demo, not a production brokerage. KYC, backing verification an
 
 ```mermaid
 flowchart LR
-  FE[Next.js frontend] --> WAF[ModSecurity WAF :3000]
-  WAF --> API[Axum API :8080]
+  FE[Next.js frontend] --> API[Axum API :8080 / Cargo Watch]
   API --> PG[(Postgres)]
   API --> RD[(Redis)]
   API --> SOL[Solana RPC]
   API --> SB[Supabase metadata]
-  API -. events .-> K[(Kafka)]
-  K -.-> WK[Worker shells]
 ```
 
 - **Identity and access:** email/password demo authentication, bearer sessions, trusted demo-role assignment, rate limiting, Solana wallet challenges and ownership proof. EVM SIWE is also supported; legacy Google OIDC routes are retained but are not initialized by the current startup composition.
@@ -23,7 +20,7 @@ flowchart LR
 - **Investor lifecycle:** live-asset catalog, verified-backing summary, simulated price feed, wallet/cNGN/equity balance checks, expiring quotes and purchase settlement.
 - **Instrument catalog:** `GET /instruments` serves a deterministic NGX-shaped demo catalog through an injectable provider. Its response is explicitly marked simulated; it does not fetch exchange data or authorize token issuance.
 - **Persistence:** Postgres stores users, wallets, KYC cases, issuer assets and setup operations; Redis stores sessions, challenges and rate-limit state. In-memory fallbacks are used when these services are not configured.
-- **Infrastructure:** Docker Compose runs Postgres, Redis, Kafka, the API and an OWASP ModSecurity reverse proxy. Debug builds expose Swagger UI.
+- **Local infrastructure:** Docker Compose runs Postgres and Redis. The API runs on the host through Cargo Watch; Kafka and the WAF are not part of this local setup. Debug builds expose Swagger UI.
 
 ## Solana integration
 
@@ -54,7 +51,7 @@ See [Solana implementation notes](docs/solana.md) for the exact account and inst
 
 ## Run locally
 
-Prerequisites: Rust 1.98, Docker and Docker Compose.
+Prerequisites: Rust 1.98 or newer, Docker, Docker Compose, and Cargo Watch (`cargo install cargo-watch --locked` if missing).
 
 Create a git-ignored `.env`:
 
@@ -62,11 +59,10 @@ Create a git-ignored `.env`:
 POSTGRES_USER=rabovel
 POSTGRES_PASSWORD=change-me
 POSTGRES_DB=rabovel
-DATABASE_URL=postgres://rabovel:change-me@postgres:5432/rabovel
+DATABASE_URL=postgres://rabovel:change-me@localhost:5432/rabovel
 
 REDIS_PASSWORD=change-me
-REDIS_URL=redis://:change-me@redis:6379/0
-KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+REDIS_URL=redis://:change-me@localhost:6379/0
 RABOVEL_PUBLIC_ORIGIN=http://localhost:3001
 
 RABOVEL_DEMO_MODE=true
@@ -97,11 +93,17 @@ RABOVEL_HOUSE_MAX_PRICE_AGE_SECONDS=60
 All six Solana setup variables must be supplied together. Base64 is encoding, not encryption; use development keys only and store them as deployment secrets.
 
 ```bash
-docker compose up -d --build
-curl -s http://localhost:3000/health
+docker compose up -d --wait
+cargo watch --env-file .env -x 'run -p rabovel-api --locked'
 ```
 
-The WAF exposes port `3000` and proxies to the API on internal port `8080`. Migrations run at API startup. Debug builds provide `/swagger-ui` and `/api-docs/openapi.json`.
+In another terminal, check `curl -f http://localhost:8080/health`. Cargo Watch loads the local `.env` and rebuilds/restarts the API when source changes. Migrations run at API startup. Debug builds provide `/swagger-ui` and `/api-docs/openapi.json` on port `8080`.
+
+Postgres and Redis publish ports only on `127.0.0.1`; `POSTGRES_PORT` and `REDIS_PORT` can override the defaults. Match those ports in `DATABASE_URL` and `REDIS_URL`. Redis uses `maxmemory 25mb` and `noeviction`, so memory-consuming writes fail when full rather than evicting security records; normal TTL expiration continues.
+
+Run the frontend on port `3001` (`pnpm dev --port 3001`), set its local `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080` and `NEXT_PUBLIC_USE_MOCK_API=false`, and match `RABOVEL_PUBLIC_ORIGIN` to `http://localhost:3001`. Local settings do not change Render or Vercel configuration. Keep `KAFKA_BOOTSTRAP_SERVERS` unset so the API uses its no-op event producer.
+
+If containers from the previous Compose setup still run, use `docker compose up -d --wait --remove-orphans` once to remove the retired API/WAF/Kafka containers. This preserves their named volumes. Avoid `docker compose down -v` when retaining local data.
 
 For source development and verification commands, see [docs/commands.md](docs/commands.md).
 

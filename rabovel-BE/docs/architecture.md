@@ -25,8 +25,10 @@ Dependency direction is `apps → domain crates + infrastructure`. Infrastructur
 
 ## Current execution
 
-The WAF exposes host port 3000 and proxies to `rabovel-api` on internal port 8080. `RABOVEL_BIND_ADDR` overrides the bind address. Postgres holds durable identity/KYC data, Redis holds sessions and one-use challenges, and Kafka carries integration events.
+Local Compose runs only Postgres and Redis, with ports bound to `127.0.0.1`. The API runs on the host through Cargo Watch at `http://localhost:8080`; `RABOVEL_BIND_ADDR` overrides its bind address. Postgres holds durable identity/KYC data, and Redis holds sessions, one-use challenges and rate-limit state with a 25 MB memory limit and `noeviction`. The optional test container runs only when explicitly requested.
+
+Kafka and the WAF are not part of the local stack. Leave `KAFKA_BOOTSTRAP_SERVERS` unset to select the no-op event producer; a separately configured Kafka broker enables the existing event adapter.
 
 The API preserves the existing routes and bearer-session behavior. Workers still log events and start from the earliest offset; durable checkpoints and idempotent handling are required before they perform side effects. Event publication still lacks a transactional outbox.
 
-The Solana adapter is not wired to the API or workers. Validator-backed tests remain opt-in.
+The API calls the Solana adapter directly for mint setup, issuance and purchases; worker shells do not execute these operations. Validator-backed tests remain opt-in.
