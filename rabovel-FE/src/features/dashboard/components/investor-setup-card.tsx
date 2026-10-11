@@ -36,14 +36,14 @@ export function InvestorSetupCard() {
       <CardHeader>
         <CardTitle>{complete ? "You’re ready to invest" : "Get ready to invest"}</CardTitle>
         <CardDescription>
-          Connect your Phantom wallet, add cNGN as your payment method, then purchase any live equity.
+          Connect your payment wallet, add demo funds, then choose an asset.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <ol className="grid gap-3 md:grid-cols-3">
-          <Step number={1} title="Connect wallet" description="Verify ownership with Phantom." complete={hasSolanaWallet} icon={Wallet} />
-          <Step number={2} title="Fund with cNGN" description="Create the account and add demo cNGN." complete={hasFunds} icon={Coins} />
-          <Step number={3} title="Buy an asset" description="Review a quote and settle on-chain." complete={false} icon={ShoppingBag} />
+          <Step number={1} title="Connect payments" description="One-time setup with Phantom." complete={hasSolanaWallet} icon={Wallet} />
+          <Step number={2} title="Add demo funds" description="Set up your cNGN payment balance." complete={hasFunds} icon={Coins} />
+          <Step number={3} title="Buy an asset" description="Review the total and confirm your purchase." complete={false} icon={ShoppingBag} />
         </ol>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -51,7 +51,7 @@ export function InvestorSetupCard() {
             <ConnectWalletDialog label="Connect Phantom wallet" />
           ) : !hasFunds ? (
             <Button asChild>
-              <Link href="/wallet">Set up and fund cNGN <ArrowRight /></Link>
+              <Link href="/wallet">Add demo funds <ArrowRight /></Link>
             </Button>
           ) : (
             <Button asChild>
@@ -62,7 +62,7 @@ export function InvestorSetupCard() {
             <p role="alert" className="text-sm text-destructive">Could not check your linked wallets.</p>
           )}
           {hasSolanaWallet && !useMockApi && cngn.isError && (
-            <p role="alert" className="text-sm text-destructive">Could not check your cNGN account. Open Wallet to retry.</p>
+            <p role="alert" className="text-sm text-destructive">Could not check your cNGN account. Open Account & Payments to retry.</p>
           )}
         </div>
       </CardContent>

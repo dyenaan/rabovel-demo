@@ -32,6 +32,7 @@ export function InvestorQuoteDialog({ asset, open, onOpenChange, paymentDecimals
     if (!nextOpen) {
       setQuantity("1");
       quote.reset();
+      purchase.reset();
     }
     onOpenChange(nextOpen);
   }
@@ -50,7 +51,7 @@ export function InvestorQuoteDialog({ asset, open, onOpenChange, paymentDecimals
         <DialogHeader>
           <DialogTitle>Buy {asset.ticker}</DialogTitle>
           <DialogDescription>
-            Request a short-lived quote against the live issuer inventory and your cNGN balance.
+            Choose how many units to buy, then review your total in cNGN.
           </DialogDescription>
         </DialogHeader>
 
@@ -73,19 +74,20 @@ export function InvestorQuoteDialog({ asset, open, onOpenChange, paymentDecimals
             </div>
             <p className="text-xs text-muted-foreground">
               Simulated market feed updated {new Date(quote.data.price_updated_at * 1000).toLocaleTimeString()}.
-              Quote expires {new Date(quote.data.expires_at * 1000).toLocaleTimeString()} and validates live funds and inventory.
+              Price valid until {new Date(quote.data.expires_at * 1000).toLocaleTimeString()}. Availability and balance are checked before purchase.
             </p>
+            <p className="text-sm text-muted-foreground">Phantom will open to approve this purchase. Network fees may also apply.</p>
             <DialogFooter>
-              <Button variant="outline" onClick={() => quote.reset()}>
+              <Button variant="outline" disabled={purchase.isPending} onClick={() => { quote.reset(); purchase.reset(); }}>
                 Change quantity
               </Button>
-              <Button disabled={purchase.isPending} onClick={() => purchase.mutate({ assetId: asset.asset_id, quantity: quote.data!.quantity, expectedTotal: quote.data!.total_payment }, { onSuccess: () => onOpenChange(false) })}>{purchase.isPending ? "Confirming in Phantom…" : "Confirm purchase"}</Button>
+              <Button disabled={purchase.isPending} onClick={() => purchase.mutate({ assetId: asset.asset_id, quantity: quote.data!.quantity, expectedTotal: quote.data!.total_payment }, { onSuccess: () => onOpenChange(false) })}>{purchase.isPending ? "Processing purchase…" : "Confirm purchase"}</Button>
             </DialogFooter>
           </div>
         ) : (
           <form className="space-y-4" onSubmit={submit}>
             <div className="space-y-2">
-              <Label htmlFor={`quantity-${asset.asset_id}`}>Whole units</Label>
+              <Label htmlFor={`quantity-${asset.asset_id}`}>Number of units</Label>
               <Input
                 id={`quantity-${asset.asset_id}`}
                 inputMode="numeric"
@@ -106,11 +108,12 @@ export function InvestorQuoteDialog({ asset, open, onOpenChange, paymentDecimals
                 Cancel
               </Button>
               <Button type="submit" disabled={!validQuantity || quote.isPending}>
-                {quote.isPending ? "Checking funds…" : "Review quote"}
+                {quote.isPending ? "Checking funds…" : "Review purchase"}
               </Button>
             </DialogFooter>
           </form>
         )}
+        {(quote.error || purchase.error) && <p role="alert" className="text-sm text-destructive">{(quote.error || purchase.error)?.message}</p>}
       </DialogContent>
     </Dialog>
   );

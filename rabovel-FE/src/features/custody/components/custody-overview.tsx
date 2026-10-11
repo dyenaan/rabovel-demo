@@ -7,24 +7,18 @@ import { useWallets } from "../hooks/use-wallets";
 export function CustodyOverview() {
   const { data } = useWallets();
   const wallets = data ?? [];
-  const networks = new Set(wallets.map((w) => w.blockchain)).size;
   const active = wallets.filter((w) => w.status === "ACTIVE").length;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2">
       <Card>
         <CardContent className="pt-6">
-          <FinancialMetric label="Bound Wallets" value={wallets.length} />
+          <FinancialMetric label="Payment connections" value={wallets.length} />
         </CardContent>
       </Card>
       <Card>
         <CardContent className="pt-6">
-          <FinancialMetric label="Active" value={active} />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-6">
-          <FinancialMetric label="Networks" value={networks} />
+          <FinancialMetric label="Active connections" value={active} />
         </CardContent>
       </Card>
     </div>

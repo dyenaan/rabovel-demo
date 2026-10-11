@@ -47,16 +47,25 @@ export function InvestorCngnCard() {
   return <Card>
     <CardHeader>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><CardTitle className="flex items-center gap-2"><WalletCards className="size-5" />Investor cNGN funding</CardTitle><CardDescription className="mt-1">Create your cNGN token account, then copy that token-account address into the devnet faucet.</CardDescription></div>
-        <div className="flex items-center gap-2"><Badge variant={status?.ready ? "success" : "warning"}>{status?.ready ? "Ready" : "Not ready"}</Badge>{status && !status.account_verified && <Button size="sm" disabled={creating || loading} onClick={() => void createAccount()}>{creating && <RefreshCw className="animate-spin" />}{creating ? "Creating…" : "Create cNGN account"}</Button>}<Button size="icon" variant="outline" disabled={!userId || loading || creating} onClick={() => void refresh()} aria-label="Refresh cNGN balance"><RefreshCw className={loading ? "animate-spin" : undefined} /></Button></div>
+        <div><CardTitle className="flex items-center gap-2"><WalletCards className="size-5" />Available balance</CardTitle><CardDescription className="mt-1">Set up your payment balance and add demo cNGN to try investing. Demo funds have no real monetary value.</CardDescription></div>
+        <div className="flex items-center gap-2"><Badge variant={status?.ready ? "success" : "warning"}>{status?.ready ? "Ready" : "Not ready"}</Badge>{status && !status.account_verified && <Button size="sm" disabled={creating || loading} onClick={() => void createAccount()}>{creating && <RefreshCw className="animate-spin" />}{creating ? "Creating…" : "Set up payments"}</Button>}<Button size="icon" variant="outline" disabled={!userId || loading || creating} onClick={() => void refresh()} aria-label="Refresh cNGN balance"><RefreshCw className={loading ? "animate-spin" : undefined} /></Button></div>
       </div>
     </CardHeader>
     <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
-      <Detail label="Network" value={status?.network ?? (loading ? "Loading…" : "Unavailable")} />
-      <Detail label="Balance" value={displayBalance(status)} />
-      <Address label="Phantom wallet" value={status?.wallet_address} />
-      <Address label="cNGN faucet recipient" value={status?.token_account} hint="Send faucet tokens to this token-account address, not the wallet address above." />
-      <Address label="cNGN mint" value={status?.mint_address} />
+      <Detail label="Available to invest" value={loading ? "Loading…" : displayBalance(status)} />
+      <div className="sm:col-span-2 rounded-lg border bg-muted/20 p-4 space-y-3">
+        <p className="font-medium">Add demo funds</p>
+        <p className="text-xs text-muted-foreground">After setting up payments, copy the funding address below into the cNGN devnet faucet. Refresh your balance when the transfer completes. Bank and card deposits are not available.</p>
+        <Address label="Demo funding address" value={status?.token_account} hint="Use this exact token-account address in the faucet, rather than your Phantom wallet address." />
+      </div>
+      <details className="sm:col-span-2 text-xs">
+        <summary className="cursor-pointer text-muted-foreground">Technical details</summary>
+        <div className="mt-3 grid gap-4">
+          <Detail label="Network" value={status?.network ?? "Unavailable"} />
+          <Address label="Phantom wallet" value={status?.wallet_address} />
+          <Address label="cNGN mint" value={status?.mint_address} />
+        </div>
+      </details>
       {error && <p role="alert" className="sm:col-span-2 text-destructive">{error}</p>}
       {status?.error && <p className="sm:col-span-2 text-amber-700 dark:text-amber-300">{status.error}</p>}
     </CardContent>

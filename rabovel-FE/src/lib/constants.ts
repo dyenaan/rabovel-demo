@@ -18,7 +18,7 @@ export const NAV_LINKS = {
     { label: "Orders", href: "/orders" },
     { label: "Trades", href: "/trades" },
     { label: "Settlements", href: "/settlements" },
-    { label: "Wallet", href: "/wallet" },
+    { label: "Account & Payments", href: "/wallet" },
     { label: "Documents", href: "/documents" },
     { label: "Security", href: "/security" },
   ],

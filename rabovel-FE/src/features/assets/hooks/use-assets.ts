@@ -90,14 +90,14 @@ export function useInvestorPurchase() {
       const signed = await provider.signTransaction(transaction);
       return submitInvestorPurchase(encodeBase64(signed.serialize()));
     },
-    onSuccess: (settlement, purchase) => {
+    onSuccess: (_settlement, purchase) => {
       queryClient.setQueryData<InvestorCatalog>(["investor", "catalog"], (catalog) =>
         catalog ? applyConfirmedPurchase(catalog, purchase) : catalog,
       );
       window.setTimeout(() => {
         void queryClient.invalidateQueries({ queryKey: ["investor", "catalog"] });
       }, 2_000);
-      toast.success(`Purchase confirmed on-chain: ${shortSignature(settlement.signature)}`);
+      toast.success("Purchase complete. Your holdings have been updated.");
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Purchase settlement failed.");
@@ -150,8 +150,4 @@ function encodeBase64(value: Uint8Array) {
   let binary = "";
   for (const byte of value) binary += String.fromCharCode(byte);
   return window.btoa(binary);
-}
-
-function shortSignature(value: string) {
-  return `${value.slice(0, 6)}…${value.slice(-6)}`;
 }

@@ -11,7 +11,7 @@ const PRIMARY_ITEMS: BottomNavLinkItem[] = [
   { label: "Home", href: "/dashboard", icon: LayoutDashboard },
   { label: "Assets", href: "/assets", icon: Building2 },
   { label: "Trade", href: "/trade", icon: Repeat },
-  { label: "Wallet", href: "/wallet", icon: Wallet },
+  { label: "Payments", href: "/wallet", icon: Wallet },
 ];
 
 export function AppBottomNav() {

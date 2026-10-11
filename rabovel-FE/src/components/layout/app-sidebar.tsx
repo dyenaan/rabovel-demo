@@ -54,7 +54,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     title: "Account",
     items: [
-      { label: "Wallet", href: "/wallet", icon: Wallet },
+      { label: "Account & Payments", href: "/wallet", icon: Wallet },
       { label: "Documents", href: "/documents", icon: FileText },
       { label: "Security", href: "/security", icon: ShieldCheck },
     ],

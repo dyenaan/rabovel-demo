@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { useConnectWallet } from "../hooks/use-wallets";
 
-export function ConnectWalletDialog({ label = "Bind Wallet" }: { label?: string }) {
+export function ConnectWalletDialog({ label = "Connect Phantom" }: { label?: string }) {
   const [open, setOpen] = useState(false);
   const connectWallet = useConnectWallet();
 
@@ -39,10 +40,11 @@ export function ConnectWalletDialog({ label = "Bind Wallet" }: { label?: string 
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Bind a custody wallet</DialogTitle>
+          <DialogTitle>Connect your payment wallet</DialogTitle>
+          <DialogDescription>Use Phantom to approve purchases and receive your holdings.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 text-sm">
-          <div className="flex gap-3 rounded-lg border bg-muted/30 p-4"><ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" /><div><p className="font-medium">Cryptographic ownership check</p><p className="mt-1 text-muted-foreground">Phantom will connect your Solana address and ask you to sign a one-time Rabovel message. Signing does not submit a transaction or spend SOL.</p></div></div>
+          <div className="flex gap-3 rounded-lg border bg-muted/30 p-4"><ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" /><div><p className="font-medium">Confirm this wallet belongs to you</p><p className="mt-1 text-muted-foreground">Phantom will ask you to approve a one-time verification message. This step does not make a purchase or spend funds.</p></div></div>
           <p className="text-xs text-muted-foreground">
             Rabovel never requests your private key or seed phrase. Reject the request if the message is not from this application.
           </p>
@@ -53,7 +55,7 @@ export function ConnectWalletDialog({ label = "Bind Wallet" }: { label?: string 
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={connectWallet.isPending}>
-            {connectWallet.isPending ? "Waiting for Phantom…" : "Connect and verify Phantom"}
+            {connectWallet.isPending ? "Waiting for Phantom…" : "Continue with Phantom"}
           </Button>
         </DialogFooter>
       </DialogContent>

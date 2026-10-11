@@ -33,6 +33,10 @@ The gateway stores backend bearer credentials in a host-only HttpOnly, SameSite=
 
 See the [hardening rollout](../../rabovel-BE/docs/plans/public-demo-hardening.md). Role assignment, public issuer safeguards, spend quotas and browser security policy remain later slices. WebSocket transport and fixture-backed screens are not enabled by this gateway.
 
+## Investor account and purchase presentation
+
+The `/wallet` route is labeled Account & Payments (Payments in mobile navigation). Investor setup, the asset catalog and purchase review emphasize available cNGN balance, units and holdings. Wallet addresses, network and mint/token-account identifiers sit in expandable details; the demo funding address stays visible because the faucet still requires it. Demo and simulated-price disclosures remain visible. Phantom still verifies wallet ownership and signs purchases; the confirmation screen explains that approval and potential network fees. Embedded signing, fee sponsorship and bank/card funding are not implemented by this presentation change.
+
 ## Browser security boundary
 
 `src/proxy.ts` generates a fresh script nonce and CSP for page requests. The root layout reads the nonce, making pages dynamic, and passes it through to next-themes. Nonce-bearing HTML is private/no-store. Baseline headers are configured in `next.config.ts`. External browser connections are limited to the configured storage origin and optional WebSocket origin; issuer images remain HTTPS-capable. Inline styles remain permitted for existing UI libraries, while production inline scripts require a nonce. See the [operations runbook](../../rabovel-BE/docs/public-demo-operations.md) for deployment settings and browser verification.

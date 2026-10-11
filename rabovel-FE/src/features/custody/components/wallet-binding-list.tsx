@@ -10,13 +10,13 @@ import { WalletCard } from "./wallet-card";
 export function WalletBindingList() {
   const { data, isPending } = useWallets();
 
-  if (isPending) return <LoadingState label="Loading wallets…" />;
+  if (isPending) return <LoadingState label="Loading payment connections…" />;
   if (!data || data.length === 0) {
     return (
       <EmptyState
         icon={WalletIcon}
-        title="No wallets bound"
-        description="Bind a custody wallet to receive settlement of tokenized assets."
+        title="Connect a payment wallet"
+        description="Connect Phantom to approve purchases and receive your holdings."
       />
     );
   }

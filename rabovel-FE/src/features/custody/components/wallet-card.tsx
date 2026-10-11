@@ -15,10 +15,11 @@ export function WalletCard({ wallet }: { wallet: Wallet }) {
             <p className="text-sm font-medium text-foreground">{wallet.label}</p>
             {wallet.isPrimary && <Star className="size-3.5 fill-warning text-warning" />}
           </div>
-          <div className="flex items-center gap-2">
-            <NetworkBadge blockchain={wallet.blockchain} />
-            <AddressDisplay address={wallet.address} />
-          </div>
+          <details className="text-xs">
+            <summary className="cursor-pointer text-muted-foreground">Connection details</summary>
+            <div className="mt-2 flex flex-wrap items-center gap-2"><NetworkBadge blockchain={wallet.blockchain} />
+            <AddressDisplay address={wallet.address} /></div>
+          </details>
         </div>
         <StatusBadge status={wallet.status} />
       </CardContent>
