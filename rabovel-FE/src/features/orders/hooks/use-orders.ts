@@ -1,5 +1,6 @@
 "use client";
 
+import { livePollInterval } from "@/lib/api/client";
 import { useQuery } from "@tanstack/react-query";
 
 import { QUERY_STALE_TIME } from "@/lib/constants";
@@ -11,6 +12,7 @@ export function useOrders() {
     queryKey: queryKeys.orders.all,
     queryFn: getOrders,
     staleTime: QUERY_STALE_TIME.short,
+    refetchInterval: livePollInterval,
   });
 }
 
@@ -20,5 +22,6 @@ export function useOrder(orderId: string) {
     queryFn: () => getOrder(orderId),
     staleTime: QUERY_STALE_TIME.short,
     enabled: !!orderId,
+    refetchInterval: livePollInterval,
   });
 }

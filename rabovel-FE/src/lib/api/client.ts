@@ -102,3 +102,10 @@ export function createIdempotencyKey(): string {
 }
 
 export const isMockApiEnabled = useMockApi;
+
+/**
+ * Real mode without a WebSocket stream polls live data (prices, book, tape,
+ * portfolio) on the backend's 5-second price tick.
+ */
+export const livePollInterval: number | false =
+  !useMockApi && !env.NEXT_PUBLIC_WS_URL ? 5_000 : false;

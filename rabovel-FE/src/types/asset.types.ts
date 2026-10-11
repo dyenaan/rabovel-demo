@@ -48,6 +48,10 @@ export type Asset = {
   contractAddress?: string;
 
   documents?: AssetDocument[];
+
+  /** Backend catalog only: assets and markets are one catalog of instruments. */
+  marketId?: string;
+  origin?: "ngx_listed" | "issuer";
 };
 
 export type AssetDocument = {

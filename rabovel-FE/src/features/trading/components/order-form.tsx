@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { createIdempotencyKey } from "@/lib/api/client";
+import { createIdempotencyKey, isMockApiEnabled } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/formatters";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -42,8 +42,12 @@ export function OrderForm({ market }: { market: Market }) {
   const { data: portfolio } = usePortfolioSummary();
   const placeOrder = usePlaceOrder();
 
-  const investor = mockInvestors.find((i) => i.investorId === user?.investorId) ?? mockInvestors[0];
-  const isEligible = investor.eligibilityStatus === "ELIGIBLE";
+  // Real mode: the server's onboarding decision from /auth/me. The backend
+  // still authorizes every order; this only drives the form's checklist.
+  const isEligible = isMockApiEnabled
+    ? (mockInvestors.find((i) => i.investorId === user?.investorId) ?? mockInvestors[0])
+        .eligibilityStatus === "ELIGIBLE"
+    : user?.onboardingStatus === "approved";
   const isMarketOpen = market.status === "OPEN";
 
   const form = useForm<OrderFormValues>({

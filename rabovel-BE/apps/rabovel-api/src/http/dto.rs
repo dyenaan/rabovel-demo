@@ -362,3 +362,165 @@ pub struct PurchaseSettlementResponse {
     pub signature: String,
     pub status: String,
 }
+
+/// One tradable market, in the frontend `Market` shape. NGX-listed and
+/// issuer-listed instruments share this shape and the `mkt_<market>_<ticker>`
+/// id format.
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct MarketResponse {
+    pub market_id: String,
+    pub symbol: String,
+    pub asset_name: String,
+    pub base_asset: String,
+    pub quote_asset: String,
+    pub last_price: String,
+    pub bid: Option<String>,
+    pub ask: String,
+    pub status: String,
+    pub price_change_24h: String,
+    pub price_change_percent_24h: String,
+    pub high_24h: String,
+    pub low_24h: String,
+    /// Units traded on the Rabovel engine in the last 24h.
+    pub volume_24h: String,
+    pub origin: crate::InstrumentOrigin,
+    pub asset_id: String,
+    pub mint_address: Option<String>,
+    pub settlement_currency: String,
+    pub price_source: String,
+    pub price_updated_at: u64,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MarketListResponse {
+    pub data: Vec<MarketResponse>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MarketDetailResponse {
+    pub data: MarketResponse,
+}
+
+/// `{ "data": ... }` envelope the frontend `apiClient` unwraps.
+#[derive(Debug, Serialize)]
+pub struct Data<T> {
+    pub data: T,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct OrderBookLevelResponse {
+    pub price: String,
+    pub size: String,
+    /// Cumulative size from the best level.
+    pub total: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct OrderBookResponse {
+    pub market_id: String,
+    pub bids: Vec<OrderBookLevelResponse>,
+    pub asks: Vec<OrderBookLevelResponse>,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct PricePointResponse {
+    pub timestamp: String,
+    pub open: String,
+    pub high: String,
+    pub low: String,
+    pub close: String,
+    pub volume: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct PublicTradeResponse {
+    pub trade_id: String,
+    pub market_id: String,
+    pub price: String,
+    pub quantity: String,
+    /// `BUY` or `SELL`: the side that took liquidity.
+    pub side: String,
+    pub executed_at: String,
+}
+
+/// A catalog instrument in the frontend `Asset` shape. Assets and
+/// instruments are the same catalog.
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetResponse {
+    pub asset_id: String,
+    pub market_id: String,
+    pub origin: crate::InstrumentOrigin,
+    pub issuer_id: String,
+    pub issuer_name: String,
+    pub name: String,
+    pub symbol: String,
+    pub description: String,
+    pub asset_class: String,
+    pub settlement_currency: String,
+    pub nav: String,
+    pub market_price: String,
+    pub total_issued: Option<String>,
+    pub lifecycle_status: String,
+    pub blockchain: String,
+    pub token_standard: String,
+    pub contract_address: Option<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct NavPointResponse {
+    pub date: String,
+    pub nav: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct PortfolioSummaryResponse {
+    pub total_value: String,
+    pub total_cost_basis: String,
+    pub total_unrealized_pnl: String,
+    pub total_unrealized_pnl_percent: String,
+    pub cash_balance: String,
+    pub invested_value: String,
+    pub ytd_income: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct HoldingResponse {
+    pub asset_id: String,
+    pub asset_name: String,
+    pub symbol: String,
+    pub quantity: String,
+    pub average_cost: String,
+    pub market_value: String,
+    pub cost_basis: String,
+    pub unrealized_pnl: String,
+    pub unrealized_pnl_percent: String,
+    pub allocation_percent: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct PerformancePointResponse {
+    pub date: String,
+    pub portfolio_value: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityEventResponse {
+    pub event_id: String,
+    #[serde(rename = "type")]
+    pub event_type: String,
+    pub title: String,
+    pub description: String,
+    pub timestamp: String,
+}

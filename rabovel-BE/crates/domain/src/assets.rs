@@ -61,7 +61,7 @@ fn default_listing_status() -> String {
 impl NewAssetDraft {
     pub fn validate_and_normalize(mut self) -> Result<Self, String> {
         self.instrument_code = normalized_code(&self.instrument_code, "instrument code", 32)?;
-        self.ticker = normalized_code(&self.ticker, "ticker", 16)?;
+        self.ticker = normalized_ticker(&self.ticker, "ticker")?;
         self.market = normalized_code(&self.market, "market", 16)?;
         self.share_class = required(&self.share_class, "share class", 64)?;
         self.name = required(&self.name, "asset name", 120)?;
@@ -69,7 +69,7 @@ impl NewAssetDraft {
         self.representation = required(&self.representation, "representation", 160)?;
         self.rights_description = required(&self.rights_description, "rights description", 500)?;
         self.metadata.name = required(&self.metadata.name, "metadata name", 120)?;
-        self.metadata.symbol = normalized_code(&self.metadata.symbol, "metadata symbol", 16)?;
+        self.metadata.symbol = normalized_ticker(&self.metadata.symbol, "metadata symbol")?;
         self.metadata.description =
             required(&self.metadata.description, "metadata description", 1000)?;
         if self.decimals > 9 {
@@ -144,6 +144,28 @@ fn normalized_code(value: &str, label: &str, max: usize) -> Result<String, Strin
     Ok(value)
 }
 
+pub const MAX_TICKER_LEN: usize = 12;
+
+/// Tradable tickers follow the NGX listing format shown on the watchlist
+/// (`DANGCEM`, `ZENITHBANK`): an uppercase letter followed by 1–11 letters or
+/// digits, no separators. Every catalog instrument shares this format.
+pub fn is_valid_ticker(value: &str) -> bool {
+    let mut chars = value.chars();
+    (2..=MAX_TICKER_LEN).contains(&value.len())
+        && chars.next().is_some_and(|c| c.is_ascii_uppercase())
+        && chars.all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
+}
+
+fn normalized_ticker(value: &str, label: &str) -> Result<String, String> {
+    let value = value.trim().to_ascii_uppercase();
+    if !is_valid_ticker(&value) {
+        return Err(format!(
+            "{label} must be 2-{MAX_TICKER_LEN} letters or digits starting with a letter, with no spaces or hyphens (e.g. DANGCEM)"
+        ));
+    }
+    Ok(value)
+}
+
 fn validate_uri(value: &str) -> Result<(), String> {
     if !(value.starts_with("https://") || value.starts_with("http://")) || value.len() > 500 {
         return Err("metadata links must be valid HTTP(S) URIs up to 500 characters".into());
@@ -172,7 +194,7 @@ mod tests {
         NewAssetDraft {
             instrument_code: "rabo-ng-telco".into(),
             name: "Rabovel Nigeria Telco".into(),
-            ticker: "rabo-ng-telco".into(),
+            ticker: "rabotelco".into(),
             market: "ngx".into(),
             share_class: "Ordinary".into(),
             asset_type: "equity".into(),
@@ -184,7 +206,7 @@ mod tests {
             disclosure: DEMO_DISCLOSURE.into(),
             metadata: AssetMetadata {
                 name: "Rabovel Nigeria Telco".into(),
-                symbol: "rabo-ng-telco".into(),
+                symbol: "rabotelco".into(),
                 description: "Demo equity".into(),
                 image_uri: None,
                 external_url: None,
@@ -203,9 +225,25 @@ mod tests {
             value: "NGX:TELCO".into(),
         });
         let draft = input.validate_and_normalize().unwrap();
-        assert_eq!(draft.ticker, "RABO-NG-TELCO");
-        assert_eq!(draft.canonical_key(), "NGX:RABO-NG-TELCO:ORDINARY");
+        assert_eq!(draft.instrument_code, "RABO-NG-TELCO");
+        assert_eq!(draft.ticker, "RABOTELCO");
+        assert_eq!(draft.canonical_key(), "NGX:RABOTELCO:ORDINARY");
         assert!(draft.metadata.additional_metadata.is_empty());
+    }
+    #[test]
+    fn tickers_follow_the_ngx_listing_format() {
+        for valid in ["DANGCEM", "ZENITHBANK", "NB", "UPDCREIT", "ABC123"] {
+            assert!(is_valid_ticker(valid), "{valid}");
+        }
+        for invalid in ["RABO-NG-TELCO", "A", "1ABC", "GT CO", "dangcem", "ABCDEFGHIJKLM"] {
+            assert!(!is_valid_ticker(invalid), "{invalid}");
+        }
+        for ticker in ["RABO-NG-TELCO", "GT CO", "1ABC"] {
+            let mut draft = valid_draft();
+            draft.ticker = ticker.into();
+            draft.metadata.symbol = ticker.into();
+            assert!(draft.validate_and_normalize().is_err(), "{ticker}");
+        }
     }
     #[test]
     fn rejects_non_demo_disclosure_and_mismatched_metadata() {

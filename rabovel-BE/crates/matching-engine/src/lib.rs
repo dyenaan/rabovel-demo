@@ -523,6 +523,29 @@ impl MatchingEngine {
         }
     }
 
+    /// Symbols with at least one resting client order, which a reference
+    /// price move could fill via [`Self::reprice`].
+    pub fn symbols_with_resting_orders(&self) -> Vec<String> {
+        self.books
+            .iter()
+            .filter(|(_, book)| {
+                book.best_price(Side::Buy).is_some() || book.best_price(Side::Sell).is_some()
+            })
+            .map(|(symbol, _)| symbol.clone())
+            .collect()
+    }
+
+    /// Risk limits in force for `symbol`.
+    pub fn limits(&self, symbol: &str) -> &HouseLimits {
+        self.config.limits(symbol)
+    }
+
+    /// Units the house can still trade against a client order on
+    /// `client_side`, ignoring the per-order cap.
+    pub fn house_quote_capacity(&self, symbol: &str, client_side: Side) -> Qty {
+        self.house_capacity(symbol, client_side, self.config.limits(symbol))
+    }
+
     pub fn house_position(&self, symbol: &str) -> HousePosition {
         self.house
             .get(symbol)

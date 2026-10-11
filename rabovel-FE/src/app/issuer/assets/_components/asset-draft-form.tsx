@@ -14,10 +14,10 @@ import { useAuthStore } from "@/stores/auth-store";
 
 export const DISCLOSURE = "Prototype / simulated asset / not an offering / not SEC-approved";
 export const defaultAssetDraft: AssetDraftSubmission = {
-  instrument_code: "RABO-NG-TELCO", name: "Rabovel Nigeria Telco", ticker: "RABO-NG-TELCO", market: "NGX", share_class: "Ordinary", asset_type: "equity", decimals: 0,
+  instrument_code: "RABO-NG-TELCO", name: "Rabovel Nigeria Telco", ticker: "RABOTELCO", market: "NGX", share_class: "Ordinary", asset_type: "equity", decimals: 0,
   authorized_units: "1000000", settlement_currency: "CNGN", representation: "1 token = 1 simulated beneficial entitlement to 1 share",
   rights_description: "Simulated ordinary-share entitlement for the Rabovel prototype.", disclosure: DISCLOSURE,
-  metadata: { name: "Rabovel Nigeria Telco", symbol: "RABO-NG-TELCO", description: "A simulated Nigerian telecom equity used only in the Rabovel demo.", image_uri: null, external_url: null, metadata_uri: null, additional_metadata: [] },
+  metadata: { name: "Rabovel Nigeria Telco", symbol: "RABOTELCO", description: "A simulated Nigerian telecom equity used only in the Rabovel demo.", image_uri: null, external_url: null, metadata_uri: null, additional_metadata: [] },
 };
 
 export function AssetDraftForm({ initialValue, assetId, deletable = false }: { initialValue: AssetDraftSubmission; assetId?: string; deletable?: boolean }) {
@@ -59,7 +59,7 @@ export function AssetDraftForm({ initialValue, assetId, deletable = false }: { i
   return <div className="mx-auto max-w-4xl space-y-6"><div><Button asChild variant="ghost" className="mb-2 -ml-3"><Link href="/issuer"><ArrowLeft />Issuer overview</Link></Button><p className="text-sm font-medium text-primary">Asset registry</p><h1 className="text-3xl font-semibold tracking-tight">{editing ? "Edit asset draft" : "Create asset draft"}</h1><p className="mt-2 text-muted-foreground">Define the simulated instrument and metadata. Saving does not create a mint or issue inventory.</p></div>
     <form onSubmit={submit} className="space-y-6"><Card><CardHeader><CardTitle>Instrument</CardTitle><CardDescription>Stable identity, classification, and authorized supply.</CardDescription></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
       <Field label="Instrument code"><Input value={form.instrument_code} onChange={field("instrument_code")} required /></Field><Field label="Display name"><Input value={form.name} onChange={field("name")} required /></Field>
-      <Field label="Ticker"><Input value={form.ticker} onChange={(event) => setForm((current) => ({ ...current, ticker: event.target.value, metadata: { ...current.metadata, symbol: event.target.value } }))} required /></Field><Field label="Market"><Input value={form.market} onChange={field("market")} required /></Field>
+      <Field label="Ticker"><Input value={form.ticker} onChange={(event) => { const ticker = event.target.value.toUpperCase(); setForm((current) => ({ ...current, ticker, metadata: { ...current.metadata, symbol: ticker } })); }} pattern="[A-Z][A-Z0-9]{1,11}" maxLength={12} title="NGX format: 2-12 letters or digits starting with a letter, no spaces or hyphens (e.g. DANGCEM)" placeholder="e.g. RABOTELCO" required /></Field><Field label="Market"><Input value={form.market} onChange={field("market")} required /></Field>
       <Field label="Share class"><Input value={form.share_class} onChange={field("share_class")} required /></Field><Field label="Asset type"><Input value={form.asset_type} onChange={field("asset_type")} required /></Field>
       <Field label="Authorized units"><Input inputMode="numeric" pattern="[0-9]+" value={form.authorized_units} onChange={field("authorized_units")} required /></Field><Field label="Decimals"><Input type="number" min={0} max={9} value={form.decimals} onChange={(event) => setForm((current) => ({ ...current, decimals: Number(event.target.value) }))} required /></Field>
       <Field label="Settlement currency"><Input value={form.settlement_currency} onChange={field("settlement_currency")} required /></Field>

@@ -76,6 +76,7 @@ export function MarketsTable({ watchlistOnly = false }: { watchlistOnly?: boolea
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge variant="success">Minted</Badge>
             <Badge variant="outline">Tradable</Badge>
+            {row.original.origin === "issuer" ? <Badge variant="outline">Issuer listing</Badge> : null}
           </div>
         ) : (
           <StatusBadge status={row.original.status} />

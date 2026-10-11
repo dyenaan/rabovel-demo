@@ -40,7 +40,7 @@ Carried forward:
 - **Pre-trade checks.** Buying power for buys and token balance for sells, reserved on submit and released on cancel. These need on-chain cNGN and token balances, so they come with slice 3.
 - **Durability.** Engine state is in memory. Persist an order/fill journal (Postgres) and rebuild by replay using `sequence`. Event publication still discards errors; this needs the outbox.
 - **Idempotency.** The frontend sends `Idempotency-Key`, but the backend ignores it.
-- **Tradable symbols** are catalog instruments only. Minted live assets (e.g. `RABO-*`) are not tradable yet.
+- **Tradable symbols** are catalog instruments only. Minted live assets (e.g. `RABO-*`) are not tradable yet. This is superseded by [unified-tradable-assets.md](unified-tradable-assets.md), which also redefines slice 3 below to use delegated investor authority.
 
 ## Slice 3 — instant on-chain settlement (settlement-worker)
 

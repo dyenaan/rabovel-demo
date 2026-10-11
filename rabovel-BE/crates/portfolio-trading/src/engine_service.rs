@@ -5,20 +5,23 @@
 //! of trades matched here, not on-chain holdings, and orders are not yet
 //! checked against buying power or token balance.
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use matching_engine::{
-    EngineConfig, EngineError, Fill, LiquiditySource, MatchingEngine, NewOrder, OrderId, OrderKind,
-    Participant, Price, Qty, Side, UnfilledReason,
+    EngineConfig, EngineError, Fill, HouseQuote, LiquiditySource, MatchingEngine, NewOrder,
+    OrderId, OrderKind, Participant, Price, Qty, Side, UnfilledReason,
 };
 
 use crate::decimal::{format_fixed, format_signed, parse_fixed};
 use crate::{
-    now_secs, AssetBalance, ExecutedTrade, Liquidity, NewOrderRequest, OrderAck, OrderExecution,
-    OrderFill, OrderSide, OrderState, OrderStatus, OrderType, PortfolioSnapshot,
-    PortfolioTradingApi, TradeParty, TradingError,
+    now_secs, AssetBalance, BookLevel, ExecutedTrade, Liquidity, NewOrderRequest, OrderAck,
+    OrderBook, OrderExecution, OrderFill, OrderSide, OrderState, OrderStatus, OrderType,
+    PortfolioSnapshot, PortfolioTradingApi, PublicTrade, TradeParty, TradingError,
 };
+
+/// Recent public trades kept per symbol for the tape and price history.
+const MAX_PUBLIC_TRADES: usize = 1_000;
 
 /// A reference price in payment-asset base units.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -93,6 +96,8 @@ struct TradingState {
     user_orders: HashMap<String, Vec<OrderId>>,
     /// user → asset → net base units (tokens are whole units).
     balances: HashMap<String, BTreeMap<String, i128>>,
+    /// symbol → recent trades, newest at the back.
+    public_trades: HashMap<String, VecDeque<PublicTrade>>,
 }
 
 impl EngineTradingService {
@@ -169,6 +174,18 @@ impl TradingState {
                     *balances.entry(fill.symbol.clone()).or_default() += asset_delta;
                     *balances.entry(String::new()).or_default() += cash_delta;
                 }
+                let tape = self.public_trades.entry(fill.symbol.clone()).or_default();
+                if tape.len() == MAX_PUBLIC_TRADES {
+                    tape.pop_front();
+                }
+                tape.push_back(PublicTrade {
+                    trade_id: format!("trd_{}", fill.trade_id.0),
+                    symbol: fill.symbol.clone(),
+                    price_base_units: fill.price,
+                    quantity: fill.quantity,
+                    aggressor: from_engine_side(fill.aggressor),
+                    executed_at: now,
+                });
                 ExecutedTrade {
                     trade_id: format!("trd_{}", fill.trade_id.0),
                     sequence: fill.sequence,
@@ -414,6 +431,93 @@ impl PortfolioTradingApi for EngineTradingService {
         let id = state.owned_order(user_id, order_id)?;
         let record = state.orders.get(&id).ok_or(TradingError::OrderNotFound)?;
         Ok(self.order_status(id, record, state.remaining(user_id, id)))
+    }
+
+    async fn reprice_resting(&self) -> Result<Vec<ExecutedTrade>, TradingError> {
+        let decimals = self.config.price_decimals;
+        let symbols = self.lock()?.engine.symbols_with_resting_orders();
+        // Fetch prices without holding the lock across awaits.
+        let mut prices = Vec::new();
+        for symbol in symbols {
+            let reference = self
+                .prices
+                .reference_price(&symbol, decimals)
+                .await
+                .map_err(TradingError::Unavailable)?;
+            if let Some(reference) = reference.filter(|reference| {
+                now_secs().saturating_sub(reference.as_of) <= self.config.max_price_age_secs
+            }) {
+                prices.push((symbol, reference.price_base_units));
+            }
+        }
+        let now = now_secs();
+        let mut state = self.lock()?;
+        let mut trades = Vec::new();
+        for (symbol, price) in prices {
+            let fills = state.engine.reprice(&symbol, price);
+            trades.extend(state.apply_fills(&fills, now, decimals));
+        }
+        Ok(trades)
+    }
+
+    async fn order_book(&self, symbol: &str, levels: usize) -> Result<OrderBook, TradingError> {
+        let symbol = normalize_symbol(symbol);
+        let reference = self
+            .prices
+            .reference_price(&symbol, self.config.price_decimals)
+            .await
+            .map_err(TradingError::Unavailable)?
+            .ok_or_else(|| TradingError::UnknownSymbol(symbol.clone()))?;
+        let fresh = now_secs().saturating_sub(reference.as_of) <= self.config.max_price_age_secs;
+
+        let state = self.lock()?;
+        let depth = state.engine.depth(&symbol, levels);
+        let mut bids: BTreeMap<Price, Qty> = depth.bids.into_iter().collect();
+        let mut asks: BTreeMap<Price, Qty> = depth.asks.into_iter().collect();
+        let limits = state.engine.limits(&symbol);
+        if let Some(quote) = fresh
+            .then(|| HouseQuote::from_reference(reference.price_base_units, limits.half_spread_bps))
+            .flatten()
+        {
+            // The house sells at its ask to client buys and buys at its bid
+            // from client sells; one order is capped by max_order_quantity.
+            let ask_size = state
+                .engine
+                .house_quote_capacity(&symbol, Side::Buy)
+                .min(limits.max_order_quantity);
+            if ask_size > 0 {
+                *asks.entry(quote.ask).or_default() += ask_size;
+            }
+            let bid_size = state
+                .engine
+                .house_quote_capacity(&symbol, Side::Sell)
+                .min(limits.max_order_quantity);
+            if let (Some(bid), true) = (quote.bid, bid_size > 0) {
+                *bids.entry(bid).or_default() += bid_size;
+            }
+        }
+        let level = |(price, quantity): (Price, Qty)| BookLevel {
+            price_base_units: price,
+            quantity,
+        };
+        Ok(OrderBook {
+            symbol,
+            bids: bids.into_iter().rev().take(levels).map(level).collect(),
+            asks: asks.into_iter().take(levels).map(level).collect(),
+        })
+    }
+
+    async fn public_trades(
+        &self,
+        symbol: &str,
+        limit: usize,
+    ) -> Result<Vec<PublicTrade>, TradingError> {
+        let state = self.lock()?;
+        Ok(state
+            .public_trades
+            .get(&normalize_symbol(symbol))
+            .map(|tape| tape.iter().rev().take(limit).cloned().collect())
+            .unwrap_or_default())
     }
 }
 

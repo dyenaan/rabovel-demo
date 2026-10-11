@@ -19,7 +19,7 @@ use solana_signer::Signer;
 
 use crate::{
     mint_setup::SolanaMintSetupExecutor, payment_assets::SolanaPaymentAssetRegistry,
-    router_with_state, GatewayStateBuilder,
+    router_with_state, spawn_market_ticker, GatewayStateBuilder,
 };
 use domain::auth::BrokerageSecurityPolicy;
 
@@ -163,7 +163,9 @@ pub async fn router_from_env() -> Result<Router, String> {
         }
     };
     builder = builder.mock_kyc_provider(Arc::new(MockKycProvider::new(kyc_secret)));
-    Ok(router_with_state(builder.build()))
+    let state = builder.build();
+    spawn_market_ticker(state.clone());
+    Ok(router_with_state(state))
 }
 
 fn demo_mode_enabled() -> Result<bool, String> {

@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { livePollInterval } from "@/lib/api/client";
 import { QUERY_STALE_TIME } from "@/lib/constants";
 import { queryKeys } from "@/lib/query-keys";
 import { useMarketStream, useOrderBookStream, useTradeStream } from "@/lib/websocket/hooks";
@@ -19,6 +20,7 @@ export function useMarkets() {
     queryKey: queryKeys.markets.all,
     queryFn: getMarkets,
     staleTime: QUERY_STALE_TIME.short,
+    refetchInterval: livePollInterval,
   });
 }
 
@@ -28,6 +30,7 @@ export function useMarket(marketId: string) {
     queryFn: () => getMarket(marketId),
     staleTime: QUERY_STALE_TIME.short,
     enabled: !!marketId,
+    refetchInterval: livePollInterval,
   });
 
   const live = useMarketStream(marketId, query.data);
@@ -41,6 +44,7 @@ export function useOrderBook(marketId: string) {
     queryFn: () => getOrderBook(marketId),
     staleTime: QUERY_STALE_TIME.realtime,
     enabled: !!marketId,
+    refetchInterval: livePollInterval,
   });
 
   const live = useOrderBookStream(marketId, query.data);
@@ -54,6 +58,7 @@ export function usePriceHistory(marketId: string, range: string) {
     queryFn: () => getPriceHistory(marketId, range),
     staleTime: QUERY_STALE_TIME.medium,
     enabled: !!marketId,
+    refetchInterval: livePollInterval,
   });
 }
 
@@ -63,6 +68,7 @@ export function useRecentTrades(marketId: string) {
     queryFn: () => getRecentTrades(marketId),
     staleTime: QUERY_STALE_TIME.realtime,
     enabled: !!marketId,
+    refetchInterval: livePollInterval,
   });
 
   const live = useTradeStream(marketId, query.data ?? []);

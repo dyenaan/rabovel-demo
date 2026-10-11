@@ -33,6 +33,61 @@ pub trait PortfolioTradingApi: Send + Sync {
     async fn cancel_order(&self, user_id: &str, order_id: &str) -> Result<(), TradingError>;
     async fn list_orders(&self, user_id: &str) -> Result<Vec<OrderStatus>, TradingError>;
     async fn get_order(&self, user_id: &str, order_id: &str) -> Result<OrderStatus, TradingError>;
+
+    /// Lets the house fill resting limit orders that the current reference
+    /// prices now satisfy. Called on a timer so limits fill as the market
+    /// moves, not only when someone else trades the symbol. Returns the
+    /// trades for event publication.
+    async fn reprice_resting(&self) -> Result<Vec<ExecutedTrade>, TradingError> {
+        Ok(Vec::new())
+    }
+
+    /// Aggregated public book for `symbol`, best price first: resting client
+    /// orders plus the house quote when its reference price is fresh.
+    async fn order_book(&self, symbol: &str, levels: usize) -> Result<OrderBook, TradingError> {
+        let _ = levels;
+        Ok(OrderBook {
+            symbol: symbol.to_ascii_uppercase(),
+            bids: Vec::new(),
+            asks: Vec::new(),
+        })
+    }
+
+    /// Most recent matched trades for `symbol`, newest first. Anonymous: no
+    /// order ids or counterparties.
+    async fn public_trades(
+        &self,
+        symbol: &str,
+        limit: usize,
+    ) -> Result<Vec<PublicTrade>, TradingError> {
+        let _ = (symbol, limit);
+        Ok(Vec::new())
+    }
+}
+
+/// One aggregated price level, in base units.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct BookLevel {
+    pub price_base_units: u64,
+    pub quantity: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct OrderBook {
+    pub symbol: String,
+    pub bids: Vec<BookLevel>,
+    pub asks: Vec<BookLevel>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct PublicTrade {
+    pub trade_id: String,
+    pub symbol: String,
+    pub price_base_units: u64,
+    pub quantity: u64,
+    /// Side of the order that took liquidity.
+    pub aggressor: OrderSide,
+    pub executed_at: u64,
 }
 
 /// A snapshot of a user's portfolio at a point in time.

@@ -6,6 +6,7 @@ mod deployment;
 mod http;
 mod ingress;
 mod instrument_provider;
+mod market_views;
 mod mint_setup;
 mod observability;
 mod payment_assets;
@@ -17,7 +18,7 @@ use argon2::{
 };
 use async_trait::async_trait;
 use axum::{
-    extract::{FromRequestParts, Path, Request, State},
+    extract::{FromRequestParts, Path, Query, Request, State},
     http::{request::Parts, HeaderMap, StatusCode},
     middleware::Next,
     response::{IntoResponse, Json},
@@ -62,7 +63,7 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 use siwe::Message;
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     env,
     str::FromStr,
     sync::Arc,
@@ -98,7 +99,8 @@ use price_feed::{CatalogReferencePrices, PriceFeed, SimulatedPriceFeed};
 
 pub use http::dto::*;
 pub use instrument_provider::{
-    Instrument, InstrumentCatalog, InstrumentProvider, SimulatedInstrumentProvider,
+    Instrument, InstrumentCatalog, InstrumentOrigin, InstrumentProvider,
+    SimulatedInstrumentProvider, UnifiedInstrumentCatalog,
 };
 
 const OIDC_CHALLENGE_TTL_SECONDS: u64 = 300;
@@ -130,7 +132,9 @@ pub struct GatewayStateBuilder {
     metadata_storage: Arc<dyn MetadataStorage>,
     mint_setup: Arc<dyn MintSetupExecutor>,
     payment_assets: Arc<dyn PaymentAssetRegistry>,
-    instrument_provider: Arc<dyn InstrumentProvider>,
+    /// `None` builds the unified catalog (NGX-listed + live issuer assets)
+    /// over `repository`.
+    instrument_provider: Option<Arc<dyn InstrumentProvider>>,
     price_feed: Arc<dyn PriceFeed>,
     siwe_domain: String,
     public_origin: String,
@@ -159,7 +163,7 @@ impl Default for GatewayStateBuilder {
             metadata_storage: Arc::new(DisabledMetadataStorage),
             mint_setup: Arc::new(DisabledMintSetupExecutor),
             payment_assets: Arc::new(DisabledPaymentAssetRegistry),
-            instrument_provider: Arc::new(SimulatedInstrumentProvider),
+            instrument_provider: None,
             price_feed: Arc::new(SimulatedPriceFeed),
             siwe_domain: "localhost:3000".to_string(),
             public_origin: "http://localhost:3000".to_string(),
@@ -229,7 +233,7 @@ impl GatewayStateBuilder {
         self
     }
     pub fn instrument_provider(mut self, provider: Arc<dyn InstrumentProvider>) -> Self {
-        self.instrument_provider = provider;
+        self.instrument_provider = Some(provider);
         self
     }
     pub fn siwe_domain(mut self, siwe_domain: impl Into<String>) -> Self {
@@ -262,11 +266,14 @@ impl GatewayStateBuilder {
         } else {
             Arc::new(BrokerageAuthService::new(BrokerageSecurityPolicy::default()))
         };
+        let instrument_provider = self.instrument_provider.unwrap_or_else(|| {
+            Arc::new(UnifiedInstrumentCatalog::new(self.repository.clone()))
+        });
+        let house_half_spread_bps = self.trading_config.engine.default_limits.half_spread_bps;
+        let price_decimals = self.trading_config.price_decimals;
         let portfolio_trading = self.portfolio_trading.unwrap_or_else(|| {
-            let prices = CatalogReferencePrices::new(
-                self.instrument_provider.clone(),
-                self.price_feed.clone(),
-            );
+            let prices =
+                CatalogReferencePrices::new(instrument_provider.clone(), self.price_feed.clone());
             Arc::new(EngineTradingService::new(
                 Arc::new(prices),
                 self.trading_config,
@@ -287,8 +294,10 @@ impl GatewayStateBuilder {
             metadata_storage: self.metadata_storage,
             mint_setup: self.mint_setup,
             payment_assets: self.payment_assets,
-            instrument_provider: self.instrument_provider,
+            instrument_provider,
             price_feed: self.price_feed,
+            house_half_spread_bps,
+            price_decimals,
             siwe_domain: self.siwe_domain.into(),
             public_origin: self.public_origin.into(),
             trusted_role_assignments: Arc::new(self.trusted_role_assignments),
@@ -315,6 +324,10 @@ pub struct GatewayState {
     payment_assets: Arc<dyn PaymentAssetRegistry>,
     instrument_provider: Arc<dyn InstrumentProvider>,
     price_feed: Arc<dyn PriceFeed>,
+    /// House quote half-spread, shown as bid/ask on `/markets`.
+    house_half_spread_bps: u32,
+    /// Payment-asset decimals prices are quoted in.
+    price_decimals: u8,
     siwe_domain: Arc<str>,
     public_origin: Arc<str>,
     trusted_role_assignments: Arc<Vec<TrustedRoleAssignment>>,
@@ -652,6 +665,8 @@ impl IntoResponse for ApiError {
         create_investor_cngn_account_handler,
         investor_catalog_handler,
         instruments_handler,
+        list_markets_handler,
+        get_market_handler,
         prepare_investor_purchase_handler,
         submit_investor_purchase_handler
     ),
@@ -681,6 +696,10 @@ impl IntoResponse for ApiError {
         InvestorCatalogResponse,
         Instrument,
         InstrumentCatalog,
+        InstrumentOrigin,
+        MarketResponse,
+        MarketListResponse,
+        MarketDetailResponse,
         QuoteRequest,
         QuoteResponse,
         QuoteSide,
@@ -735,6 +754,33 @@ async fn ip_rate_limit_middleware(
         .await
         .map_err(ApiError::from)?;
     Ok(next.run(request).await)
+}
+
+/// Background market clock: every price tick, the house fills resting limit
+/// orders the moving market now satisfies, and the fills are published like
+/// any other trade.
+fn spawn_market_ticker(state: GatewayState) {
+    tokio::spawn(async move {
+        let mut interval =
+            tokio::time::interval(std::time::Duration::from_secs(price_feed::PRICE_TICK_SECS));
+        interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        loop {
+            interval.tick().await;
+            match state.portfolio_trading.reprice_resting().await {
+                Ok(trades) => {
+                    for trade in trades {
+                        let _ = messaging::publish(
+                            state.event_producer.as_ref(),
+                            to_trade_executed(trade),
+                            "matching-engine",
+                        )
+                        .await;
+                    }
+                }
+                Err(error) => eprintln!("market tick failed: {error}"),
+            }
+        }
+    });
 }
 
 fn router_with_state(state: GatewayState) -> Router {
@@ -1133,6 +1179,7 @@ async fn create_asset_draft_handler(
 ) -> Result<Json<AssetDraftResponse>, ApiError> {
     require_approved_issuer(&state, &user.user_id).await?;
     let draft = asset_draft_from_request(request)?;
+    reject_ngx_listed_ticker(&draft.ticker)?;
     let now = unix_now();
     let record = AssetDraftRecord {
         asset_id: format!("ast_{}", random_hex(12).map_err(ApiError::from)?),
@@ -1150,6 +1197,57 @@ async fn create_asset_draft_handler(
         .await
         .map_err(ApiError::from)?;
     Ok(Json(asset_draft_response(record)))
+}
+
+/// Issuer tickers share one namespace with the NGX-listed catalog.
+fn reject_ngx_listed_ticker(ticker: &str) -> Result<(), ApiError> {
+    if instrument_provider::is_ngx_listed(ticker) {
+        return Err(ApiError {
+            status: StatusCode::CONFLICT,
+            error: AuthError::PolicyViolation(format!(
+                "ticker {ticker} is already an NGX-listed instrument; choose a distinct ticker"
+            )),
+        });
+    }
+    Ok(())
+}
+
+/// A live listing joins the tradable catalog, so its ticker must be valid and
+/// unused by any other tradable instrument.
+async fn ensure_ticker_tradable(
+    state: &GatewayState,
+    asset: &AssetDraftRecord,
+) -> Result<(), ApiError> {
+    let ticker = &asset.draft.ticker;
+    if !domain::assets::is_valid_ticker(ticker) {
+        return Err(ApiError {
+            status: StatusCode::CONFLICT,
+            error: AuthError::PolicyViolation(format!(
+                "ticker {ticker} does not follow the NGX ticker format; create a new asset with a ticker like DANGCEM"
+            )),
+        });
+    }
+    reject_ngx_listed_ticker(ticker)?;
+    let taken = state
+        .repository
+        .list_minted_assets()
+        .await
+        .map_err(ApiError::from)?
+        .into_iter()
+        .any(|other| {
+            other.asset_id != asset.asset_id
+                && other.draft.listing_status == "live"
+                && other.draft.ticker.eq_ignore_ascii_case(ticker)
+        });
+    if taken {
+        return Err(ApiError {
+            status: StatusCode::CONFLICT,
+            error: AuthError::PolicyViolation(format!(
+                "ticker {ticker} is already listed by another issuer"
+            )),
+        });
+    }
+    Ok(())
 }
 
 fn asset_draft_from_request(request: CreateAssetDraftRequest) -> Result<NewAssetDraft, ApiError> {
@@ -1332,6 +1430,7 @@ async fn update_asset_draft_handler(
         return Err(ApiError::from(AuthError::ForbiddenAction));
     }
     let draft = asset_draft_from_request(request)?;
+    reject_ngx_listed_ticker(&draft.ticker)?;
     let updated = AssetDraftRecord {
         canonical_key: draft.canonical_key(),
         draft,
@@ -1577,6 +1676,7 @@ async fn publish_asset_listing_handler(
     Path(asset_id): Path<String>,
 ) -> Result<Json<AssetDraftResponse>, ApiError> {
     let (asset, operation) = inventory_context(&state, &user.user_id, &asset_id).await?;
+    ensure_ticker_tradable(&state, &asset).await?;
     if asset
         .draft
         .backing
@@ -2599,6 +2699,639 @@ async fn instruments_handler(
             error: AuthError::PolicyViolation(message),
         })?;
     Ok(Json(catalog))
+}
+
+const BPS_DENOMINATOR: u128 = 10_000;
+
+/// Display price in whole payment units, two decimals, rounded half up.
+fn display_price(base_units: u128, decimals: u8) -> String {
+    let scale = 10_u128.pow(u32::from(decimals));
+    let cents = (base_units * 100 + scale / 2) / scale;
+    format!("{}.{:02}", cents / 100, cents % 100)
+}
+
+fn quote_asset(settlement_currency: &str) -> &str {
+    match settlement_currency {
+        "CNGN" => "NGN",
+        "USDC" => "USD",
+        "CADC" => "CAD",
+        other => other,
+    }
+}
+
+async fn market_response(
+    state: &GatewayState,
+    instrument: Instrument,
+) -> Result<MarketResponse, ApiError> {
+    let decimals = state.price_decimals;
+    let price = state
+        .price_feed
+        .latest(&instrument.ticker, decimals)
+        .map_err(|message| ApiError {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            error: AuthError::PolicyViolation(message),
+        })?;
+    // 24h statistics: the price path sampled every 5 minutes plus engine trades.
+    let day_ago = price.as_of.saturating_sub(86_400);
+    let ticker = instrument.ticker.clone();
+    let path = price_path(state, &ticker);
+    let opened = path(day_ago);
+    let mut high = price.price_base_units.max(opened);
+    let mut low = price.price_base_units.min(opened);
+    for at in (day_ago..price.as_of).step_by(300) {
+        let sample = path(at);
+        high = high.max(sample);
+        low = low.min(sample);
+    }
+    let mut volume = 0_u64;
+    for (at, traded, quantity) in trade_points(state, &instrument.ticker).await? {
+        if at >= day_ago {
+            high = high.max(traded);
+            low = low.min(traded);
+            volume += quantity;
+        }
+    }
+    let change = i128::from(price.price_base_units) - i128::from(opened);
+    // Same arithmetic as the matching engine's house quote.
+    let reference = u128::from(price.price_base_units);
+    let spread = u128::from(state.house_half_spread_bps).min(BPS_DENOMINATOR);
+    let bid = reference * (BPS_DENOMINATOR - spread) / BPS_DENOMINATOR;
+    let ask = (reference * (BPS_DENOMINATOR + spread)).div_ceil(BPS_DENOMINATOR);
+    let quote = quote_asset(&instrument.settlement_currency).to_string();
+    Ok(MarketResponse {
+        market_id: instrument.market_id,
+        symbol: format!("{}/{}", instrument.ticker, quote),
+        asset_name: instrument.name,
+        base_asset: instrument.ticker,
+        quote_asset: quote,
+        last_price: display_price(reference, decimals),
+        bid: (bid > 0).then(|| display_price(bid, decimals)),
+        ask: display_price(ask, decimals),
+        status: "OPEN".into(),
+        origin: instrument.origin,
+        asset_id: instrument.asset_id,
+        mint_address: instrument.mint_address,
+        settlement_currency: instrument.settlement_currency,
+        price_change_24h: market_views::fixed2(change, decimals),
+        price_change_percent_24h: market_views::percent(change, opened.into()),
+        high_24h: display_price(high.into(), decimals),
+        low_24h: display_price(low.into(), decimals),
+        volume_24h: volume.to_string(),
+        price_source: price.source,
+        price_updated_at: price.as_of,
+    })
+}
+
+#[utoipa::path(get, path = "/markets", responses((status = 200, body = MarketListResponse), (status = 503, body = ApiErrorResponse)))]
+async fn list_markets_handler(
+    State(state): State<GatewayState>,
+) -> Result<Json<MarketListResponse>, ApiError> {
+    let catalog = state
+        .instrument_provider
+        .catalog()
+        .await
+        .map_err(|message| ApiError {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            error: AuthError::PolicyViolation(message),
+        })?;
+    let mut data = Vec::with_capacity(catalog.instruments.len());
+    for instrument in catalog.instruments {
+        data.push(market_response(&state, instrument).await?);
+    }
+    Ok(Json(MarketListResponse { data }))
+}
+
+#[utoipa::path(get, path = "/markets/{market_id}", responses((status = 200, body = MarketDetailResponse), (status = 404, body = ApiErrorResponse), (status = 503, body = ApiErrorResponse)))]
+async fn get_market_handler(
+    State(state): State<GatewayState>,
+    Path(market_id): Path<String>,
+) -> Result<Json<MarketDetailResponse>, ApiError> {
+    let instrument = state
+        .instrument_provider
+        .catalog()
+        .await
+        .map_err(|message| ApiError {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            error: AuthError::PolicyViolation(message),
+        })?
+        .instruments
+        .into_iter()
+        .find(|instrument| instrument.market_id.eq_ignore_ascii_case(&market_id))
+        .ok_or_else(|| ApiError {
+            status: StatusCode::NOT_FOUND,
+            error: AuthError::PolicyViolation("market not found".into()),
+        })?;
+    Ok(Json(MarketDetailResponse {
+        data: market_response(&state, instrument).await?,
+    }))
+}
+
+fn catalog_unavailable(message: String) -> ApiError {
+    ApiError {
+        status: StatusCode::SERVICE_UNAVAILABLE,
+        error: AuthError::PolicyViolation(message),
+    }
+}
+
+fn not_found(what: &str) -> ApiError {
+    ApiError {
+        status: StatusCode::NOT_FOUND,
+        error: AuthError::PolicyViolation(format!("{what} not found")),
+    }
+}
+
+async fn catalog_instruments(state: &GatewayState) -> Result<Vec<Instrument>, ApiError> {
+    Ok(state
+        .instrument_provider
+        .catalog()
+        .await
+        .map_err(catalog_unavailable)?
+        .instruments)
+}
+
+async fn instrument_by_market(state: &GatewayState, market_id: &str) -> Result<Instrument, ApiError> {
+    catalog_instruments(state)
+        .await?
+        .into_iter()
+        .find(|instrument| instrument.market_id.eq_ignore_ascii_case(market_id))
+        .ok_or_else(|| not_found("market"))
+}
+
+/// Current reference price for a ticker, in payment-asset base units.
+fn reference_price(state: &GatewayState, ticker: &str) -> Result<u64, ApiError> {
+    state
+        .price_feed
+        .latest(ticker, state.price_decimals)
+        .map(|price| price.price_base_units)
+        .map_err(catalog_unavailable)
+}
+
+/// The ticker's simulated price at any unix second. Callers validate the
+/// ticker with [`reference_price`] first; a failed sample reads as 0.
+fn price_path<'a>(state: &'a GatewayState, ticker: &'a str) -> impl Fn(u64) -> u64 + 'a {
+    move |at| {
+        state
+            .price_feed
+            .price_at(ticker, state.price_decimals, at)
+            .map_or(0, |price| price.price_base_units)
+    }
+}
+
+/// Engine trades for a ticker, as candle input.
+async fn trade_points(
+    state: &GatewayState,
+    ticker: &str,
+) -> Result<Vec<market_views::TradePoint>, ApiError> {
+    Ok(state
+        .portfolio_trading
+        .public_trades(ticker, usize::MAX)
+        .await
+        .map_err(ApiError::from)?
+        .into_iter()
+        .map(|trade| (trade.executed_at, trade.price_base_units, trade.quantity))
+        .collect())
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct RangeQuery {
+    range: Option<String>,
+}
+
+async fn market_order_book_handler(
+    State(state): State<GatewayState>,
+    Path(market_id): Path<String>,
+) -> Result<Json<Data<OrderBookResponse>>, ApiError> {
+    let instrument = instrument_by_market(&state, &market_id).await?;
+    let book = state
+        .portfolio_trading
+        .order_book(&instrument.ticker, 15)
+        .await
+        .map_err(ApiError::from)?;
+    let decimals = state.price_decimals;
+    let side = |levels: Vec<portfolio_trading::BookLevel>| {
+        let mut total = 0_u64;
+        levels
+            .into_iter()
+            .map(|level| {
+                total += level.quantity;
+                OrderBookLevelResponse {
+                    price: market_views::fixed2(level.price_base_units.into(), decimals),
+                    size: level.quantity.to_string(),
+                    total: total.to_string(),
+                }
+            })
+            .collect()
+    };
+    Ok(Json(Data {
+        data: OrderBookResponse {
+            market_id: instrument.market_id,
+            bids: side(book.bids),
+            asks: side(book.asks),
+            updated_at: market_views::iso(unix_now()),
+        },
+    }))
+}
+
+async fn market_price_history_handler(
+    State(state): State<GatewayState>,
+    Path(market_id): Path<String>,
+    Query(query): Query<RangeQuery>,
+) -> Result<Json<Data<Vec<PricePointResponse>>>, ApiError> {
+    let instrument = instrument_by_market(&state, &market_id).await?;
+    let (bucket, count) = market_views::range_buckets(query.range.as_deref().unwrap_or("1D"));
+    reference_price(&state, &instrument.ticker)?;
+    let trades = trade_points(&state, &instrument.ticker).await?;
+    let decimals = state.price_decimals;
+    let price = |units: u64| market_views::fixed2(units.into(), decimals);
+    Ok(Json(Data {
+        data: market_views::candles(&trades, price_path(&state, &instrument.ticker), unix_now(), bucket, count)
+            .into_iter()
+            .map(|candle| PricePointResponse {
+                timestamp: market_views::iso(candle.start),
+                open: price(candle.open),
+                high: price(candle.high),
+                low: price(candle.low),
+                close: price(candle.close),
+                volume: candle.volume.to_string(),
+            })
+            .collect(),
+    }))
+}
+
+async fn market_trades_handler(
+    State(state): State<GatewayState>,
+    Path(market_id): Path<String>,
+) -> Result<Json<Data<Vec<PublicTradeResponse>>>, ApiError> {
+    let instrument = instrument_by_market(&state, &market_id).await?;
+    let trades = state
+        .portfolio_trading
+        .public_trades(&instrument.ticker, 50)
+        .await
+        .map_err(ApiError::from)?;
+    Ok(Json(Data {
+        data: trades
+            .into_iter()
+            .map(|trade| PublicTradeResponse {
+                trade_id: trade.trade_id,
+                market_id: instrument.market_id.clone(),
+                price: market_views::fixed2(trade.price_base_units.into(), state.price_decimals),
+                quantity: trade.quantity.to_string(),
+                side: match trade.aggressor {
+                    OrderSide::Buy => "BUY".into(),
+                    OrderSide::Sell => "SELL".into(),
+                },
+                executed_at: market_views::iso(trade.executed_at),
+            })
+            .collect(),
+    }))
+}
+
+async fn asset_response(
+    state: &GatewayState,
+    instrument: Instrument,
+) -> Result<AssetResponse, ApiError> {
+    let price = market_views::fixed2(
+        reference_price(state, &instrument.ticker)?.into(),
+        state.price_decimals,
+    );
+    let (issuer_id, issuer_name, description, total_issued) = match instrument.origin {
+        InstrumentOrigin::NgxListed => (
+            "ngx".to_string(),
+            "NGX (simulated listing)".to_string(),
+            format!(
+                "{} ({}): NGX-listed equity modeled as a minted, tradable token. Simulated; no underlying shares are held.",
+                instrument.name, instrument.ticker
+            ),
+            None,
+        ),
+        InstrumentOrigin::Issuer => {
+            let asset = state
+                .repository
+                .get_asset_draft(&instrument.asset_id)
+                .await
+                .map_err(ApiError::from)?
+                .ok_or_else(|| not_found("asset"))?;
+            let issuer_name = state
+                .repository
+                .get_issuer_organization(&asset.issuer_user_id)
+                .await
+                .map_err(ApiError::from)?
+                .map_or_else(|| "Demo issuer".to_string(), |org| org.legal_name);
+            (
+                asset.issuer_user_id,
+                issuer_name,
+                asset.draft.metadata.description,
+                Some(asset.draft.authorized_units.to_string()),
+            )
+        }
+    };
+    Ok(AssetResponse {
+        asset_id: instrument.asset_id,
+        market_id: instrument.market_id,
+        origin: instrument.origin,
+        issuer_id,
+        issuer_name,
+        name: instrument.name,
+        symbol: instrument.ticker,
+        description,
+        asset_class: "EQUITY".into(),
+        settlement_currency: instrument.settlement_currency,
+        nav: price.clone(),
+        market_price: price,
+        total_issued,
+        lifecycle_status: "ACTIVE".into(),
+        blockchain: "SOLANA".into(),
+        token_standard: "SPL".into(),
+        contract_address: instrument.mint_address,
+    })
+}
+
+async fn instrument_by_asset(state: &GatewayState, asset_id: &str) -> Result<Instrument, ApiError> {
+    catalog_instruments(state)
+        .await?
+        .into_iter()
+        .find(|instrument| instrument.asset_id.eq_ignore_ascii_case(asset_id))
+        .ok_or_else(|| not_found("asset"))
+}
+
+/// Every tradable instrument, NGX-listed or issuer-minted, as an asset.
+async fn list_assets_handler(
+    State(state): State<GatewayState>,
+) -> Result<Json<Data<Vec<AssetResponse>>>, ApiError> {
+    let mut assets = Vec::new();
+    for instrument in catalog_instruments(&state).await? {
+        assets.push(asset_response(&state, instrument).await?);
+    }
+    Ok(Json(Data { data: assets }))
+}
+
+async fn get_asset_handler(
+    State(state): State<GatewayState>,
+    Path(asset_id): Path<String>,
+) -> Result<Json<Data<AssetResponse>>, ApiError> {
+    let instrument = instrument_by_asset(&state, &asset_id).await?;
+    Ok(Json(Data {
+        data: asset_response(&state, instrument).await?,
+    }))
+}
+
+async fn asset_nav_history_handler(
+    State(state): State<GatewayState>,
+    Path(asset_id): Path<String>,
+) -> Result<Json<Data<Vec<NavPointResponse>>>, ApiError> {
+    let instrument = instrument_by_asset(&state, &asset_id).await?;
+    let (bucket, count) = market_views::range_buckets("3M");
+    reference_price(&state, &instrument.ticker)?;
+    let trades = trade_points(&state, &instrument.ticker).await?;
+    Ok(Json(Data {
+        data: market_views::candles(&trades, price_path(&state, &instrument.ticker), unix_now(), bucket, count)
+            .into_iter()
+            .map(|candle| NavPointResponse {
+                date: market_views::iso_date(candle.start),
+                nav: market_views::fixed2(candle.close.into(), state.price_decimals),
+            })
+            .collect(),
+    }))
+}
+
+/// One engine position valued at the current reference price.
+struct PositionView {
+    asset_id: String,
+    name: String,
+    ticker: String,
+    quantity: i128,
+    cost_basis: i128,
+    price: i128,
+}
+
+impl PositionView {
+    fn market_value(&self) -> i128 {
+        self.quantity * self.price
+    }
+}
+
+struct PortfolioView {
+    positions: Vec<PositionView>,
+    cash: i128,
+}
+
+/// The caller's engine positions, average cost from their own fills, and the
+/// linked wallet's on-chain cNGN balance as cash (zero when unavailable).
+/// Engine balances are matched trades that are not yet settled on-chain.
+async fn portfolio_view(state: &GatewayState, user_id: &str) -> Result<PortfolioView, ApiError> {
+    let decimals = state.price_decimals;
+    let snapshot = state
+        .portfolio_trading
+        .get_portfolio(user_id)
+        .await
+        .map_err(ApiError::from)?;
+    let mut orders = state
+        .portfolio_trading
+        .list_orders(user_id)
+        .await
+        .map_err(ApiError::from)?;
+    orders.sort_by_key(|order| order.created_at);
+    // symbol -> (quantity, cost) under the average-cost method.
+    let mut lots: HashMap<String, (i128, i128)> = HashMap::new();
+    for order in &orders {
+        let filled = market_views::parse_units(&order.filled_quantity, 0).unwrap_or(0);
+        let average = order
+            .average_price
+            .as_deref()
+            .and_then(|price| market_views::parse_units(price, decimals))
+            .unwrap_or(0);
+        if filled == 0 {
+            continue;
+        }
+        let (quantity, cost) = lots.entry(order.symbol.clone()).or_default();
+        match order.side {
+            OrderSide::Buy => {
+                *quantity += filled;
+                *cost += filled * average;
+            }
+            OrderSide::Sell => {
+                if *quantity > 0 {
+                    *cost -= *cost * filled.min(*quantity) / *quantity;
+                }
+                *quantity -= filled;
+            }
+        }
+    }
+
+    let mut positions = Vec::new();
+    for balance in snapshot.balances {
+        if balance.asset.eq_ignore_ascii_case("CNGN") {
+            continue;
+        }
+        let quantity = market_views::parse_units(&balance.total, 0).unwrap_or(0);
+        if quantity <= 0 {
+            continue;
+        }
+        let (asset_id, name) = match state.instrument_provider.find(&balance.asset).await {
+            Ok(Some(instrument)) => (instrument.asset_id, instrument.name),
+            _ => (balance.asset.to_ascii_lowercase(), balance.asset.clone()),
+        };
+        positions.push(PositionView {
+            cost_basis: lots.get(&balance.asset).map_or(0, |(_, cost)| (*cost).max(0)),
+            price: reference_price(state, &balance.asset)?.into(),
+            asset_id,
+            name,
+            ticker: balance.asset,
+            quantity,
+        });
+    }
+
+    let cash = match investor_solana_wallet(state, user_id).await {
+        Ok(wallet) => state
+            .payment_assets
+            .cngn_wallet_status(wallet.address())
+            .await
+            .ok()
+            .and_then(|status| status.balance_base_units)
+            .and_then(|units| units.parse::<i128>().ok())
+            .unwrap_or(0),
+        Err(_) => 0,
+    };
+    Ok(PortfolioView { positions, cash })
+}
+
+async fn portfolio_summary_handler(
+    State(state): State<GatewayState>,
+    user: AuthenticatedUser,
+) -> Result<Json<Data<PortfolioSummaryResponse>>, ApiError> {
+    let view = portfolio_view(&state, &user.user_id).await?;
+    let decimals = state.price_decimals;
+    let invested: i128 = view.positions.iter().map(PositionView::market_value).sum();
+    let cost: i128 = view.positions.iter().map(|position| position.cost_basis).sum();
+    let fixed = |value: i128| market_views::fixed2(value, decimals);
+    Ok(Json(Data {
+        data: PortfolioSummaryResponse {
+            total_value: fixed(invested + view.cash),
+            total_cost_basis: fixed(cost),
+            total_unrealized_pnl: fixed(invested - cost),
+            total_unrealized_pnl_percent: market_views::percent(invested - cost, cost),
+            cash_balance: fixed(view.cash),
+            invested_value: fixed(invested),
+            ytd_income: fixed(0),
+        },
+    }))
+}
+
+async fn portfolio_holdings_handler(
+    State(state): State<GatewayState>,
+    user: AuthenticatedUser,
+) -> Result<Json<Data<Vec<HoldingResponse>>>, ApiError> {
+    let view = portfolio_view(&state, &user.user_id).await?;
+    let decimals = state.price_decimals;
+    let invested: i128 = view.positions.iter().map(PositionView::market_value).sum();
+    let fixed = |value: i128| market_views::fixed2(value, decimals);
+    Ok(Json(Data {
+        data: view
+            .positions
+            .iter()
+            .map(|position| {
+                let value = position.market_value();
+                HoldingResponse {
+                    asset_id: position.asset_id.clone(),
+                    asset_name: position.name.clone(),
+                    symbol: position.ticker.clone(),
+                    quantity: position.quantity.to_string(),
+                    average_cost: fixed(position.cost_basis / position.quantity),
+                    market_value: fixed(value),
+                    cost_basis: fixed(position.cost_basis),
+                    unrealized_pnl: fixed(value - position.cost_basis),
+                    unrealized_pnl_percent: market_views::percent(
+                        value - position.cost_basis,
+                        position.cost_basis,
+                    ),
+                    allocation_percent: market_views::percent(value, invested),
+                }
+            })
+            .collect(),
+    }))
+}
+
+/// Current holdings and cash valued at each bucket's closing price. Engine
+/// state has no history of past positions, so earlier points show today's
+/// holdings at earlier prices.
+async fn portfolio_performance_handler(
+    State(state): State<GatewayState>,
+    user: AuthenticatedUser,
+    Query(query): Query<RangeQuery>,
+) -> Result<Json<Data<Vec<PerformancePointResponse>>>, ApiError> {
+    let view = portfolio_view(&state, &user.user_id).await?;
+    let (bucket, count) = market_views::range_buckets(query.range.as_deref().unwrap_or("1M"));
+    let now = unix_now();
+    let mut values = vec![view.cash; count];
+    for position in &view.positions {
+        let trades = trade_points(&state, &position.ticker).await?;
+        let series = market_views::candles(&trades, price_path(&state, &position.ticker), now, bucket, count);
+        for (value, candle) in values.iter_mut().zip(series) {
+            *value += position.quantity * i128::from(candle.close);
+        }
+    }
+    let start = (now / bucket + 1) * bucket - bucket * count as u64;
+    Ok(Json(Data {
+        data: values
+            .into_iter()
+            .enumerate()
+            .map(|(index, value)| PerformancePointResponse {
+                date: market_views::iso_date(start + index as u64 * bucket),
+                portfolio_value: market_views::fixed2(value, state.price_decimals),
+            })
+            .collect(),
+    }))
+}
+
+async fn portfolio_activity_handler(
+    State(state): State<GatewayState>,
+    user: AuthenticatedUser,
+) -> Result<Json<Data<Vec<ActivityEventResponse>>>, ApiError> {
+    let orders = state
+        .portfolio_trading
+        .list_orders(&user.user_id)
+        .await
+        .map_err(ApiError::from)?;
+    let mut events = Vec::new();
+    for order in orders {
+        let side = match order.side {
+            OrderSide::Buy => "Buy",
+            OrderSide::Sell => "Sell",
+        };
+        if order.filled_quantity != "0" {
+            events.push((
+                order.updated_at,
+                ActivityEventResponse {
+                    event_id: format!("{}_filled", order.order_id),
+                    event_type: "ORDER_FILLED".into(),
+                    title: format!("{side} {} filled", order.symbol),
+                    description: format!(
+                        "{} of {} {} at an average of {} NGN",
+                        order.filled_quantity,
+                        order.quantity,
+                        order.symbol,
+                        order.average_price.as_deref().unwrap_or("-")
+                    ),
+                    timestamp: market_views::iso(order.updated_at),
+                },
+            ));
+        }
+        events.push((
+            order.created_at,
+            ActivityEventResponse {
+                event_id: format!("{}_placed", order.order_id),
+                event_type: "ORDER_PLACED".into(),
+                title: format!("{side} order placed"),
+                description: format!("{} {} {}", side, order.quantity, order.symbol),
+                timestamp: market_views::iso(order.created_at),
+            },
+        ));
+    }
+    // Newest first; a fill sorts ahead of its own placement.
+    events.sort_by(|a, b| b.0.cmp(&a.0));
+    Ok(Json(Data {
+        data: events.into_iter().map(|(_, event)| event).collect(),
+    }))
 }
 
 #[utoipa::path(post, path = "/investor/quote", request_body = QuoteRequest, responses((status = 200, body = QuoteResponse), (status = 400, body = ApiErrorResponse), (status = 403, body = ApiErrorResponse), (status = 404, body = ApiErrorResponse), (status = 503, body = ApiErrorResponse)))]
@@ -3913,14 +4646,38 @@ mod tests {
         assert_eq!(broker_account["fee_payer_address"], "admin");
 
         let draft = serde_json::json!({
-            "instrument_code": "RABO-NG-TELCO", "name": "Rabovel Nigeria Telco", "ticker": "RABO-NG-TELCO",
+            "instrument_code": "RABO-NG-TELCO", "name": "Rabovel Nigeria Telco", "ticker": "RABOTELCO",
             "market": "NGX", "share_class": "Ordinary", "asset_type": "equity", "decimals": 0,
             "authorized_units": "1000000", "settlement_currency": "CNGN",
             "representation": "1 token = 1 simulated beneficial entitlement to 1 share",
             "rights_description": "Simulated ordinary-share entitlement for the Rabovel prototype.",
             "disclosure": domain::assets::DEMO_DISCLOSURE,
-            "metadata": { "name": "Rabovel Nigeria Telco", "symbol": "RABO-NG-TELCO", "description": "Demo equity", "image_uri": null, "external_url": null, "metadata_uri": null, "additional_metadata": [] }
+            "metadata": { "name": "Rabovel Nigeria Telco", "symbol": "RABOTELCO", "description": "Demo equity", "image_uri": null, "external_url": null, "metadata_uri": null, "additional_metadata": [] }
         });
+
+        for (ticker, status) in [
+            ("RABO-NG-TELCO", StatusCode::BAD_REQUEST),
+            ("DANGCEM", StatusCode::CONFLICT),
+        ] {
+            let mut rejected = draft.clone();
+            rejected["ticker"] = serde_json::json!(ticker);
+            rejected["metadata"]["symbol"] = serde_json::json!(ticker);
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .method("POST")
+                        .uri("/issuer/assets")
+                        .header("authorization", format!("Bearer {token}"))
+                        .header("content-type", "application/json")
+                        .body(Body::from(rejected.to_string()))
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(response.status(), status, "{ticker}");
+        }
+
         let created = app
             .clone()
             .oneshot(
@@ -4123,6 +4880,24 @@ mod tests {
             body_json(published).await["draft"]["listing_status"],
             "live"
         );
+
+        // A live listing joins the same market catalog as the NGX instruments.
+        let market = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/markets/mkt_ngx_rabotelco")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(market.status(), StatusCode::OK);
+        let market = body_json(market).await;
+        assert_eq!(market["data"]["symbol"], "RABOTELCO/NGN");
+        assert_eq!(market["data"]["origin"], "issuer");
+        assert_eq!(market["data"]["assetId"], asset_id);
+        assert_eq!(market["data"]["mintAddress"], format!("mint-{operation_id}"));
 
         let edit_after_approval = app
             .oneshot(
@@ -4477,8 +5252,52 @@ mod tests {
     #[tokio::test]
     async fn orders_execute_against_the_matching_engine_and_publish_trades() {
         let producer = Arc::new(messaging::InMemoryEventProducer::default());
+        let repository = Arc::new(InMemoryRepository::default());
+        let listed = AssetDraftRecord {
+            asset_id: "ast_rabotelco".into(),
+            issuer_user_id: "usr_issuer".into(),
+            canonical_key: "NGX:RABOTELCO:ORDINARY".into(),
+            draft: NewAssetDraft {
+                instrument_code: "RABO-NG-TELCO".into(),
+                name: "Rabovel Nigeria Telco".into(),
+                ticker: "RABOTELCO".into(),
+                market: "NGX".into(),
+                share_class: "Ordinary".into(),
+                asset_type: "equity".into(),
+                decimals: 0,
+                authorized_units: 1_000_000,
+                settlement_currency: "CNGN".into(),
+                representation: "1 token = 1 simulated share".into(),
+                rights_description: "Simulated".into(),
+                disclosure: domain::assets::DEMO_DISCLOSURE.into(),
+                metadata: domain::assets::AssetMetadata {
+                    name: "Rabovel Nigeria Telco".into(),
+                    symbol: "RABOTELCO".into(),
+                    description: "Demo equity".into(),
+                    image_uri: None,
+                    external_url: None,
+                    metadata_uri: None,
+                    additional_metadata: vec![],
+                },
+                backing: Some(BackingEvidence {
+                    summary: "Simulated share register".into(),
+                    document_name: "register.pdf".into(),
+                    content_type: "application/pdf".into(),
+                    size_bytes: 1,
+                    verification_status: "verified".into(),
+                    verified_at: 1,
+                }),
+                listing_status: "not_listed".into(),
+            },
+            status: "minted".into(),
+            created_at: 1,
+            updated_at: 1,
+            mint_address: Some("mint-rabotelco".into()),
+        };
+        repository.create_asset_draft(listed).await.unwrap();
         let app = router_with_state(
             GatewayStateBuilder::default()
+                .repository(repository.clone())
                 .google(Arc::new(FakeGoogle))
                 .wallet_proof(Arc::new(FakeWalletProof))
                 .trusted_role_assignments(vec![TrustedRoleAssignment {
@@ -4556,6 +5375,91 @@ mod tests {
         .unwrap();
         assert_eq!(unknown.status(), StatusCode::BAD_REQUEST);
 
+        // An issuer asset is tradable only once it is listed live, and then
+        // with no extra registration: same catalog, same engine.
+        let issuer_order = serde_json::json!({
+            "symbol": "rabotelco",
+            "side": "buy",
+            "order_type": "market",
+            "quantity": "2",
+            "limit_price": null
+        });
+        let unlisted = send("POST", "/orders".into(), Some(issuer_order.clone()))
+            .await
+            .unwrap();
+        assert_eq!(unlisted.status(), StatusCode::BAD_REQUEST);
+        repository
+            .publish_asset_listing("ast_rabotelco", "usr_issuer", 2)
+            .await
+            .unwrap();
+        let markets = body_json(send("GET", "/markets".into(), None).await.unwrap()).await;
+        let markets = markets["data"].as_array().unwrap();
+        assert_eq!(markets.len(), 147);
+        assert!(markets
+            .iter()
+            .any(|market| market["marketId"] == "mkt_ngx_dangcem" && market["origin"] == "ngx_listed"));
+        assert!(markets
+            .iter()
+            .any(|market| market["marketId"] == "mkt_ngx_rabotelco" && market["origin"] == "issuer"));
+        let filled = send("POST", "/orders".into(), Some(issuer_order))
+            .await
+            .unwrap();
+        assert_eq!(filled.status(), StatusCode::OK);
+        let filled = body_json(filled).await;
+        assert_eq!(filled["state"], "filled");
+        assert_eq!(filled["filled_quantity"], "2");
+
+        let get = |uri: &str| {
+            let uri = uri.to_string();
+            let send = &send;
+            async move {
+                let response = send("GET", uri.clone(), None).await.unwrap();
+                assert_eq!(response.status(), StatusCode::OK, "{uri}");
+                body_json(response).await["data"].clone()
+            }
+        };
+
+        // Portfolio views are derived from the same engine fills.
+        let holdings = get("/portfolio/holdings").await;
+        let dangcem = holdings
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|holding| holding["symbol"] == "DANGCEM")
+            .unwrap()
+            .clone();
+        assert_eq!(dangcem["assetId"], "ast_ngx_dangcem");
+        assert_eq!(dangcem["quantity"], "3");
+        assert_eq!(holdings.as_array().unwrap().len(), 2);
+        let summary = get("/portfolio/summary").await;
+        // No payment-asset registry in this test, so no on-chain cash.
+        assert_eq!(summary["cashBalance"], "0.00");
+        assert_ne!(summary["investedValue"], "0.00");
+        let activity = get("/portfolio/activity").await;
+        assert_eq!(activity[0]["type"], "ORDER_FILLED");
+        assert_eq!(get("/portfolio/performance?range=1M").await.as_array().unwrap().len(), 30);
+
+        // Market data comes from the engine: tape, book (house quote) and candles.
+        let tape = get("/markets/mkt_ngx_dangcem/trades").await;
+        assert_eq!(tape[0]["quantity"], "3");
+        assert_eq!(tape[0]["side"], "BUY");
+        let book = get("/markets/mkt_ngx_rabotelco/order-book").await;
+        assert!(!book["asks"].as_array().unwrap().is_empty());
+        assert!(!book["bids"].as_array().unwrap().is_empty());
+        let candles = get("/markets/mkt_ngx_dangcem/price-history?range=1D").await;
+        assert_eq!(candles.as_array().unwrap().len(), 24);
+        assert_eq!(candles[23]["volume"], "3");
+
+        // Assets are the same catalog as markets and instruments.
+        let assets = get("/assets").await;
+        assert_eq!(assets.as_array().unwrap().len(), 147);
+        let issuer_asset = get("/assets/ast_rabotelco").await;
+        assert_eq!(issuer_asset["symbol"], "RABOTELCO");
+        assert_eq!(issuer_asset["origin"], "issuer");
+        assert_eq!(issuer_asset["contractAddress"], "mint-rabotelco");
+        assert_eq!(get("/assets/ast_ngx_gtco").await["origin"], "ngx_listed");
+        assert_eq!(get("/assets/ast_ngx_gtco/nav-history").await.as_array().unwrap().len(), 90);
+
         let trades: Vec<serde_json::Value> = producer
             .published()
             .await
@@ -4563,7 +5467,8 @@ mod tests {
             .filter(|(topic, _, _)| topic == events::topics::TRADING_TRADE_EXECUTED_V1)
             .map(|(_, _, payload)| serde_json::from_slice(&payload).unwrap())
             .collect();
-        assert_eq!(trades.len(), 1);
+        assert_eq!(trades.len(), 2);
+        assert_eq!(trades[1]["payload"]["symbol"], "RABOTELCO");
         let trade = &trades[0]["payload"];
         assert_eq!(trade["symbol"], "DANGCEM");
         assert_eq!(trade["quantity"], "3");

@@ -273,3 +273,74 @@ async fn invalid_orders_are_rejected() {
         Err(TradingError::OrderTooLarge(_))
     ));
 }
+
+#[tokio::test]
+async fn book_merges_resting_orders_with_the_house_quote_and_trades_are_taped() {
+    let svc = service();
+    svc.place_order("bob", limit(OrderSide::Buy, "4", "99"))
+        .await
+        .unwrap();
+    svc.place_order("alice", market(OrderSide::Buy, "3"))
+        .await
+        .unwrap();
+
+    let book = svc.order_book("dangcem", 10).await.unwrap();
+    assert_eq!(book.symbol, "DANGCEM");
+    // House bid 99.5 ranks above bob's 99 bid; the house ask is 100.5.
+    assert_eq!(book.bids[0].price_base_units, 99_500_000);
+    assert_eq!(
+        book.bids[1],
+        BookLevel {
+            price_base_units: 99_000_000,
+            quantity: 4
+        }
+    );
+    assert_eq!(book.asks[0].price_base_units, 100_500_000);
+    assert!(book.asks[0].quantity > 0);
+
+    let trades = svc.public_trades("DANGCEM", 10).await.unwrap();
+    assert_eq!(trades.len(), 1);
+    assert_eq!(trades[0].quantity, 3);
+    assert_eq!(trades[0].price_base_units, 100_500_000);
+    assert_eq!(trades[0].aggressor, OrderSide::Buy);
+    assert!(svc.public_trades("GTCO", 10).await.unwrap().is_empty());
+}
+
+/// A reference price the test can move.
+struct MovablePrice(std::sync::Mutex<u64>);
+
+#[async_trait::async_trait]
+impl ReferencePriceSource for MovablePrice {
+    async fn reference_price(
+        &self,
+        _symbol: &str,
+        _price_decimals: u8,
+    ) -> Result<Option<ReferencePrice>, String> {
+        Ok(Some(ReferencePrice {
+            price_base_units: *self.0.lock().unwrap(),
+            as_of: now_secs(),
+        }))
+    }
+}
+
+#[tokio::test]
+async fn resting_limits_fill_when_the_market_moves_through_them() {
+    let prices = Arc::new(MovablePrice(std::sync::Mutex::new(100_000_000)));
+    let svc = EngineTradingService::new(prices.clone(), EngineTradingConfig::default());
+    let ack = svc
+        .place_order("bob", limit(OrderSide::Buy, "2", "99"))
+        .await
+        .unwrap()
+        .ack;
+    assert_eq!(ack.state, OrderState::Accepted);
+    assert!(svc.reprice_resting().await.unwrap().is_empty());
+
+    // The market falls: the house ask (98 + 0.5%) is now below bob's 99 bid.
+    *prices.0.lock().unwrap() = 98_000_000;
+    let trades = svc.reprice_resting().await.unwrap();
+    assert_eq!(trades.len(), 1);
+    assert_eq!(trades[0].quantity, 2);
+    let order = svc.get_order("bob", &ack.order_id).await.unwrap();
+    assert_eq!(order.state, OrderState::Filled);
+    assert_eq!(svc.public_trades("DANGCEM", 5).await.unwrap().len(), 1);
+}

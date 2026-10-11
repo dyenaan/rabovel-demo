@@ -20,7 +20,14 @@ export type Market = {
   volume24h?: string;
 
   status: MarketStatus;
+
+  /** Backend catalog only: NGX-listed instrument or an issuer's live listing. */
+  origin?: MarketOrigin;
+  assetId?: string | null;
+  mintAddress?: string | null;
 };
+
+export type MarketOrigin = "ngx_listed" | "issuer";
 
 export type OrderBookLevel = {
   price: string;

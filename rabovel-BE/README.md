@@ -124,8 +124,9 @@ Issuer signup still requires organization onboarding before creating assets. Org
 | Issuers | `/issuer/overview`, `/issuer/onboarding`, `/issuer/assets/*` |
 | Payment asset | `/payment-assets/cngn` |
 | Investors | `/investor/catalog`, `/investor/quote`, `/investor/purchase/prepare`, `/investor/purchase/submit` |
-| Instruments | `/instruments` |
-| Trading | `/orders` (place/list), `/orders/:order_id` (get/cancel), `/portfolio` |
+| Instruments/markets/assets | `/instruments`, `/markets`, `/markets/:market_id`, `/assets`, `/assets/:asset_id`. One catalog: 146 NGX-listed instruments plus every live issuer listing. NGX asset ids are `ast_ngx_<ticker>`. |
+| Market data | `/markets/:market_id/order-book` (resting orders + house quote), `/markets/:market_id/trades`, `/markets/:market_id/price-history?range=`, `/assets/:asset_id/nav-history` |
+| Trading | `/orders` (place/list), `/orders/:order_id` (get/cancel), `/portfolio`, `/portfolio/summary`, `/portfolio/holdings`, `/portfolio/performance?range=`, `/portfolio/activity` |
 | Legacy stubs | `/tokenization/requests` |
 
 The frontend gateway supplies `Authorization: Bearer <token>` from its HttpOnly cookie. With `RABOVEL_GATEWAY_SECRET` configured, every route except `/health` additionally requires the gateway secret and a validated client IP. Hosted origins require a secret at startup. Direct local API calls must supply these headers too, or run in localhost-only development without the secret. See [public-demo hardening](docs/plans/public-demo-hardening.md) for deployment coordination. The frontend demo should deploy with `RABOVEL_DEMO_MODE=true`: this bypasses onboarding checks that have no UI/endpoints yet, while preserving role, permission, linked-wallet, balance, inventory and transaction-signature checks.
@@ -135,7 +136,8 @@ The frontend gateway supplies `Authorization: Bearer <token>` from its HttpOnly 
 - Backing documents are metadata only; upload, custody evidence and admin review are simulated.
 - KYC approval and the deterministic market-price feed are simulated.
 - Purchase confirmation is real on-chain, but there is no durable purchase/settlement ledger, cost-basis history, reconciliation or automatic recovery after ambiguous RPC outcomes.
-- `/orders` executes instantly against the in-memory matching engine (catalog instruments only). Engine state is lost on restart, there are no buying-power/balance checks yet, and fills are not yet settled on-chain; `/portfolio` shows net matched-trade balances, not on-chain holdings. See [the plan](docs/plans/principal-matching-engine.md).
+- `/orders` executes instantly against the in-memory matching engine for any catalog instrument, including live issuer listings. Issuer tickers must use the NGX format (e.g. `DANGCEM`) and may not reuse a catalog ticker.
+- Price history and charts come only from engine trades in memory. Before any trade, a series sits flat at the simulated reference price. Portfolio performance values today's holdings at past prices, because the engine keeps no position history. Portfolio cash is the linked wallet's on-chain cNGN balance. Engine state is lost on restart, there are no buying-power/balance checks yet, and fills are not yet settled on-chain; `/portfolio` shows net matched-trade balances, not on-chain holdings. See [the plan](docs/plans/principal-matching-engine.md).
 - Kafka publishing is not transactional, and the settlement, reconciliation and tokenization workers are shells.
 - Strict policy requires MFA and trusted-device state, but enrollment endpoints do not exist; demo mode intentionally relaxes those checks.
 - Hosted keys are process secrets rather than HSM/MPC-backed production custody.

@@ -1,0 +1,27 @@
+# Local development override: runs the API from source with cargo, reusing the
+# cached registry/target volumes of the `tests` service, instead of building
+# the release image (which needs apt downloads). Use when the image build is
+# slow or offline:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+# The first start compiles a debug build; later starts reuse it.
+services:
+  rabovel:
+    build: !reset null
+    image: rust:1.98-slim-bookworm
+    working_dir: /app
+    command: ["cargo", "run", "-p", "rabovel-api", "--locked"]
+    environment:
+      RABOVEL_BIND_ADDR: 0.0.0.0:8080
+    volumes:
+      - .:/app
+      - cargo_registry:/usr/local/cargo/registry
+      - cargo_target:/app/target
+    healthcheck:
+      # The rust image has no curl; probe the port with bash instead.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 600s
