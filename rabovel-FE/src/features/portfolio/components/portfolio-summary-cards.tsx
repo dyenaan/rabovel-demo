@@ -2,6 +2,8 @@
 
 import { Landmark, TrendingUp, Wallet, PiggyBank } from "lucide-react";
 
+import { ErrorState } from "@/components/shared/error-state";
+import { isMockApiEnabled } from "@/lib/api/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FinancialMetric } from "@/components/financial/financial-metric";
@@ -20,7 +22,9 @@ const EMPTY_SUMMARY = {
 };
 
 export function PortfolioSummaryCards() {
-  const { data, isPending } = usePortfolioSummary();
+  const { data, isPending, isError, refetch } = usePortfolioSummary();
+
+  if (isError) return <ErrorState title="Portfolio unavailable" onRetry={() => refetch()} />;
 
   if (isPending) {
     return (
@@ -84,6 +88,7 @@ export function PortfolioSummaryCards() {
           />
         </CardContent>
       </Card>
+      {!isMockApiEnabled && <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-4">Includes simulated trades and wallet-held investments. Wallet cost basis is estimated at current prices; its historical return is not available.</p>}
     </div>
   );
 }

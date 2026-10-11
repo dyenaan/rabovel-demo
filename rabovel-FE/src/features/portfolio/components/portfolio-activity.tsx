@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { ErrorState } from "@/components/shared/error-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingState } from "@/components/shared/loading-state";
@@ -30,12 +31,14 @@ const ICONS: Record<ActivityEvent["type"], LucideIcon> = {
 };
 
 export function PortfolioActivity() {
-  const { data, isPending } = usePortfolioActivity();
+  const { data, isPending, isError, refetch } = usePortfolioActivity();
+
+  if (isError) return <ErrorState onRetry={() => refetch()} />;
 
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
+        <CardTitle>Trading Activity</CardTitle>
       </CardHeader>
       <CardContent className="pb-6">
         {isPending ? (
@@ -44,7 +47,7 @@ export function PortfolioActivity() {
           <EmptyState
             icon={ActivityIcon}
             title="No recent activity"
-            description="Completed purchases and account updates will appear here."
+            description="Simulated order placements and fills will appear here."
             className="py-10"
           />
         ) : (

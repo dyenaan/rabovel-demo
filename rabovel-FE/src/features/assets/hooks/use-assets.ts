@@ -97,6 +97,8 @@ export function useInvestorPurchase() {
       window.setTimeout(() => {
         void queryClient.invalidateQueries({ queryKey: ["investor", "catalog"] });
       }, 2_000);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.portfolio.all });
+      void queryClient.invalidateQueries({ queryKey: ["custody", "cngn"] });
       toast.success("Purchase complete. Your holdings have been updated.");
     },
     onError: (error) => {

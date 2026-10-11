@@ -37,7 +37,11 @@ pub const PRICE_TICK_SECS: u64 = 5;
 pub struct SimulatedPriceFeed;
 
 /// Wave periods in seconds and amplitudes as a fraction of the base price.
-const WAVES: [(f64, f64); 3] = [(6.0 * 86_400.0, 0.08), (19.0 * 3_600.0, 0.035), (47.0 * 60.0, 0.012)];
+const WAVES: [(f64, f64); 3] = [
+    (6.0 * 86_400.0, 0.08),
+    (19.0 * 3_600.0, 0.035),
+    (47.0 * 60.0, 0.012),
+];
 const JITTER: f64 = 0.004;
 
 fn seed_bytes(input: &[u8]) -> [u8; 32] {
@@ -51,7 +55,7 @@ fn unit(bytes: &[u8]) -> f64 {
 
 impl PriceFeed for SimulatedPriceFeed {
     fn price_at(&self, ticker: &str, payment_decimals: u8, at: u64) -> Result<MarketPrice, String> {
-        if payment_decimals < 2 || payment_decimals > 12 {
+        if !(2..=12).contains(&payment_decimals) {
             return Err("payment asset decimals are unsupported".into());
         }
         let ticker = ticker.trim().to_ascii_uppercase();

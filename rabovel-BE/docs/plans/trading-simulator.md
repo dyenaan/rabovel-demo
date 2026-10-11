@@ -41,7 +41,7 @@ Implemented as described below.
 
 - **Tests.** `price_feed`, `market_views` and `engine_service` tests cover determinism, bounds, candle sampling, and limit fills on market moves.
 - **Frontend polling.** `livePollInterval` in `rabovel-FE/src/lib/api/client.ts` drives polling in real mode.
-- **Portfolio source.** Real-mode portfolio summary and holdings now read `/portfolio/*`: engine positions plus on-chain cNGN cash. They used to read `/investor/catalog`.
+- **Portfolio source.** Real-mode portfolio summary and holdings now read `/portfolio/*`: engine positions plus wallet-held issuer investments and on-chain cNGN cash counted once. Wallet holdings retain the earlier current-price cost baseline until purchase-lot accounting exists; their historical P&L is unavailable. The chart values current positions at historical simulated prices, rather than reconstructing historical account returns. Engine positions remain separate unsettled simulations; this does not implement S4–S6.
 - **Buying is blocked until S3/S4.** The order form blocks buys when cash is below the order total, and cash is on-chain cNGN. Locally there's no Solana config, so buys stay blocked until S3 (deposit) is configured. The backend itself doesn't check buying power before S4.
 
 ### Original S1 scope

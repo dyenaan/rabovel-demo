@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { ChartNoAxesCombined } from "lucide-react";
 
+import { ErrorState } from "@/components/shared/error-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,7 +24,7 @@ const RANGES = ["1M", "3M", "6M", "1Y"] as const;
 
 export function PortfolioPerformanceChart() {
   const [range, setRange] = useState<(typeof RANGES)[number]>("6M");
-  const { data, isPending } = usePortfolioPerformance(range);
+  const { data, isPending, isError, refetch } = usePortfolioPerformance(range);
 
   const chartData = useMemo(
     () =>
@@ -37,11 +38,14 @@ export function PortfolioPerformanceChart() {
 
   const hasBenchmark = chartData.some((point) => point.benchmark !== undefined);
 
+  if (isError) return <ErrorState onRetry={() => refetch()} />;
+
   return (
     <Card>
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 space-y-0">
         <div className="flex min-w-0 flex-wrap items-center gap-3">
           <CardTitle>Portfolio Performance</CardTitle>
+          <p className="w-full text-xs text-muted-foreground">Current holdings valued at earlier simulated prices, rather than historical account returns.</p>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="h-0.5 w-3 rounded-full bg-[var(--color-chart-1)]" />

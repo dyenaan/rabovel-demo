@@ -108,9 +108,21 @@ pub fn parse_units(value: &str, decimals: u8) -> Option<i128> {
         return None;
     }
     let digits = usize::from(decimals);
-    let fraction: String = fraction.chars().chain(std::iter::repeat('0')).take(digits).collect();
-    let whole: i128 = if whole.is_empty() { 0 } else { whole.parse().ok()? };
-    let fraction: i128 = if digits == 0 { 0 } else { fraction.parse().ok()? };
+    let fraction: String = fraction
+        .chars()
+        .chain(std::iter::repeat('0'))
+        .take(digits)
+        .collect();
+    let whole: i128 = if whole.is_empty() {
+        0
+    } else {
+        whole.parse().ok()?
+    };
+    let fraction: i128 = if digits == 0 {
+        0
+    } else {
+        fraction.parse().ok()?
+    };
     Some(whole * 10_i128.pow(u32::from(decimals)) + fraction)
 }
 
@@ -136,7 +148,11 @@ mod tests {
         // Price rises 1 per second.
         let path = |at: u64| 1_000 + at;
         let now = 10 * HOUR + 60;
-        let trades = [(9 * HOUR + 10, 5_000, 2), (9 * HOUR + 20, 900, 1), (8 * HOUR, 9_100, 5)];
+        let trades = [
+            (9 * HOUR + 10, 5_000, 2),
+            (9 * HOUR + 20, 900, 1),
+            (8 * HOUR, 9_100, 5),
+        ];
         let series = candles(&trades, path, now, HOUR, 4);
         assert_eq!(series.len(), 4);
         // Buckets 7h, 8h, 9h, 10h.
@@ -146,7 +162,10 @@ mod tests {
         assert_eq!(series[0].volume, 0);
         assert_eq!(series[1].volume, 5);
         // Trades outside the path widen the range but not open/close.
-        assert_eq!((series[2].high, series[2].low, series[2].volume), (path(10 * HOUR - 1), 900, 3));
+        assert_eq!(
+            (series[2].high, series[2].low, series[2].volume),
+            (path(10 * HOUR - 1), 900, 3)
+        );
         assert_eq!(series[2].close, path(10 * HOUR - 1));
         // The current bucket never samples the future.
         assert_eq!(series[3].close, path(now));

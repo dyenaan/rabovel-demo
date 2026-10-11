@@ -266,9 +266,9 @@ impl GatewayStateBuilder {
         } else {
             Arc::new(BrokerageAuthService::new(BrokerageSecurityPolicy::default()))
         };
-        let instrument_provider = self.instrument_provider.unwrap_or_else(|| {
-            Arc::new(UnifiedInstrumentCatalog::new(self.repository.clone()))
-        });
+        let instrument_provider = self
+            .instrument_provider
+            .unwrap_or_else(|| Arc::new(UnifiedInstrumentCatalog::new(self.repository.clone())));
         let house_half_spread_bps = self.trading_config.engine.default_limits.half_spread_bps;
         let price_decimals = self.trading_config.price_decimals;
         let portfolio_trading = self.portfolio_trading.unwrap_or_else(|| {
@@ -2602,7 +2602,16 @@ async fn investor_catalog_handler(
     State(state): State<GatewayState>,
     user: AuthenticatedUser,
 ) -> Result<Json<InvestorCatalogResponse>, ApiError> {
-    let wallet = investor_solana_wallet(&state, &user.user_id).await?;
+    investor_catalog_for_user(&state, &user.user_id)
+        .await
+        .map(Json)
+}
+
+async fn investor_catalog_for_user(
+    state: &GatewayState,
+    user_id: &str,
+) -> Result<InvestorCatalogResponse, ApiError> {
+    let wallet = investor_solana_wallet(state, user_id).await?;
     let cngn = state
         .payment_assets
         .cngn_wallet_status(wallet.address())
@@ -2679,11 +2688,11 @@ async fn investor_catalog_handler(
             price_updated_at: price.as_of,
         });
     }
-    Ok(Json(InvestorCatalogResponse {
+    Ok(InvestorCatalogResponse {
         wallet_address: wallet.address().into(),
         cngn,
         assets,
-    }))
+    })
 }
 
 #[utoipa::path(get, path = "/instruments", responses((status = 200, body = InstrumentCatalog), (status = 503, body = ApiErrorResponse)))]
@@ -2849,7 +2858,10 @@ async fn catalog_instruments(state: &GatewayState) -> Result<Vec<Instrument>, Ap
         .instruments)
 }
 
-async fn instrument_by_market(state: &GatewayState, market_id: &str) -> Result<Instrument, ApiError> {
+async fn instrument_by_market(
+    state: &GatewayState,
+    market_id: &str,
+) -> Result<Instrument, ApiError> {
     catalog_instruments(state)
         .await?
         .into_iter()
@@ -2944,17 +2956,23 @@ async fn market_price_history_handler(
     let decimals = state.price_decimals;
     let price = |units: u64| market_views::fixed2(units.into(), decimals);
     Ok(Json(Data {
-        data: market_views::candles(&trades, price_path(&state, &instrument.ticker), unix_now(), bucket, count)
-            .into_iter()
-            .map(|candle| PricePointResponse {
-                timestamp: market_views::iso(candle.start),
-                open: price(candle.open),
-                high: price(candle.high),
-                low: price(candle.low),
-                close: price(candle.close),
-                volume: candle.volume.to_string(),
-            })
-            .collect(),
+        data: market_views::candles(
+            &trades,
+            price_path(&state, &instrument.ticker),
+            unix_now(),
+            bucket,
+            count,
+        )
+        .into_iter()
+        .map(|candle| PricePointResponse {
+            timestamp: market_views::iso(candle.start),
+            open: price(candle.open),
+            high: price(candle.high),
+            low: price(candle.low),
+            close: price(candle.close),
+            volume: candle.volume.to_string(),
+        })
+        .collect(),
     }))
 }
 
@@ -3084,13 +3102,19 @@ async fn asset_nav_history_handler(
     reference_price(&state, &instrument.ticker)?;
     let trades = trade_points(&state, &instrument.ticker).await?;
     Ok(Json(Data {
-        data: market_views::candles(&trades, price_path(&state, &instrument.ticker), unix_now(), bucket, count)
-            .into_iter()
-            .map(|candle| NavPointResponse {
-                date: market_views::iso_date(candle.start),
-                nav: market_views::fixed2(candle.close.into(), state.price_decimals),
-            })
-            .collect(),
+        data: market_views::candles(
+            &trades,
+            price_path(&state, &instrument.ticker),
+            unix_now(),
+            bucket,
+            count,
+        )
+        .into_iter()
+        .map(|candle| NavPointResponse {
+            date: market_views::iso_date(candle.start),
+            nav: market_views::fixed2(candle.close.into(), state.price_decimals),
+        })
+        .collect(),
     }))
 }
 
@@ -3172,7 +3196,9 @@ async fn portfolio_view(state: &GatewayState, user_id: &str) -> Result<Portfolio
             _ => (balance.asset.to_ascii_lowercase(), balance.asset.clone()),
         };
         positions.push(PositionView {
-            cost_basis: lots.get(&balance.asset).map_or(0, |(_, cost)| (*cost).max(0)),
+            cost_basis: lots
+                .get(&balance.asset)
+                .map_or(0, |(_, cost)| (*cost).max(0)),
             price: reference_price(state, &balance.asset)?.into(),
             asset_id,
             name,
@@ -3181,18 +3207,87 @@ async fn portfolio_view(state: &GatewayState, user_id: &str) -> Result<Portfolio
         });
     }
 
-    let cash = match investor_solana_wallet(state, user_id).await {
-        Ok(wallet) => state
-            .payment_assets
-            .cngn_wallet_status(wallet.address())
-            .await
-            .ok()
-            .and_then(|status| status.balance_base_units)
-            .and_then(|units| units.parse::<i128>().ok())
-            .unwrap_or(0),
-        Err(_) => 0,
+    // Wallet purchases and engine trades are separate positions today: the
+    // engine does not settle its fills into these token accounts. Include both
+    // quantities, but count the wallet's cash only once. Propagate RPC failures
+    // rather than displaying a partial portfolio as a verified zero balance.
+    let has_wallet = match investor_solana_wallet(state, user_id).await {
+        Ok(_) => true,
+        Err(error)
+            if matches!(
+                error.error,
+                AuthError::MissingWallet | AuthError::ForbiddenAction
+            ) =>
+        {
+            false
+        }
+        Err(error) => return Err(error),
+    };
+    let cash = if has_wallet {
+        let catalog = investor_catalog_for_user(state, user_id).await?;
+        for asset in catalog.assets {
+            let quantity = asset
+                .investor_balance
+                .parse::<i128>()
+                .map_err(|_| ApiError::from(state_unavailable()))?;
+            if quantity <= 0 {
+                continue;
+            }
+            let price = reference_price(state, &asset.ticker)?;
+            merge_wallet_position(
+                &mut positions,
+                asset.asset_id,
+                asset.name,
+                asset.ticker,
+                quantity,
+                price.into(),
+            );
+        }
+        catalog
+            .cngn
+            .balance_base_units
+            .as_deref()
+            .zip(catalog.cngn.decimals)
+            .and_then(|(units, source_decimals)| {
+                let units = units.parse::<i128>().ok()?;
+                let source_scale = 10_i128.checked_pow(source_decimals.into())?;
+                let target_scale = 10_i128.checked_pow(decimals.into())?;
+                units.checked_mul(target_scale)?.checked_div(source_scale)
+            })
+            .ok_or_else(|| ApiError::from(state_unavailable()))?
+    } else {
+        0
     };
     Ok(PortfolioView { positions, cash })
+}
+
+/// Preserve the previous wallet-view valuation baseline until purchase-lot
+/// accounting exists. It is an estimate of cost, not a recorded acquisition price.
+fn merge_wallet_position(
+    positions: &mut Vec<PositionView>,
+    asset_id: String,
+    name: String,
+    ticker: String,
+    quantity: i128,
+    price: i128,
+) {
+    let baseline_cost = quantity * price;
+    if let Some(position) = positions
+        .iter_mut()
+        .find(|position| position.asset_id == asset_id)
+    {
+        position.quantity += quantity;
+        position.cost_basis += baseline_cost;
+    } else {
+        positions.push(PositionView {
+            asset_id,
+            name,
+            ticker,
+            quantity,
+            cost_basis: baseline_cost,
+            price,
+        });
+    }
 }
 
 async fn portfolio_summary_handler(
@@ -3202,7 +3297,11 @@ async fn portfolio_summary_handler(
     let view = portfolio_view(&state, &user.user_id).await?;
     let decimals = state.price_decimals;
     let invested: i128 = view.positions.iter().map(PositionView::market_value).sum();
-    let cost: i128 = view.positions.iter().map(|position| position.cost_basis).sum();
+    let cost: i128 = view
+        .positions
+        .iter()
+        .map(|position| position.cost_basis)
+        .sum();
     let fixed = |value: i128| market_views::fixed2(value, decimals);
     Ok(Json(Data {
         data: PortfolioSummaryResponse {
@@ -3265,7 +3364,13 @@ async fn portfolio_performance_handler(
     let mut values = vec![view.cash; count];
     for position in &view.positions {
         let trades = trade_points(&state, &position.ticker).await?;
-        let series = market_views::candles(&trades, price_path(&state, &position.ticker), now, bucket, count);
+        let series = market_views::candles(
+            &trades,
+            price_path(&state, &position.ticker),
+            now,
+            bucket,
+            count,
+        );
         for (value, candle) in values.iter_mut().zip(series) {
             *value += position.quantity * i128::from(candle.close);
         }
@@ -3328,7 +3433,7 @@ async fn portfolio_activity_handler(
         ));
     }
     // Newest first; a fill sorts ahead of its own placement.
-    events.sort_by(|a, b| b.0.cmp(&a.0));
+    events.sort_by_key(|event| std::cmp::Reverse(event.0));
     Ok(Json(Data {
         data: events.into_iter().map(|(_, event)| event).collect(),
     }))
@@ -4291,6 +4396,85 @@ mod tests {
         (app, body["access_token"].as_str().unwrap().to_string())
     }
 
+    #[test]
+    fn portfolio_keeps_wallet_purchases_and_engine_positions_without_duplicate_rows() {
+        let mut positions = vec![PositionView {
+            asset_id: "ast_demo".into(),
+            name: "Demo".into(),
+            ticker: "DEMO".into(),
+            quantity: 2,
+            cost_basis: 18_000_000,
+            price: 10_000_000,
+        }];
+        merge_wallet_position(
+            &mut positions,
+            "ast_demo".into(),
+            "Demo".into(),
+            "DEMO".into(),
+            3,
+            10_000_000,
+        );
+        merge_wallet_position(
+            &mut positions,
+            "ast_other".into(),
+            "Other".into(),
+            "OTHER".into(),
+            4,
+            5_000_000,
+        );
+        assert_eq!(positions.len(), 2);
+        assert_eq!(positions[0].quantity, 5);
+        assert_eq!(positions[0].cost_basis, 48_000_000);
+        assert_eq!(
+            positions
+                .iter()
+                .map(PositionView::market_value)
+                .sum::<i128>(),
+            70_000_000
+        );
+    }
+
+    #[tokio::test]
+    async fn merged_market_and_portfolio_routes_return_frontend_envelopes() {
+        let (app, token) = login(test_app()).await;
+        for path in [
+            "/assets",
+            "/markets",
+            "/portfolio/summary",
+            "/portfolio/holdings",
+            "/portfolio/performance?range=1M",
+            "/portfolio/activity",
+        ] {
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .uri(path)
+                        .header("authorization", format!("Bearer {token}"))
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::OK, "{path}");
+            let body = body_json(response).await;
+            assert!(body.get("data").is_some(), "{path}: {body}");
+        }
+        for path in [
+            "/portfolio/summary",
+            "/portfolio/holdings",
+            "/portfolio/performance",
+            "/portfolio/activity",
+        ] {
+            let response = app
+                .clone()
+                .oneshot(Request::builder().uri(path).body(Body::empty()).unwrap())
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::UNAUTHORIZED, "{path}");
+        }
+    }
+
     #[tokio::test]
     async fn health_endpoint_returns_ok() {
         let response = router()
@@ -4897,7 +5081,10 @@ mod tests {
         assert_eq!(market["data"]["symbol"], "RABOTELCO/NGN");
         assert_eq!(market["data"]["origin"], "issuer");
         assert_eq!(market["data"]["assetId"], asset_id);
-        assert_eq!(market["data"]["mintAddress"], format!("mint-{operation_id}"));
+        assert_eq!(
+            market["data"]["mintAddress"],
+            format!("mint-{operation_id}")
+        );
 
         let edit_after_approval = app
             .oneshot(
@@ -5306,6 +5493,7 @@ mod tests {
                     role: UserRole::Trader,
                 }])
                 .security_policy(test_security_policy())
+                .payment_assets(Arc::new(FakePaymentAssets))
                 .event_producer(producer.clone())
                 .build(),
         );
@@ -5397,10 +5585,11 @@ mod tests {
         assert_eq!(markets.len(), 147);
         assert!(markets
             .iter()
-            .any(|market| market["marketId"] == "mkt_ngx_dangcem" && market["origin"] == "ngx_listed"));
-        assert!(markets
-            .iter()
-            .any(|market| market["marketId"] == "mkt_ngx_rabotelco" && market["origin"] == "issuer"));
+            .any(|market| market["marketId"] == "mkt_ngx_dangcem"
+                && market["origin"] == "ngx_listed"));
+        assert!(markets.iter().any(
+            |market| market["marketId"] == "mkt_ngx_rabotelco" && market["origin"] == "issuer"
+        ));
         let filled = send("POST", "/orders".into(), Some(issuer_order))
             .await
             .unwrap();
@@ -5432,12 +5621,19 @@ mod tests {
         assert_eq!(dangcem["quantity"], "3");
         assert_eq!(holdings.as_array().unwrap().len(), 2);
         let summary = get("/portfolio/summary").await;
-        // No payment-asset registry in this test, so no on-chain cash.
-        assert_eq!(summary["cashBalance"], "0.00");
+        // The fake wallet has 25 cNGN; count it once alongside engine positions.
+        assert_eq!(summary["cashBalance"], "25.00");
         assert_ne!(summary["investedValue"], "0.00");
         let activity = get("/portfolio/activity").await;
         assert_eq!(activity[0]["type"], "ORDER_FILLED");
-        assert_eq!(get("/portfolio/performance?range=1M").await.as_array().unwrap().len(), 30);
+        assert_eq!(
+            get("/portfolio/performance?range=1M")
+                .await
+                .as_array()
+                .unwrap()
+                .len(),
+            30
+        );
 
         // Market data comes from the engine: tape, book (house quote) and candles.
         let tape = get("/markets/mkt_ngx_dangcem/trades").await;
@@ -5458,7 +5654,14 @@ mod tests {
         assert_eq!(issuer_asset["origin"], "issuer");
         assert_eq!(issuer_asset["contractAddress"], "mint-rabotelco");
         assert_eq!(get("/assets/ast_ngx_gtco").await["origin"], "ngx_listed");
-        assert_eq!(get("/assets/ast_ngx_gtco/nav-history").await.as_array().unwrap().len(), 90);
+        assert_eq!(
+            get("/assets/ast_ngx_gtco/nav-history")
+                .await
+                .as_array()
+                .unwrap()
+                .len(),
+            90
+        );
 
         let trades: Vec<serde_json::Value> = producer
             .published()

@@ -40,3 +40,7 @@ The `/wallet` route is labeled Account & Payments (Payments in mobile navigation
 ## Browser security boundary
 
 `src/proxy.ts` generates a fresh script nonce and CSP for page requests. The root layout reads the nonce, making pages dynamic, and passes it through to next-themes. Nonce-bearing HTML is private/no-store. Baseline headers are configured in `next.config.ts`. External browser connections are limited to the configured storage origin and optional WebSocket origin; issuer images remain HTTPS-capable. Inline styles remain permitted for existing UI libraries, while production inline scripts require a nonce. See the [operations runbook](../../rabovel-BE/docs/public-demo-operations.md) for deployment settings and browser verification.
+
+## Unified catalog merge
+
+The gateway permits authenticated GET requests to asset list/detail/NAV, market list/detail/book/history/trades and portfolio summary/holdings/performance/activity routes. Other paths and write methods remain blocked. The asset page combines the searchable NGX/issuer catalog with direct issuer purchases and keeps technical identifiers expandable. Portfolio reads use the backend `/portfolio/*` views, including both engine positions and wallet-held issuer assets, with wallet cash counted once. Wallet acquisition cost is still a current-price estimate; the UI labels this limitation. Simulated fills remain process-local and do not settle on-chain. Order mutations and direct purchases invalidate portfolio queries.

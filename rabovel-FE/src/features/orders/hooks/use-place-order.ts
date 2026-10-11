@@ -12,7 +12,9 @@ export function usePlaceOrder() {
   return useMutation({
     mutationFn: (input: PlaceOrderInput) => placeOrder(input),
     onSuccess: (order) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.portfolio.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.markets.all });
       toast.success(`Order placed — ${order.side} ${order.quantity} ${order.marketSymbol}`);
     },
     onError: (error) => {
@@ -28,7 +30,9 @@ export function useCancelOrder() {
     mutationFn: ({ orderId, idempotencyKey }: { orderId: string; idempotencyKey: string }) =>
       cancelOrder(orderId, idempotencyKey),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.portfolio.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.markets.all });
       toast.success("Order cancelled.");
     },
     onError: (error) => {

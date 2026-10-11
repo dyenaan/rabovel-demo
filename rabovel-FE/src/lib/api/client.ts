@@ -1,4 +1,4 @@
-import { useMockApi } from "@/lib/env";
+import { env, useMockApi } from "@/lib/env";
 import { gatewayFetch } from "./gateway-fetch";
 import { ApiRequestError, type ApiError, type ApiResponse } from "@/types";
 

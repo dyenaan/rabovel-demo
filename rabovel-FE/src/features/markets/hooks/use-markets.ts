@@ -2,7 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { livePollInterval } from "@/lib/api/client";
+import { isMockApiEnabled, livePollInterval } from "@/lib/api/client";
+import { env } from "@/lib/env";
 import { QUERY_STALE_TIME } from "@/lib/constants";
 import { queryKeys } from "@/lib/query-keys";
 import { useMarketStream, useOrderBookStream, useTradeStream } from "@/lib/websocket/hooks";
@@ -14,6 +15,8 @@ import {
   getPriceHistory,
   getRecentTrades,
 } from "../api/get-markets";
+
+const useStreaming = isMockApiEnabled || Boolean(env.NEXT_PUBLIC_WS_URL);
 
 export function useMarkets() {
   return useQuery({
@@ -35,7 +38,7 @@ export function useMarket(marketId: string) {
 
   const live = useMarketStream(marketId, query.data);
 
-  return { ...query, data: (live ?? query.data) as Market | undefined };
+  return { ...query, data: (useStreaming ? live ?? query.data : query.data) as Market | undefined };
 }
 
 export function useOrderBook(marketId: string) {
@@ -49,7 +52,7 @@ export function useOrderBook(marketId: string) {
 
   const live = useOrderBookStream(marketId, query.data);
 
-  return { ...query, data: live ?? query.data };
+  return { ...query, data: useStreaming ? live ?? query.data : query.data };
 }
 
 export function usePriceHistory(marketId: string, range: string) {
@@ -73,5 +76,5 @@ export function useRecentTrades(marketId: string) {
 
   const live = useTradeStream(marketId, query.data ?? []);
 
-  return { ...query, data: live.length > 0 ? live : query.data };
+  return { ...query, data: useStreaming && live.length > 0 ? live : query.data };
 }

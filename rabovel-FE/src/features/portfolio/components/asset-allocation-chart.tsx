@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
+import { ErrorState } from "@/components/shared/error-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,12 +24,14 @@ const COLORS = [
 ];
 
 export function AssetAllocationChart() {
-  const { data, isPending } = useHoldings();
+  const { data, isPending, isError, refetch } = useHoldings();
 
   const chartData = useMemo(
     () => (data ?? []).map((holding) => ({ ...holding, allocationPercent: Number(holding.allocationPercent) })),
     [data],
   );
+
+  if (isError) return <ErrorState onRetry={() => refetch()} />;
 
   return (
     <Card className="h-full">

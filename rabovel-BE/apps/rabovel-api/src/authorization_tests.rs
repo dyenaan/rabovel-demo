@@ -41,7 +41,7 @@ fn organization() -> Value {
     json!({"legal_name":"Demo Issuer Ltd","organization_type":"company","registration_number":"RC-123","jurisdiction":"Nigeria","registered_address":"1 Demo Street","representative_name":"Ada Demo","representative_title":"Director","document_reference":"demo.pdf","beneficial_owners_confirmed":true,"information_certified":true})
 }
 fn draft() -> Value {
-    json!({"instrument_code":"RABO-NG-TELCO","name":"Demo Equity","ticker":"RABO-NG-TELCO","market":"NGX","share_class":"Ordinary","asset_type":"equity","decimals":0,"authorized_units":"100","settlement_currency":"CNGN","representation":"1 token = 1 simulated share","rights_description":"Simulated ordinary-share entitlement.","disclosure":domain::assets::DEMO_DISCLOSURE,"metadata":{"name":"Demo Equity","symbol":"RABO-NG-TELCO","description":"Demo equity","image_uri":null,"external_url":null,"metadata_uri":null,"additional_metadata":[]}})
+    json!({"instrument_code":"RABO-NG-TELCO","name":"Demo Equity","ticker":"RABOTELCO","market":"NGX","share_class":"Ordinary","asset_type":"equity","decimals":0,"authorized_units":"100","settlement_currency":"CNGN","representation":"1 token = 1 simulated share","rights_description":"Simulated ordinary-share entitlement.","disclosure":domain::assets::DEMO_DISCLOSURE,"metadata":{"name":"Demo Equity","symbol":"RABOTELCO","description":"Demo equity","image_uri":null,"external_url":null,"metadata_uri":null,"additional_metadata":[]}})
 }
 
 #[tokio::test]

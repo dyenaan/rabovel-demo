@@ -165,3 +165,31 @@ test("query parameters preserve the fixed backend origin and have a bounded size
     async () => assert.fail("backend must not be contacted"));
   assert.equal(oversized.status, 404);
 });
+
+
+test("merged market, asset and portfolio reads require a session and forward only to the fixed backend", async () => {
+  for (const path of [
+    "/assets", "/assets/ast_ngx_dangcem", "/assets/ast_ngx_dangcem/nav-history",
+    "/markets", "/markets/mkt_ngx_dangcem", "/markets/mkt_ngx_dangcem/order-book",
+    "/markets/mkt_ngx_dangcem/price-history?range=1D", "/markets/mkt_ngx_dangcem/trades",
+    "/portfolio/summary", "/portfolio/holdings", "/portfolio/performance?range=1M", "/portfolio/activity",
+  ]) {
+    const response = await handleGateway(makeRequest(path), config, async (url, options) => {
+      assert.equal(url, `${config.backendOrigin}${path}`);
+      assert.equal(options.headers.get("authorization"), `Bearer ${token}`);
+      assert.equal(options.headers.get("x-rabovel-gateway-secret"), config.secret);
+      return Response.json({ data: [] });
+    });
+    assert.equal(response.status, 200, path);
+    const missing = await handleGateway(makeRequest(path, "GET", { cookie: "" }), config,
+      async () => assert.fail("unauthenticated request must not reach backend"));
+    assert.equal(missing.status, 401, path);
+    const mutation = await handleGateway(makeRequest(path, "POST", {}, "{}"), config,
+      async () => assert.fail("read routes must not allow writes"));
+    assert.equal(mutation.status, 405, path);
+  }
+  for (const path of ["/assets/ast_aa/setup", "/markets/mkt_aa/admin", "/portfolio/admin", "/assets/ast_aa/nav-history/extra"]) {
+    const response = await handleGateway(makeRequest(path), config, async () => assert.fail("unknown route"));
+    assert.equal(response.status, 404, path);
+  }
+});
