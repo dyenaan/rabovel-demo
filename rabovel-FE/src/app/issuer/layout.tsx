@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Building2, FileCheck2, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { WorkspaceSwitcher } from "@/components/layout/workspace-switcher";
 import { Logo } from "@/components/layout/logo";
 import { AccessRestricted } from "@/features/auth/components/access-restricted";
 import { RoleGuard } from "@/features/auth/components/role-guard";
@@ -14,7 +15,7 @@ export default function IssuerLayout({ children }: LayoutProps<"/issuer">) {
   const router = useRouter();
   const { user, logout } = useAuth();
   return (
-    <RoleGuard allow={["ISSUER"]} fallback={<AccessRestricted />}>
+    <RoleGuard allow={["ISSUER"]} fallback={<AccessRestricted area="The issuer workspace" requiredRole="issuer" />}>
       <div className="flex min-h-screen">
         <aside className="hidden w-64 border-r bg-sidebar p-4 md:block">
           <Logo href="/issuer" />
@@ -24,7 +25,7 @@ export default function IssuerLayout({ children }: LayoutProps<"/issuer">) {
           </nav>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex h-16 items-center border-b px-4 sm:px-6"><span className="font-medium md:hidden">Issuer</span><div className="ml-auto flex items-center gap-3"><span className="hidden text-sm text-muted-foreground sm:inline">{user?.email}</span><Button variant="ghost" size="sm" onClick={async () => { await logout(); router.push("/login"); }}><LogOut className="size-4" />Log out</Button></div></header>
+          <header className="flex h-16 items-center border-b px-4 sm:px-6"><WorkspaceSwitcher /><div className="ml-auto flex items-center gap-3"><span className="hidden text-sm text-muted-foreground sm:inline">{user?.email}</span><Button variant="ghost" size="sm" onClick={async () => { await logout(); router.push("/login"); }}><LogOut className="size-4" />Log out</Button></div></header>
           <nav aria-label="Issuer navigation" className="flex flex-wrap gap-2 border-b p-3 md:hidden"><Button asChild variant="outline" size="sm"><Link href="/issuer"><Building2 className="size-4" />Overview</Link></Button><Button asChild variant="outline" size="sm"><Link href="/issuer/onboarding"><FileCheck2 className="size-4" />Verification</Link></Button></nav>
           <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
         </div>

@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { WorkspaceSwitcher } from "@/components/layout/workspace-switcher";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { useConnectionStatus } from "@/lib/websocket/hooks";
 import { formatRelativeTime } from "@/lib/formatters";
@@ -44,6 +45,7 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background px-4 sm:px-6">
+      <WorkspaceSwitcher />
       <div className="flex-1" />
 
       <Tooltip>

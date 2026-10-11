@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { WorkspaceSwitcher } from "@/components/layout/workspace-switcher";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 
 export function AdminHeader() {
@@ -23,6 +24,7 @@ export function AdminHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background px-4 sm:px-6">
+      <WorkspaceSwitcher />
       <div className="flex-1" />
       <ThemeToggle />
       <DropdownMenu>

@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import type { UserRole } from "@/types";
 import { useAuth } from "../hooks/use-auth";
+import { hasAllowedRole } from "../role-access";
 import { RequireAuth } from "./require-auth";
 
 /**
@@ -22,7 +23,7 @@ export function RoleGuard({
   fallback?: ReactNode;
   children: ReactNode;
 }) {
-  const { role } = useAuth();
+  const { user } = useAuth();
 
-  return <RequireAuth>{role && allow.includes(role) ? children : fallback}</RequireAuth>;
+  return <RequireAuth>{hasAllowedRole(user, allow) ? children : fallback}</RequireAuth>;
 }

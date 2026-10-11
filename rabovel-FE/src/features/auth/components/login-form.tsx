@@ -20,28 +20,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { mockLogin } from "../api/mock-auth";
-import { fetchCurrentUser, homeForRole, loginWithPassword } from "../api/backend-auth";
+import { fetchCurrentUser, loginWithPassword } from "../api/backend-auth";
+import { loginDestination } from "../role-access";
 import { useMockApi } from "@/lib/env";
 import { useAuth } from "../hooks/use-auth";
 import { loginSchema, type LoginFormValues } from "../schemas/auth.schema";
 import { PasswordInput } from "./password-input";
-
-/**
- * Resolves `path` against the current origin the same way a browser
- * navigation would (so backslash/percent tricks like "/\evil.com", which
- * WHATWG URL parsing treats as "//evil.com", are caught) and only returns it
- * if that resolution stays on this origin.
- */
-function getSafeRedirect(path: string | null): string | null {
-  if (!path) return null;
-  try {
-    const resolved = new URL(path, window.location.origin);
-    if (resolved.origin !== window.location.origin) return null;
-    return resolved.pathname + resolved.search + resolved.hash;
-  } catch {
-    return null;
-  }
-}
 
 export function LoginForm() {
   const router = useRouter();
@@ -62,8 +46,7 @@ export function LoginForm() {
         : await loginWithPassword(values.email, values.password).then(() => fetchCurrentUser());
       login(authUser);
       toast.success(`Welcome back, ${authUser.name.split(" ")[0]}.`);
-      const redirect = getSafeRedirect(searchParams.get("redirect"));
-      router.push(redirect ?? homeForRole(authUser.role));
+      router.push(loginDestination(authUser, searchParams.get("redirect"), window.location.origin));
     } catch (error) {
       form.setError("password", {
         message: error instanceof Error ? error.message : "Unable to sign in.",
@@ -140,7 +123,7 @@ export function LoginForm() {
               </>
             ) : (
               <p className="mt-1">
-                Investors use their registered email. Issuers use the issuer email configured by the demo operator and are taken to the issuance workspace.
+                Sign in with the account you registered as an investor or issuer. Issuer accounts open the issuer workspace.
               </p>
             )}
           </div>

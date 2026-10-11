@@ -106,8 +106,7 @@ export function adaptCurrentUser(dto: CurrentUserDto): AuthUser {
   };
 }
 
-export const homeForRole = (role: UserRole) =>
-  ["ADMIN", "COMPLIANCE", "OPERATIONS"].includes(role) ? "/admin" : role === "ISSUER" ? "/issuer" : "/dashboard";
+export { homeForRole } from "../role-access";
 
 export async function loginWithPassword(email: string, password: string) {
   return directRequest<SessionDto>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });

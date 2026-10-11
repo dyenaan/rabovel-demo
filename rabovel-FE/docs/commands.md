@@ -30,6 +30,7 @@ Production gateway origins require HTTPS. The old `NEXT_PUBLIC_API_BASE_URL` set
 ```bash
 pnpm test:gateway
 pnpm test:security
+node --experimental-strip-types tests/role-access.test.mjs
 ./node_modules/.bin/tsc --noEmit --incremental false
 pnpm lint -- src/lib/server/session-gateway.ts
 pnpm build
