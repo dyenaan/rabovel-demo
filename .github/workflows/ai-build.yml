@@ -3,7 +3,7 @@ name: AI Build Triage
 # Fires when a ticket gets the `ai-build` label. Validates the spec is complete
 # enough for an agent to run, then posts the hand-off pack (builder + reviewer
 # prompts) as a comment. It does NOT write code: the builder is a
-# subscription-powered agent (Codex cloud / OpenCode / Muse Code) that the
+# subscription-powered agent (Codex cloud) that the
 # ticket is handed to next. See docs/agent-pipeline/README.md.
 
 on:
@@ -40,7 +40,7 @@ jobs:
               lines.push('**Spec complete.** Hand-off order:');
               lines.push('');
               lines.push('1. **Planner** — break this ticket into one small vertical slice (repo rule: one slice per session). If the ticket is bigger than one slice, split it into sub-issues and stop.');
-              lines.push('2. **Builder** — hand the ticket to Codex (assign the issue / `@codex`) or run OpenCode on it. Builder must follow `AGENTS.md` in the target area and load only the applicable `.agents/skills/` workflow (`plan-feature` → `implement-slice`).');
+              lines.push('2. **Builder — Codex cloud** — hand the ticket to Codex (assign the issue from the Agents tab / `@codex`). Builder must follow `AGENTS.md` in the target area and load only the applicable `.agents/skills/` workflow (`plan-feature` → `implement-slice`).');
               lines.push('3. **Tests** — PR must keep CI green: BE runs fmt/clippy/`cargo test`; FE runs the node tests in `rabovel-FE/tests/`.');
               lines.push('4. **Reviewer (second AI, different model than the builder)** — score the PR against `docs/agent-pipeline/REVIEW_RUBRIC.md` and post the scored review as a PR comment. No merge without a passing rubric score.');
               lines.push('5. **Human gate** — merge to staging behind a feature flag. Production promotion is a human decision; `high` risk tickets never auto-promote.');
