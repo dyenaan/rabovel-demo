@@ -1,0 +1,66 @@
+name: AI Build Ticket
+description: A spec'd ticket for the agent pipeline (planner -> builder -> tests -> reviewer -> PR)
+title: "[ai-build] "
+labels: ["ai-build"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill this in like a spec, not a vibe. The pipeline runs on exactly what is written here.
+        If a field is empty, the triage workflow will bounce the ticket back.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What should change, and why. One short paragraph.
+      placeholder: "As a <user>, when <situation>, I should be able to <outcome> because <reason>."
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - rabovel-BE (Rust)
+        - rabovel-FE (Next.js)
+        - Both
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Testable statements. The reviewer AI scores the PR against these, line by line.
+      placeholder: |
+        - [ ] Given <state>, when <action>, then <observable result>
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Tests / evals to run
+      description: Which existing tests must stay green, and what new checks prove this works. Narrowest meaningful tests first (see AGENTS.md).
+      placeholder: |
+        - cargo test -p <crate> <name>  /  node --test tests/<file>.test.mjs
+        - New: <test or scripted flow that demonstrates the acceptance criteria>
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: What the builder must NOT touch. Unrelated refactors and cleanup are out of scope by default.
+    validations:
+      required: false
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk
+      description: High risk tickets never auto-promote past staging.
+      options:
+        - low - cosmetic, docs, isolated logic with tests
+        - medium - user-facing behaviour, existing flows
+        - high - auth, money movement, chain/on-chain, data loss possible
+    validations:
+      required: true
