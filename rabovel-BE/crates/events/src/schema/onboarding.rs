@@ -1,6 +1,7 @@
-use serde::{Deserialize, Serialize};
-
-use crate::{envelope::DomainEvent, topics};
+use crate::envelope::DomainEvent;
+use crate::topics;
+use serde::Deserialize;
+use serde::Serialize;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

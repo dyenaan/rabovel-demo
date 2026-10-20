@@ -1,27 +1,19 @@
-use axum::{
-    extract::DefaultBodyLimit,
-    http::{header, HeaderValue, Method},
-    middleware,
-    routing::get,
-    Router,
-};
+use crate::app::state::GatewayState;
+use crate::http::documentation::add_debug_routes;
+use crate::http::ingress::ip_rate_limit_middleware;
+use axum::extract::DefaultBodyLimit;
+use axum::http::header;
+use axum::http::HeaderValue;
+use axum::http::Method;
+use axum::middleware;
+use axum::routing::get;
+use axum::Router;
 use tower_http::cors::CorsLayer;
-
-use super::features;
-use crate::{add_debug_routes, health_handler, ip_rate_limit_middleware, GatewayState};
 
 /// Assemble the public HTTP surface from feature-owned route groups.
 pub(crate) fn build(state: GatewayState) -> Router {
-    let routes = Router::new()
-        .route("/health", get(health_handler))
-        .merge(features::auth::routes())
-        .merge(features::issuer::routes())
-        .merge(features::instruments::routes())
-        .merge(features::onboarding::routes())
-        .merge(features::wallets::routes())
-        .merge(features::kyc::routes())
-        .merge(features::portfolio::routes())
-        .merge(features::tokenization::routes());
+    let routes = crate::features::routes::feature_routes()
+        .route("/health", get(crate::app::health::health_handler));
     // Sandbox/debug routes are unavailable behind the session gateway.
     let routes = if state.gateway_secret.is_none() {
         add_debug_routes(routes)
@@ -52,6 +44,6 @@ pub(crate) fn build(state: GatewayState) -> Router {
             state.clone(),
             ip_rate_limit_middleware,
         ))
-        .layer(middleware::from_fn(crate::observability::observe))
+        .layer(middleware::from_fn(crate::http::observability::observe))
         .with_state(state)
 }

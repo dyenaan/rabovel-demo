@@ -4,9 +4,9 @@
 
 ## Source map and mint setup
 
-- `src/lib.rs` exposes `equity_setup_service` from the existing `EquitySetupService/` directory; its builder file is `TokenMintBuilder.rs`. Preserve these explicit module paths.
+- `src/lib.rs` exposes the conventional `equity_setup_service/` module; its builder is `token_mint_builder.rs`. Preserve public type names while keeping Rust paths snake_case.
 - `authority_config/` separates public `AuthConfig`, service-controlled `SignerConfig` sources and loaded `AuthoritySigners`. Hosted API startup decodes Base64 keypair variables directly into validated in-memory signers; local commands retain file support. Resolve authorities from trusted configuration, not request bodies.
-- `EquitySetupService/mint_setup.rs` creates a mint and verifies it after confirmation. `token_acl/` holds list builders, saved deployment configuration, ACL handover validation and the resumable per-mint setup service.
+- `equity_setup_service/mint_setup.rs` creates a mint and verifies it after confirmation. `token_acl/` holds list builders, saved deployment configuration, ACL handover validation and the resumable per-mint setup service.
 - `examples/create_equity_mint.rs` and `examples/setup_shared_lists.rs` are local commands. `tests/local_mint.rs` is an ignored validator integration test.
 
 Mint creation uses System account creation, Token-2022 extension initialization and `InitializeMint2`, then metadata initialization/update instructions. It funds space including metadata TLV growth, signs with required keys selected from Admin, issuer and the saved mint keypair, submits through RPC, confirms and reads back. Existing mint addresses are rejected for creation; uncertain outcomes require inspection before retry.

@@ -1,3 +1,5 @@
+> Protocol/design reference. Import-era implementation-status claims are historical; use [current flows](../docs/refactor/current-map.md), [architecture](../docs/architecture.md) and the active runbooks for current behavior.
+
 # Rabovel on-chain reference: equity setup, issuance and holder eligibility
 
 **Canonical design and integration reference. Consolidated 2026-09-23; foundation imported into rabovel-BE.**
@@ -275,8 +277,8 @@ The prior slice reported **21 passing adapter unit tests** and a successful comp
 
 Main files:
 
-- [Mint builder](../crates/solana-adapter/src/EquitySetupService/TokenMintBuilder.rs)
-- [Equity setup service](../crates/solana-adapter/src/EquitySetupService/mint_setup.rs)
+- [Mint builder](../crates/solana-adapter/src/equity_setup_service/token_mint_builder.rs)
+- [Equity setup service](../crates/solana-adapter/src/equity_setup_service/mint_setup.rs)
 - [Authority configuration](../crates/solana-adapter/src/authority_config/mod.rs)
 - [Token ACL and shared lists](../crates/solana-adapter/src/token_acl/mod.rs)
 - [Per-mint ACL configuration service](../crates/solana-adapter/src/token_acl/mint_setup.rs)

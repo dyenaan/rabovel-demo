@@ -1,0 +1,69 @@
+name: Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "rabovel-BE/**"
+      - "rabovel-FE/src/lib/server/session-gateway.ts"
+      - "rabovel-FE/tests/session-gateway.test.mjs"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "rabovel-BE/**"
+      - "rabovel-FE/src/lib/server/session-gateway.ts"
+      - "rabovel-FE/tests/session-gateway.test.mjs"
+      - ".github/workflows/backend.yml"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: rabovel-BE
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_TOOLCHAIN: "1.98.0"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "rabovel-BE -> target"
+      - name: Architecture boundaries
+        run: python3 scripts/check_architecture.py
+      - name: Formatting
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Tests
+        run: cargo test --workspace --locked
+
+  gateway:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rabovel-FE
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Session gateway contract
+        run: node --experimental-strip-types tests/session-gateway.test.mjs
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [check, gateway]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -t rabovel/api:ci .

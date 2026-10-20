@@ -5,3 +5,7 @@ Dockerfile
 .dockerignore
 README*
 **/.DS_Store
+
+.env
+.env.*
+**/*keypair*.json

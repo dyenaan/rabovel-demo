@@ -1,4 +1,5 @@
 use super::*;
+use std::collections::HashMap;
 
 const SYMBOL: &str = "RABO-NG-TELCO";
 /// 100 cNGN at 6 decimals; with the default 50 bps half-spread the house

@@ -1,7 +1,6 @@
-use solana_adapter::{
-    authority_config::SignerConfig,
-    token_acl::{AclDeploymentConfig, SharedListsService},
-};
+use solana_adapter::authority_config::SignerConfig;
+use solana_adapter::token_acl::AclDeploymentConfig;
+use solana_adapter::token_acl::SharedListsService;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_commitment_config::CommitmentConfig;
 use solana_signer::Signer;

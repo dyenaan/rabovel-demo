@@ -1,8 +1,11 @@
 //! Per-symbol client limit order book with price-time priority.
 
-use std::collections::{BTreeMap, VecDeque};
-
-use crate::{OrderId, Price, Qty, Side};
+use crate::OrderId;
+use crate::Price;
+use crate::Qty;
+use crate::Side;
+use std::collections::BTreeMap;
+use std::collections::VecDeque;
 
 #[derive(Debug, Clone)]
 pub(crate) struct RestingOrder {

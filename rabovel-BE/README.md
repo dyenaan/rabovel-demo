@@ -16,9 +16,9 @@ flowchart LR
   API --> SB[Supabase metadata]
 ```
 
-- **Identity and access:** email/password demo authentication, bearer sessions, explicit investor/issuer signup, rate limiting, Solana wallet challenges and ownership proof. EVM SIWE is also supported; legacy Google OIDC routes are retained but are not initialized by the current startup composition.
+- **Identity and access:** email/password demo authentication, bearer sessions, explicit investor/issuer signup, rate limiting, Solana wallet challenges and ownership proof. EVM SIWE is also supported. Dormant Google OIDC and legacy tokenization routes were retired; see [the contract record](docs/refactor/retirements.md).
 - **Issuer lifecycle:** onboarding, asset drafts, simulated document-backed verification, metadata publishing, replay-safe mint setup, initial inventory issuance and explicit listing activation.
-- **Investor lifecycle:** live-asset catalog, verified-backing summary, simulated price feed, wallet/cNGN/equity balance checks, expiring quotes and purchase settlement.
+- **Investor lifecycle:** live-asset catalog, verified-backing summary, simulated price feed, wallet/cNGN/equity balance checks, quote expiry timestamps and purchase submission/confirmation.
 - **Instrument catalog:** `GET /instruments` serves a deterministic NGX-shaped demo catalog through an injectable provider. Its response is explicitly marked simulated; it does not fetch exchange data or authorize token issuance.
 - **Persistence:** Postgres stores users, wallets, KYC cases, issuer assets and setup operations; Redis stores sessions, challenges and rate-limit state. In-memory fallbacks are used when these services are not configured.
 - **Local infrastructure:** Docker Compose runs Postgres and Redis. The API runs on the host through Cargo Watch; Kafka and the WAF are not part of this local setup. Debug builds expose Swagger UI only when the gateway secret is unset.
@@ -41,14 +41,19 @@ See [Solana implementation notes](docs/solana.md) for the exact account and inst
 
 | Path | Purpose |
 | --- | --- |
-| `apps/rabovel-api` | HTTP API, composition and Solana purchase orchestration |
-| `apps/*-worker` | Kafka consumer entry points; business processing is not implemented |
-| `crates/domain` | Identity, roles, onboarding and authorization rules |
-| `crates/identity` / `crates/infrastructure` | Repository contracts and Postgres/Redis/Kafka/provider adapters |
-| `crates/solana-adapter` | Token-2022 minting, authorities, ACL/Gate instructions and RPC verification |
-| `crates/matching-engine` | I/O-free principal-backed matching: client book, house quote, float/mint inventory and hedge netting |
-| `crates/portfolio-trading` | Portfolio/order contract; engine-backed service used by `/orders` and `/portfolio` |
-| `migrations` | Postgres schema |
+| `apps/rabovel-api/src/features` | Complete feature/subfeature HTTP adapters, use cases, contexts and API-specific providers |
+| `apps/rabovel-api/src/app`, `src/http` | Process composition and shared HTTP boundary |
+| `apps/*-worker` | Settlement/reconciliation logging processes; economic processing is not implemented |
+| `crates/identity` | Accounts, wallets, policy, security state and owned persistence |
+| `crates/kyc` / `crates/issuer-assets` | Compliance and issuer models, ports, persistence and providers |
+| `crates/events` / `crates/infrastructure` | Event contracts/publishing port; Kafka transport and database lifecycle |
+| `crates/solana-adapter` | Reusable Token-2022/ACL/Gate instructions, authority configuration and RPC helpers |
+| `crates/matching-engine` | Pure matching, house risk/float/mint accounting and hedge netting |
+| `crates/portfolio-trading` | Narrow execution/query ports, reusable order/repricing workflows and portfolio models |
+| `crates/settlement-orchestrator` | Direct-purchase chain contracts and checked pricing policy |
+| `migrations` | Applied Postgres schema history |
+
+See [architecture](docs/architecture.md) and the [current flow map](docs/refactor/current-map.md). Repositories/providers remain with their owning feature; no global business buckets.
 
 ## Run locally
 
@@ -90,7 +95,7 @@ RABOVEL_HOUSE_MAX_ORDER_QUANTITY=10000
 RABOVEL_HOUSE_MAX_PRICE_AGE_SECONDS=60
 ```
 
-All six Solana setup variables must be supplied together. Base64 is encoding, not encryption; use development keys only and store them as deployment secrets.
+Optional quote policy uses `RABOVEL_DEMO_FEE_BPS` (100) and `RABOVEL_DEMO_QUOTE_EXPIRY_SECONDS` (300), validated at startup. All six Solana setup variables must be supplied together. Base64 is encoding, not encryption; use development keys only and store them as deployment secrets.
 
 ```bash
 docker compose up -d --wait
@@ -113,7 +118,7 @@ For hosted deployment, security headers, monitoring and recovery, see the [publi
 
 `POST /auth/register` requires `account_type` equal to `investor` or `issuer`, plus name, email and password. Each new account receives exactly one public role (`trader` internally for investors). Administrative, compliance and operations roles are not selectable. Password login preserves the stored role. `RABOVEL_DEMO_ISSUER_EMAIL` and `RABOVEL_DEMO_ADMIN_EMAIL` no longer assign roles and can be removed from deployment settings.
 
-Issuer signup still requires organization onboarding before creating assets. Organization and backing review remain simulated. Migration `0006` removes historical privileged grants from password accounts while preserving issuer accounts and asset data; existing password admins become investors. It also replaces password-account permissions with the public-role permission set. Active sessions use current database roles. No password-based admin provisioning endpoint is provided; trusted OIDC identity assignment remains a separate internal capability, not enabled by the current startup composition.
+Issuer signup still requires organization onboarding before creating assets. Organization and backing review remain simulated. Migration `0006` removes historical privileged grants from password accounts while preserving issuer accounts and asset data; existing password admins become investors. It also replaces password-account permissions with the public-role permission set. Active sessions use current database roles. No public admin provisioning endpoint is provided. Historical OIDC identity data remains readable; its routes/provider and role-assignment wiring were removed.
 
 ## Main API surfaces
 
@@ -127,7 +132,6 @@ Issuer signup still requires organization onboarding before creating assets. Org
 | Instruments/markets/assets | `/instruments`, `/markets`, `/markets/:market_id`, `/assets`, `/assets/:asset_id`. One catalog: 146 NGX-listed instruments plus every live issuer listing. NGX asset ids are `ast_ngx_<ticker>`. |
 | Market data | `/markets/:market_id/order-book` (resting orders + house quote), `/markets/:market_id/trades`, `/markets/:market_id/price-history?range=`, `/assets/:asset_id/nav-history` |
 | Trading | `/orders` (place/list), `/orders/:order_id` (get/cancel), `/portfolio`, `/portfolio/summary`, `/portfolio/holdings`, `/portfolio/performance?range=`, `/portfolio/activity` |
-| Legacy stubs | `/tokenization/requests` |
 
 The frontend gateway supplies `Authorization: Bearer <token>` from its HttpOnly cookie. With `RABOVEL_GATEWAY_SECRET` configured, every route except `/health` additionally requires the gateway secret and a validated client IP. Hosted origins require a secret at startup. Direct local API calls must supply these headers too, or run in localhost-only development without the secret. See [public-demo hardening](docs/plans/public-demo-hardening.md) for deployment coordination. The frontend demo should deploy with `RABOVEL_DEMO_MODE=true`: this bypasses onboarding checks that have no UI/endpoints yet, while preserving role, permission, linked-wallet, balance, inventory and transaction-signature checks.
 
@@ -135,10 +139,10 @@ The frontend gateway supplies `Authorization: Bearer <token>` from its HttpOnly 
 
 - Backing documents are metadata only; upload, custody evidence and admin review are simulated.
 - KYC approval and the deterministic market-price feed are simulated.
-- Purchase confirmation is real on-chain, but there is no durable purchase/settlement ledger, cost-basis history, reconciliation or automatic recovery after ambiguous RPC outcomes.
+- Purchase confirmation is real on-chain, but there is no durable purchase/settlement ledger, cost-basis history, reconciliation or automatic recovery after ambiguous RPC outcomes. Quote IDs/expiry are not persisted/enforced intents, and submission verifies wallet/signatures without binding to a stored preparation. Sell quotes have no sell-settlement endpoint.
 - `/orders` executes instantly against the in-memory matching engine for any catalog instrument, including live issuer listings. Issuer tickers must use the NGX format (e.g. `DANGCEM`) and may not reuse a catalog ticker.
-- Price history and charts come only from engine trades in memory. Before any trade, a series sits flat at the simulated reference price. Portfolio performance values today's holdings at past prices, because the engine keeps no position history. Portfolio cash is the linked wallet's on-chain cNGN balance. Engine state is lost on restart, there are no buying-power/balance checks yet, and fills are not yet settled on-chain; `/portfolio` shows net matched-trade balances, not on-chain holdings. See [the plan](docs/plans/principal-matching-engine.md).
-- Kafka publishing is not transactional, and the settlement, reconciliation and tokenization workers are shells.
+- Price history/charts sample the deterministic simulated price path; recent engine trades add volume and widen extrema. Portfolio performance values today's holdings at past prices, because the engine keeps no position history. Portfolio cash is the linked wallet's on-chain cNGN balance. Engine state is lost on restart, there are no buying-power/balance checks yet, and fills are not yet settled on-chain; `/portfolio` shows net matched-trade balances, not on-chain holdings. See [the plan](docs/plans/principal-matching-engine.md).
+- Kafka publishing is not transactional, and the settlement and reconciliation workers still log events.
 - Strict policy requires MFA and trusted-device state, but enrollment endpoints do not exist; demo mode intentionally relaxes those checks.
 - Hosted keys are process secrets rather than HSM/MPC-backed production custody.
 - The transfer-hook extension is inactive; current eligibility relies on frozen-by-default accounts, ACL allow/block lists and controlled thawing.
@@ -146,4 +150,4 @@ The frontend gateway supplies `Authorization: Bearer <token>` from its HttpOnly 
 
 ## Future state
 
-A production system would integrate regulated KYC/KYB, document storage and custody attestations; licensed market data and pricing controls; HSM/MPC or qualified-custodian signing; a durable double-entry portfolio and settlement ledger; idempotent workers, outbox delivery and reconciliation; and an audited settlement program or active transfer hook with per-trade authorization and replay protection. It would also need secondary-market matching, corporate actions, surveillance, reporting, disaster recovery and jurisdiction-specific legal/regulatory approval.
+A production system would integrate regulated KYC/KYB, document storage and custody attestations; licensed market data and pricing controls; HSM/MPC or qualified-custodian signing; explicit durable accounting and settlement sources; idempotent workers, outbox delivery and reconciliation; and an audited settlement program or active transfer hook with per-trade authorization and replay protection. It would also need durable matching/capacity controls, corporate actions, surveillance, reporting, disaster recovery and jurisdiction-specific legal/regulatory approval.

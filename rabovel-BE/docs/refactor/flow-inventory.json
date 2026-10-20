@@ -1,0 +1,2884 @@
+{
+  "captured": "2026-10-19",
+  "scope": "Historical 2026-10-19 pre-refactor snapshot; current state is current-inventory.json",
+  "method": "Literal route registration scan cross-checked against merged routers; Rust source/test declaration scan plus manual flow traces in flow-map.md. Implicit HEAD/OPTIONS are not separate routes. Test declarations do not imply passing tests or full behavioral coverage.",
+  "summary": {
+    "explicit_route_methods": 63,
+    "distinct_paths": 54,
+    "rust_source_files": 98,
+    "test_declarations": 142,
+    "ignored_test_declarations": 2
+  },
+  "flow_owners": {
+    "F01": "identity/accounts/passwords",
+    "F02": "identity/sessions",
+    "F03": "identity/oidc (retire)",
+    "F04": "identity/access",
+    "F05": "compliance/onboarding",
+    "F06": "identity/wallets/linking",
+    "F07": "compliance/kyc",
+    "F08": "issuer/organizations",
+    "F09": "issuer/assets/drafts",
+    "F10": "issuer/assets/media",
+    "F11": "issuer/assets/review + backing",
+    "F12": "issuer/assets/issuance/setup",
+    "F13": "issuer/assets/issuance/inventory",
+    "F14": "issuer/assets/listings",
+    "F15": "payments/cngn/broker_accounts",
+    "F16": "payments/cngn/wallet_accounts",
+    "F17": "catalog/instruments",
+    "F18": "market_data/markets + assets + charts",
+    "F19": "settlement/direct_purchases/catalog",
+    "F20": "settlement/direct_purchases/quotes",
+    "F21": "settlement/direct_purchases/preparation",
+    "F22": "settlement/direct_purchases/submission",
+    "F23": "trading/orders/placement",
+    "F24": "trading/orders/queries",
+    "F25": "trading/orders/cancellation",
+    "F26": "trading/repricing",
+    "F27": "portfolio/balances + valuation + performance + activity",
+    "F28": "tokenization/legacy_requests (retire)",
+    "F29": "app/health + development_docs",
+    "F30": "app/composition + configuration + ingress",
+    "F31": "worker composition + logging consumers",
+    "F32": "events contracts + messaging transport",
+    "F33": "solana-adapter primitives",
+    "F34": "solana-adapter operator examples",
+    "F35": "operations + schema migrations",
+    "F36": "matching-engine rules",
+    "F37": "technical state contracts + feature adapters"
+  },
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "handler": "health_handler",
+      "source": "apps/rabovel-api/src/http/router.rs",
+      "line": 16,
+      "availability": "registered",
+      "id": "H01",
+      "flow": "F29",
+      "target_owner": "app/health + development_docs",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 781
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/auth/google/start",
+      "handler": "google_authorization_handler",
+      "source": "apps/rabovel-api/src/http/features/auth.rs",
+      "line": 13,
+      "availability": "registered; disabled Google provider in env composition; selected for retirement",
+      "id": "H02",
+      "flow": "F03",
+      "target_owner": "identity/oidc (retire)",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 792
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/auth/google/callback",
+      "handler": "google_callback_handler",
+      "source": "apps/rabovel-api/src/http/features/auth.rs",
+      "line": 14,
+      "availability": "registered; disabled Google provider in env composition; selected for retirement",
+      "id": "H03",
+      "flow": "F03",
+      "target_owner": "identity/oidc (retire)",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 821
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/auth/me",
+      "handler": "auth_me_handler",
+      "source": "apps/rabovel-api/src/http/features/auth.rs",
+      "line": 18,
+      "availability": "registered",
+      "id": "H04",
+      "flow": "F02",
+      "target_owner": "identity/sessions",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 940
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/auth/logout",
+      "handler": "logout_handler",
+      "source": "apps/rabovel-api/src/http/features/auth.rs",
+      "line": 19,
+      "availability": "registered",
+      "id": "H05",
+      "flow": "F02",
+      "target_owner": "identity/sessions",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 976
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/auth/register",
+      "handler": "password_register_handler",
+      "source": "apps/rabovel-api/src/http/features/auth.rs",
+      "line": 20,
+      "availability": "registered",
+      "id": "H06",
+      "flow": "F01",
+      "target_owner": "identity/accounts/passwords",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 862
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/auth/login",
+      "handler": "password_login_handler",
+      "source": "apps/rabovel-api/src/http/features/auth.rs",
+      "line": 21,
+      "availability": "registered",
+      "id": "H07",
+      "flow": "F01",
+      "target_owner": "identity/accounts/passwords",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 926
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/instruments",
+      "handler": "instruments_handler",
+      "source": "apps/rabovel-api/src/http/features/instruments.rs",
+      "line": 12,
+      "availability": "registered",
+      "id": "H08",
+      "flow": "F17",
+      "target_owner": "catalog/instruments",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2657
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/markets",
+      "handler": "list_markets_handler",
+      "source": "apps/rabovel-api/src/http/features/instruments.rs",
+      "line": 13,
+      "availability": "registered",
+      "id": "H09",
+      "flow": "F18",
+      "target_owner": "market_data/markets + assets + charts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2753
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/markets/:market_id",
+      "handler": "get_market_handler",
+      "source": "apps/rabovel-api/src/http/features/instruments.rs",
+      "line": 14,
+      "availability": "registered",
+      "id": "H10",
+      "flow": "F18",
+      "target_owner": "market_data/markets + assets + charts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2772
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/markets/:market_id/order-book",
+      "handler": "market_order_book_handler",
+      "source": "apps/rabovel-api/src/http/features/instruments.rs",
+      "line": 15,
+      "availability": "registered",
+      "id": "H11",
+      "flow": "F18",
+      "target_owner": "market_data/markets + assets + charts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2870
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/markets/:market_id/price-history",
+      "handler": "market_price_history_handler",
+      "source": "apps/rabovel-api/src/http/features/instruments.rs",
+      "line": 19,
+      "availability": "registered",
+      "id": "H12",
+      "flow": "F18",
+      "target_owner": "market_data/markets + assets + charts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2905
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/markets/:market_id/trades",
+      "handler": "market_trades_handler",
+      "source": "apps/rabovel-api/src/http/features/instruments.rs",
+      "line": 23,
+      "availability": "registered",
+      "id": "H13",
+      "flow": "F18",
+      "target_owner": "market_data/markets + assets + charts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2937
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/assets",
+      "handler": "list_assets_handler",
+      "source": "apps/rabovel-api/src/http/features/instruments.rs",
+      "line": 24,
+      "availability": "registered",
+      "id": "H14",
+      "flow": "F18",
+      "target_owner": "market_data/markets + assets + charts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3034
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/assets/:asset_id",
+      "handler": "get_asset_handler",
+      "source": "apps/rabovel-api/src/http/features/instruments.rs",
+      "line": 25,
+      "availability": "registered",
+      "id": "H15",
+      "flow": "F18",
+      "target_owner": "market_data/markets + assets + charts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3044
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/assets/:asset_id/nav-history",
+      "handler": "asset_nav_history_handler",
+      "source": "apps/rabovel-api/src/http/features/instruments.rs",
+      "line": 26,
+      "availability": "registered",
+      "id": "H16",
+      "flow": "F18",
+      "target_owner": "market_data/markets + assets + charts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3054
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/issuer/overview",
+      "handler": "issuer_overview_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 18,
+      "availability": "registered",
+      "id": "H17",
+      "flow": "F08",
+      "target_owner": "issuer/organizations",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 991
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/issuer/onboarding",
+      "handler": "issuer_onboarding_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 19,
+      "availability": "registered",
+      "id": "H18",
+      "flow": "F08",
+      "target_owner": "issuer/organizations",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1037
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/issuer/assets",
+      "handler": "list_asset_drafts_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 20,
+      "availability": "registered",
+      "id": "H19",
+      "flow": "F09",
+      "target_owner": "issuer/assets/drafts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1244
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/issuer/assets",
+      "handler": "create_asset_draft_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 20,
+      "availability": "registered",
+      "id": "H20",
+      "flow": "F09",
+      "target_owner": "issuer/assets/drafts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1133
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/issuer/assets/:asset_id/image-upload",
+      "handler": "create_asset_image_upload_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 24,
+      "availability": "registered",
+      "id": "H21",
+      "flow": "F10",
+      "target_owner": "issuer/assets/media",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1281
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/issuer/assets/:asset_id/image-upload/confirm",
+      "handler": "confirm_asset_image_upload_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 28,
+      "availability": "registered",
+      "id": "H22",
+      "flow": "F10",
+      "target_owner": "issuer/assets/media",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1331
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/issuer/assets/:asset_id",
+      "handler": "get_asset_draft_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 32,
+      "availability": "registered",
+      "id": "H23",
+      "flow": "F09",
+      "target_owner": "issuer/assets/drafts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1258
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/issuer/assets/:asset_id",
+      "handler": "update_asset_draft_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 32,
+      "availability": "registered",
+      "id": "H24",
+      "flow": "F09",
+      "target_owner": "issuer/assets/drafts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1371
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/issuer/assets/:asset_id",
+      "handler": "delete_asset_draft_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 32,
+      "availability": "registered",
+      "id": "H25",
+      "flow": "F09",
+      "target_owner": "issuer/assets/drafts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1407
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/issuer/assets/:asset_id/submit",
+      "handler": "submit_asset_for_demo_review_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 38,
+      "availability": "registered",
+      "id": "H26",
+      "flow": "F11",
+      "target_owner": "issuer/assets/review + backing",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1422
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/issuer/assets/:asset_id/setup",
+      "handler": "get_asset_setup_operation_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 42,
+      "availability": "registered",
+      "id": "H27",
+      "flow": "F12",
+      "target_owner": "issuer/assets/issuance/setup",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1717
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/issuer/assets/:asset_id/setup",
+      "handler": "start_asset_setup_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 42,
+      "availability": "registered",
+      "id": "H28",
+      "flow": "F12",
+      "target_owner": "issuer/assets/issuance/setup",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1736
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/issuer/assets/:asset_id/inventory",
+      "handler": "get_initial_inventory_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 46,
+      "availability": "registered",
+      "id": "H29",
+      "flow": "F13",
+      "target_owner": "issuer/assets/issuance/inventory",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1535
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/issuer/assets/:asset_id/inventory",
+      "handler": "issue_initial_inventory_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 46,
+      "availability": "registered",
+      "id": "H30",
+      "flow": "F13",
+      "target_owner": "issuer/assets/issuance/inventory",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1551
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/issuer/assets/:asset_id/backing",
+      "handler": "submit_asset_backing_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 50,
+      "availability": "registered",
+      "id": "H31",
+      "flow": "F11",
+      "target_owner": "issuer/assets/review + backing",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1577
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/issuer/assets/:asset_id/listing",
+      "handler": "publish_asset_listing_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 54,
+      "availability": "registered",
+      "id": "H32",
+      "flow": "F14",
+      "target_owner": "issuer/assets/listings",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1631
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/payment-assets/cngn",
+      "handler": "cngn_payment_asset_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 58,
+      "availability": "registered",
+      "id": "H33",
+      "flow": "F15",
+      "target_owner": "payments/cngn/broker_accounts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1671
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/payment-assets/cngn",
+      "handler": "create_broker_cngn_account_handler",
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "line": 58,
+      "availability": "registered",
+      "id": "H34",
+      "flow": "F15",
+      "target_owner": "payments/cngn/broker_accounts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1679
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/kyc/cases",
+      "handler": "submit_kyc_case_handler",
+      "source": "apps/rabovel-api/src/http/features/kyc.rs",
+      "line": 7,
+      "availability": "registered",
+      "id": "H35",
+      "flow": "F07",
+      "target_owner": "compliance/kyc",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2371
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/kyc/webhook",
+      "handler": "kyc_webhook_handler",
+      "source": "apps/rabovel-api/src/http/features/kyc.rs",
+      "line": 8,
+      "availability": "registered",
+      "id": "H36",
+      "flow": "F07",
+      "target_owner": "compliance/kyc",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2438
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/onboarding/status",
+      "handler": "onboarding_status_handler",
+      "source": "apps/rabovel-api/src/http/features/onboarding.rs",
+      "line": 10,
+      "availability": "registered",
+      "id": "H37",
+      "flow": "F05",
+      "target_owner": "compliance/onboarding",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1943
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/onboarding/terms",
+      "handler": "accept_terms_handler",
+      "source": "apps/rabovel-api/src/http/features/onboarding.rs",
+      "line": 11,
+      "availability": "registered",
+      "id": "H38",
+      "flow": "F05",
+      "target_owner": "compliance/onboarding",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 1965
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/portfolio",
+      "handler": "portfolio_handler",
+      "source": "apps/rabovel-api/src/http/features/portfolio.rs",
+      "line": 15,
+      "availability": "registered",
+      "id": "H39",
+      "flow": "F27",
+      "target_owner": "portfolio/balances + valuation + performance + activity",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2543
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/portfolio/summary",
+      "handler": "portfolio_summary_handler",
+      "source": "apps/rabovel-api/src/http/features/portfolio.rs",
+      "line": 16,
+      "availability": "registered",
+      "id": "H40",
+      "flow": "F27",
+      "target_owner": "portfolio/balances + valuation + performance + activity",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3251
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/portfolio/holdings",
+      "handler": "portfolio_holdings_handler",
+      "source": "apps/rabovel-api/src/http/features/portfolio.rs",
+      "line": 17,
+      "availability": "registered",
+      "id": "H41",
+      "flow": "F27",
+      "target_owner": "portfolio/balances + valuation + performance + activity",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3277
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/portfolio/performance",
+      "handler": "portfolio_performance_handler",
+      "source": "apps/rabovel-api/src/http/features/portfolio.rs",
+      "line": 18,
+      "availability": "registered",
+      "id": "H42",
+      "flow": "F27",
+      "target_owner": "portfolio/balances + valuation + performance + activity",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3314
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/portfolio/activity",
+      "handler": "portfolio_activity_handler",
+      "source": "apps/rabovel-api/src/http/features/portfolio.rs",
+      "line": 19,
+      "availability": "registered",
+      "id": "H43",
+      "flow": "F27",
+      "target_owner": "portfolio/balances + valuation + performance + activity",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3349
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/investor/catalog",
+      "handler": "investor_catalog_handler",
+      "source": "apps/rabovel-api/src/http/features/portfolio.rs",
+      "line": 20,
+      "availability": "registered",
+      "id": "H44",
+      "flow": "F19",
+      "target_owner": "settlement/direct_purchases/catalog",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2559
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/investor/quote",
+      "handler": "investor_quote_handler",
+      "source": "apps/rabovel-api/src/http/features/portfolio.rs",
+      "line": 21,
+      "availability": "registered",
+      "id": "H45",
+      "flow": "F20",
+      "target_owner": "settlement/direct_purchases/quotes",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3401
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/investor/purchase/prepare",
+      "handler": "prepare_investor_purchase_handler",
+      "source": "apps/rabovel-api/src/http/features/portfolio.rs",
+      "line": 22,
+      "availability": "registered",
+      "id": "H46",
+      "flow": "F21",
+      "target_owner": "settlement/direct_purchases/preparation",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3656
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/investor/purchase/submit",
+      "handler": "submit_investor_purchase_handler",
+      "source": "apps/rabovel-api/src/http/features/portfolio.rs",
+      "line": 26,
+      "availability": "registered",
+      "id": "H47",
+      "flow": "F22",
+      "target_owner": "settlement/direct_purchases/submission",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3759
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/tokenization/requests",
+      "handler": "tokenization_request_handler",
+      "source": "apps/rabovel-api/src/http/features/tokenization.rs",
+      "line": 10,
+      "availability": "registered stub; selected for retirement",
+      "id": "H48",
+      "flow": "F28",
+      "target_owner": "tokenization/legacy_requests (retire)",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3794
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/tokenization/requests/:request_id",
+      "handler": "tokenization_status_handler",
+      "source": "apps/rabovel-api/src/http/features/tokenization.rs",
+      "line": 11,
+      "availability": "registered stub; selected for retirement",
+      "id": "H49",
+      "flow": "F28",
+      "target_owner": "tokenization/legacy_requests (retire)",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 3836
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/wallet/challenges",
+      "handler": "wallet_challenge_handler",
+      "source": "apps/rabovel-api/src/http/features/wallets.rs",
+      "line": 14,
+      "availability": "registered",
+      "id": "H50",
+      "flow": "F06",
+      "target_owner": "identity/wallets/linking",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2000
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/wallet/solana/challenges",
+      "handler": "solana_wallet_challenge_handler",
+      "source": "apps/rabovel-api/src/http/features/wallets.rs",
+      "line": 15,
+      "availability": "registered",
+      "id": "H51",
+      "flow": "F06",
+      "target_owner": "identity/wallets/linking",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2071
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/wallet/link",
+      "handler": "wallet_link_handler",
+      "source": "apps/rabovel-api/src/http/features/wallets.rs",
+      "line": 19,
+      "availability": "registered",
+      "id": "H52",
+      "flow": "F06",
+      "target_owner": "identity/wallets/linking",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2133
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/wallet/authorize",
+      "handler": "authorize_wallet_handler",
+      "source": "apps/rabovel-api/src/http/features/wallets.rs",
+      "line": 20,
+      "availability": "registered",
+      "id": "H53",
+      "flow": "F04",
+      "target_owner": "identity/access",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2331
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/wallets",
+      "handler": "list_wallets_handler",
+      "source": "apps/rabovel-api/src/http/features/wallets.rs",
+      "line": 21,
+      "availability": "registered",
+      "id": "H54",
+      "flow": "F06",
+      "target_owner": "identity/wallets/linking",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2246
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/wallet/payment-assets/cngn",
+      "handler": "investor_cngn_account_handler",
+      "source": "apps/rabovel-api/src/http/features/wallets.rs",
+      "line": 22,
+      "availability": "registered",
+      "id": "H55",
+      "flow": "F16",
+      "target_owner": "payments/cngn/wallet_accounts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2283
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/wallet/payment-assets/cngn",
+      "handler": "create_investor_cngn_account_handler",
+      "source": "apps/rabovel-api/src/http/features/wallets.rs",
+      "line": 22,
+      "availability": "registered",
+      "id": "H56",
+      "flow": "F16",
+      "target_owner": "payments/cngn/wallet_accounts",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2300
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/orders",
+      "handler": "place_order",
+      "source": "apps/rabovel-api/src/features/trading/http/mod.rs",
+      "line": 50,
+      "availability": "registered",
+      "id": "H57",
+      "flow": "F23",
+      "target_owner": "trading/orders/placement",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/features/trading/http/mod.rs",
+        "line": 54
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/orders",
+      "handler": "list_orders",
+      "source": "apps/rabovel-api/src/features/trading/http/mod.rs",
+      "line": 50,
+      "availability": "registered",
+      "id": "H58",
+      "flow": "F24",
+      "target_owner": "trading/orders/queries",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/features/trading/http/mod.rs",
+        "line": 70
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/orders/:order_id",
+      "handler": "get_order",
+      "source": "apps/rabovel-api/src/features/trading/http/mod.rs",
+      "line": 51,
+      "availability": "registered",
+      "id": "H59",
+      "flow": "F24",
+      "target_owner": "trading/orders/queries",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/features/trading/http/mod.rs",
+        "line": 62
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/orders/:order_id",
+      "handler": "cancel_order",
+      "source": "apps/rabovel-api/src/features/trading/http/mod.rs",
+      "line": 51,
+      "availability": "registered",
+      "id": "H60",
+      "flow": "F25",
+      "target_owner": "trading/orders/cancellation",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/features/trading/http/mod.rs",
+        "line": 77
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/kyc/_sandbox/advance",
+      "handler": "kyc_sandbox_advance_handler",
+      "source": "apps/rabovel-api/src/lib.rs",
+      "line": 755,
+      "availability": "debug_assertions and no gateway_secret",
+      "id": "H61",
+      "flow": "F07",
+      "target_owner": "compliance/kyc",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 2522
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/swagger-ui",
+      "handler": "swagger_ui_handler",
+      "source": "apps/rabovel-api/src/lib.rs",
+      "line": 756,
+      "availability": "debug_assertions and no gateway_secret",
+      "id": "H62",
+      "flow": "F29",
+      "target_owner": "app/health + development_docs",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 771
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api-docs/openapi.json",
+      "handler": "openapi_handler",
+      "source": "apps/rabovel-api/src/lib.rs",
+      "line": 757,
+      "availability": "debug_assertions and no gateway_secret",
+      "id": "H63",
+      "flow": "F29",
+      "target_owner": "app/health + development_docs",
+      "handler_definition": {
+        "source": "apps/rabovel-api/src/lib.rs",
+        "line": 766
+      }
+    }
+  ],
+  "rust_sources": [
+    {
+      "source": "apps/rabovel-api/src/authorization_tests.rs",
+      "lines": 251,
+      "flows": [
+        "F01",
+        "F04"
+      ],
+      "tests": [
+        {
+          "name": "public_signup_roles_survive_login_and_do_not_grant_other_roles",
+          "line": 47,
+          "ignored": false
+        },
+        {
+          "name": "public_signup_rejects_privileged_roles_multiple_roles_and_role_injection",
+          "line": 121,
+          "ignored": false
+        },
+        {
+          "name": "issuers_cannot_access_or_mutate_another_issuers_asset",
+          "line": 174,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/bootstrap.rs",
+      "lines": 271,
+      "flows": [
+        "F30"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/config.rs",
+      "lines": 69,
+      "flows": [
+        "F30"
+      ],
+      "tests": [
+        {
+          "name": "default_address_is_the_internal_api_port",
+          "line": 43,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/deployment.rs",
+      "lines": 177,
+      "flows": [
+        "F30"
+      ],
+      "tests": [
+        {
+          "name": "hosted_configuration_cannot_fall_back_to_memory_or_wrong_network",
+          "line": 135,
+          "ignored": false
+        },
+        {
+          "name": "local_development_is_explicitly_separate_and_origins_are_strict",
+          "line": 159,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/features/mod.rs",
+      "lines": 1,
+      "flows": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F08",
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F15",
+        "F16",
+        "F17",
+        "F18",
+        "F19",
+        "F20",
+        "F21",
+        "F22",
+        "F23",
+        "F24",
+        "F25",
+        "F27",
+        "F28",
+        "F29",
+        "F30"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/features/trading/adapters/access.rs",
+      "lines": 86,
+      "flows": [
+        "F04",
+        "F23",
+        "F25"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/features/trading/adapters/access/tests.rs",
+      "lines": 83,
+      "flows": [
+        "F04",
+        "F23",
+        "F25"
+      ],
+      "tests": [
+        {
+          "name": "place_checks_existing_limiter_key_before_financial_access",
+          "line": 28,
+          "ignored": false
+        },
+        {
+          "name": "allowed_rate_limit_still_requires_current_identity",
+          "line": 62,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/features/trading/adapters/events.rs",
+      "lines": 92,
+      "flows": [
+        "F23",
+        "F26",
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/features/trading/adapters/mod.rs",
+      "lines": 2,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/features/trading/http/error_tests.rs",
+      "lines": 165,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26"
+      ],
+      "tests": [
+        {
+          "name": "typed_policy_rejections_keep_http_status_codes_and_messages",
+          "line": 34,
+          "ignored": false
+        },
+        {
+          "name": "execution_failures_keep_existing_http_error_contract",
+          "line": 119,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/features/trading/http/mod.rs",
+      "lines": 89,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/features/trading/http/tests.rs",
+      "lines": 296,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26"
+      ],
+      "tests": [
+        {
+          "name": "orders_execute_against_the_matching_engine_and_publish_trades",
+          "line": 21,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/features/trading/mod.rs",
+      "lines": 35,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/features/trading/runtime.rs",
+      "lines": 23,
+      "flows": [
+        "F26"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/features/trading/runtime/tests.rs",
+      "lines": 113,
+      "flows": [
+        "F26"
+      ],
+      "tests": [
+        {
+          "name": "immediate_tick_reprices_the_injected_engine_and_publishes_only_the_fill",
+          "line": 42,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/http/dto.rs",
+      "lines": 526,
+      "flows": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F08",
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F15",
+        "F16",
+        "F17",
+        "F18",
+        "F19",
+        "F20",
+        "F21",
+        "F22",
+        "F23",
+        "F24",
+        "F25",
+        "F27",
+        "F28",
+        "F29",
+        "F30"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/http/features/auth.rs",
+      "lines": 22,
+      "flows": [
+        "F01",
+        "F02",
+        "F03"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/http/features/instruments.rs",
+      "lines": 30,
+      "flows": [
+        "F17",
+        "F18"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/http/features/issuer.rs",
+      "lines": 62,
+      "flows": [
+        "F08",
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F15"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/http/features/kyc.rs",
+      "lines": 9,
+      "flows": [
+        "F07"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/http/features/mod.rs",
+      "lines": 8,
+      "flows": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F08",
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F15",
+        "F16",
+        "F17",
+        "F18",
+        "F19",
+        "F20",
+        "F21",
+        "F22",
+        "F23",
+        "F24",
+        "F25",
+        "F27",
+        "F28",
+        "F29"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/http/features/onboarding.rs",
+      "lines": 12,
+      "flows": [
+        "F05"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/http/features/portfolio.rs",
+      "lines": 30,
+      "flows": [
+        "F19",
+        "F20",
+        "F21",
+        "F22",
+        "F27"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/http/features/tokenization.rs",
+      "lines": 15,
+      "flows": [
+        "F28"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/http/features/wallets.rs",
+      "lines": 26,
+      "flows": [
+        "F04",
+        "F06",
+        "F16"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/http/mod.rs",
+      "lines": 3,
+      "flows": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F08",
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F15",
+        "F16",
+        "F17",
+        "F18",
+        "F19",
+        "F20",
+        "F21",
+        "F22",
+        "F23",
+        "F24",
+        "F25",
+        "F27",
+        "F28",
+        "F29",
+        "F30"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/http/router.rs",
+      "lines": 58,
+      "flows": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F08",
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F15",
+        "F16",
+        "F17",
+        "F18",
+        "F19",
+        "F20",
+        "F21",
+        "F22",
+        "F23",
+        "F24",
+        "F25",
+        "F27",
+        "F28",
+        "F29",
+        "F30"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/ingress.rs",
+      "lines": 134,
+      "flows": [
+        "F30"
+      ],
+      "tests": [
+        {
+          "name": "hosted_origin_requires_a_valid_secret",
+          "line": 57,
+          "ignored": false
+        },
+        {
+          "name": "application_requires_gateway_even_with_a_forged_forwarded_ip",
+          "line": 65,
+          "ignored": false
+        },
+        {
+          "name": "authenticated_ip_is_validated_and_direct_mode_ignores_headers",
+          "line": 113,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/instrument_provider.rs",
+      "lines": 448,
+      "flows": [
+        "F17"
+      ],
+      "tests": [
+        {
+          "name": "ngx_catalog_matches_the_watchlist_format",
+          "line": 407,
+          "ignored": false
+        },
+        {
+          "name": "live_issuer_assets_join_the_catalog_automatically",
+          "line": 422,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/lib.rs",
+      "lines": 5434,
+      "flows": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F08",
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F15",
+        "F16",
+        "F17",
+        "F18",
+        "F19",
+        "F20",
+        "F21",
+        "F22",
+        "F23",
+        "F24",
+        "F25",
+        "F27",
+        "F28",
+        "F29",
+        "F26",
+        "F30"
+      ],
+      "tests": [
+        {
+          "name": "portfolio_keeps_wallet_purchases_and_engine_positions_without_duplicate_rows",
+          "line": 4221,
+          "ignored": false
+        },
+        {
+          "name": "merged_market_and_portfolio_routes_return_frontend_envelopes",
+          "line": 4259,
+          "ignored": false
+        },
+        {
+          "name": "health_endpoint_returns_ok",
+          "line": 4300,
+          "ignored": false
+        },
+        {
+          "name": "fail_closed_router_preserves_configured_cors_origin",
+          "line": 4314,
+          "ignored": false
+        },
+        {
+          "name": "old_self_asserted_google_payload_is_rejected",
+          "line": 4345,
+          "ignored": false
+        },
+        {
+          "name": "callback_rejects_client_supplied_roles",
+          "line": 4366,
+          "ignored": false
+        },
+        {
+          "name": "password_registration_and_login_do_not_elevate_admin_email",
+          "line": 4387,
+          "ignored": false
+        },
+        {
+          "name": "password_auth_rejects_wrong_password_and_role_fields",
+          "line": 4439,
+          "ignored": false
+        },
+        {
+          "name": "auth_me_requires_a_live_session_and_logout_revokes_it",
+          "line": 4472,
+          "ignored": false
+        },
+        {
+          "name": "auth_me_rejects_an_expired_session",
+          "line": 4526,
+          "ignored": false
+        },
+        {
+          "name": "trusted_roles_are_assigned_and_issuer_endpoint_is_authoritative",
+          "line": 4555,
+          "ignored": false
+        },
+        {
+          "name": "approved_issuer_creates_and_reads_valid_asset_draft",
+          "line": 4597,
+          "ignored": false
+        },
+        {
+          "name": "oidc_state_is_single_use",
+          "line": 4926,
+          "ignored": false
+        },
+        {
+          "name": "wallet_authorization_requires_a_server_session",
+          "line": 4944,
+          "ignored": false
+        },
+        {
+          "name": "old_forged_principal_and_verified_wallet_are_rejected",
+          "line": 4964,
+          "ignored": false
+        },
+        {
+          "name": "wallet_challenge_is_session_bound_and_single_use",
+          "line": 4996,
+          "ignored": false
+        },
+        {
+          "name": "phantom_wallet_is_verified_persisted_and_listed",
+          "line": 5052,
+          "ignored": false
+        },
+        {
+          "name": "production_siwe_verifier_recovers_expected_address",
+          "line": 5261,
+          "ignored": false
+        },
+        {
+          "name": "kyc_case_lifecycle_flips_onboarding_from_requires_review_toward_approved",
+          "line": 5278,
+          "ignored": false
+        },
+        {
+          "name": "ip_rate_limit_blocks_after_the_configured_window",
+          "line": 5396,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/main.rs",
+      "lines": 29,
+      "flows": [
+        "F30"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/market_views.rs",
+      "lines": 190,
+      "flows": [
+        "F18",
+        "F27"
+      ],
+      "tests": [
+        {
+          "name": "candles_sample_the_price_path_and_trades_add_volume",
+          "line": 146,
+          "ignored": false
+        },
+        {
+          "name": "fixed_point_display_and_parsing_round_trip",
+          "line": 175,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/mint_setup.rs",
+      "lines": 843,
+      "flows": [
+        "F12",
+        "F13",
+        "F19",
+        "F21",
+        "F22",
+        "F33"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/observability.rs",
+      "lines": 156,
+      "flows": [
+        "F30"
+      ],
+      "tests": [
+        {
+          "name": "successful_status_payloads_do_not_expose_provider_errors",
+          "line": 67,
+          "ignored": false
+        },
+        {
+          "name": "unavailable_security_state_blocks_requests_but_not_liveness",
+          "line": 92,
+          "ignored": false
+        },
+        {
+          "name": "errors_and_rejected_requests_receive_safe_headers",
+          "line": 124,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/rabovel-api/src/payment_assets.rs",
+      "lines": 445,
+      "flows": [
+        "F15",
+        "F16"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/rabovel-api/src/price_feed.rs",
+      "lines": 176,
+      "flows": [
+        "F18",
+        "F20",
+        "F23",
+        "F26",
+        "F27"
+      ],
+      "tests": [
+        {
+          "name": "catalog_reference_prices_only_quote_catalog_instruments",
+          "line": 126,
+          "ignored": false
+        },
+        {
+          "name": "simulated_prices_are_deterministic_bounded_and_scaled_to_payment_decimals",
+          "line": 143,
+          "ignored": false
+        },
+        {
+          "name": "simulated_prices_move_over_time_within_fifteen_percent",
+          "line": 161,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "apps/reconciliation-worker/src/main.rs",
+      "lines": 43,
+      "flows": [
+        "F31"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/settlement-worker/src/main.rs",
+      "lines": 38,
+      "flows": [
+        "F31"
+      ],
+      "tests": []
+    },
+    {
+      "source": "apps/tokenization-worker/src/main.rs",
+      "lines": 33,
+      "flows": [
+        "F31"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/domain/src/assets.rs",
+      "lines": 257,
+      "flows": [
+        "F01",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F09",
+        "F11"
+      ],
+      "tests": [
+        {
+          "name": "validates_and_normalizes_demo_asset",
+          "line": 220,
+          "ignored": false
+        },
+        {
+          "name": "tickers_follow_the_ngx_listing_format",
+          "line": 233,
+          "ignored": false
+        },
+        {
+          "name": "rejects_non_demo_disclosure_and_mismatched_metadata",
+          "line": 248,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/domain/src/auth.rs",
+      "lines": 990,
+      "flows": [
+        "F01",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F09",
+        "F11"
+      ],
+      "tests": [
+        {
+          "name": "unverified_google_claims_cannot_create_identity",
+          "line": 806,
+          "ignored": false
+        },
+        {
+          "name": "google_profile_starts_unassessed_and_untrusted",
+          "line": 817,
+          "ignored": false
+        },
+        {
+          "name": "high_risk_is_blocked_before_incomplete_checks",
+          "line": 830,
+          "ignored": false
+        },
+        {
+          "name": "requires_review_cannot_trade",
+          "line": 846,
+          "ignored": false
+        },
+        {
+          "name": "cross_user_wallet_is_rejected",
+          "line": 863,
+          "ignored": false
+        },
+        {
+          "name": "compliance_officer_cannot_sign_withdrawals",
+          "line": 877,
+          "ignored": false
+        },
+        {
+          "name": "sensitive_action_requires_fresh_mfa",
+          "line": 895,
+          "ignored": false
+        },
+        {
+          "name": "reconstituted_profile_matches_original_field_for_field",
+          "line": 925,
+          "ignored": false
+        },
+        {
+          "name": "reconstituted_profile_is_evaluated_identically_to_a_fresh_one",
+          "line": 945,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/domain/src/lib.rs",
+      "lines": 6,
+      "flows": [
+        "F01",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F09",
+        "F11"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/events/src/envelope.rs",
+      "lines": 98,
+      "flows": [
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/events/src/error.rs",
+      "lines": 7,
+      "flows": [
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/events/src/lib.rs",
+      "lines": 55,
+      "flows": [
+        "F32"
+      ],
+      "tests": [
+        {
+          "name": "envelope_round_trips_through_json",
+          "line": 25,
+          "ignored": false
+        },
+        {
+          "name": "decoding_as_the_wrong_event_type_is_rejected",
+          "line": 41,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/events/src/schema/kyc.rs",
+      "lines": 37,
+      "flows": [
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/events/src/schema/mod.rs",
+      "lines": 5,
+      "flows": [
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/events/src/schema/onboarding.rs",
+      "lines": 24,
+      "flows": [
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/events/src/schema/tokenization.rs",
+      "lines": 43,
+      "flows": [
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/events/src/schema/trading.rs",
+      "lines": 99,
+      "flows": [
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/events/src/schema/wallet.rs",
+      "lines": 17,
+      "flows": [
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/events/src/topics.rs",
+      "lines": 32,
+      "flows": [
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/identity/src/lib.rs",
+      "lines": 742,
+      "flows": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F08",
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F37"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/identity/src/provider.rs",
+      "lines": 29,
+      "flows": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F05",
+        "F06",
+        "F07",
+        "F08",
+        "F09",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F37"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/infrastructure/src/ephemeral.rs",
+      "lines": 437,
+      "flows": [
+        "F37"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/infrastructure/src/lib.rs",
+      "lines": 8,
+      "flows": [
+        "F37"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/infrastructure/src/messaging/consumer.rs",
+      "lines": 156,
+      "flows": [
+        "F32"
+      ],
+      "tests": [
+        {
+          "name": "parse_trims_whitespace_and_drops_empty_entries",
+          "line": 135,
+          "ignored": false
+        },
+        {
+          "name": "parse_single_server",
+          "line": 143,
+          "ignored": false
+        },
+        {
+          "name": "parse_empty_yields_nothing",
+          "line": 151,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/infrastructure/src/messaging/error.rs",
+      "lines": 9,
+      "flows": [
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/infrastructure/src/messaging/mod.rs",
+      "lines": 9,
+      "flows": [
+        "F32"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/infrastructure/src/messaging/producer.rs",
+      "lines": 195,
+      "flows": [
+        "F32"
+      ],
+      "tests": [
+        {
+          "name": "in_memory_producer_records_publishes",
+          "line": 176,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/infrastructure/src/metadata_storage.rs",
+      "lines": 190,
+      "flows": [
+        "F37"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/infrastructure/src/postgres.rs",
+      "lines": 873,
+      "flows": [
+        "F37"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/infrastructure/src/providers.rs",
+      "lines": 157,
+      "flows": [
+        "F37"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/infrastructure/src/rate_limiter.rs",
+      "lines": 157,
+      "flows": [
+        "F37"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/infrastructure/tests/password_role_migration.rs",
+      "lines": 52,
+      "flows": [
+        "F35"
+      ],
+      "tests": [
+        {
+          "name": "password_role_migration_removes_legacy_privileges_and_preserves_oidc",
+          "line": 4,
+          "ignored": true
+        }
+      ]
+    },
+    {
+      "source": "crates/kyc/src/lib.rs",
+      "lines": 370,
+      "flows": [
+        "F07"
+      ],
+      "tests": [
+        {
+          "name": "approved_case_round_trips_into_compliance_evidence",
+          "line": 285,
+          "ignored": false
+        },
+        {
+          "name": "sandbox_country_forces_a_rejected_verdict",
+          "line": 315,
+          "ignored": false
+        },
+        {
+          "name": "tampered_webhook_body_is_rejected",
+          "line": 337,
+          "ignored": false
+        },
+        {
+          "name": "unknown_case_id_is_rejected",
+          "line": 364,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/matching-engine/src/book.rs",
+      "lines": 104,
+      "flows": [
+        "F36"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/matching-engine/src/house.rs",
+      "lines": 269,
+      "flows": [
+        "F36"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/matching-engine/src/lib.rs",
+      "lines": 644,
+      "flows": [
+        "F36"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/matching-engine/src/tests.rs",
+      "lines": 450,
+      "flows": [
+        "F36"
+      ],
+      "tests": [
+        {
+          "name": "market_buy_on_empty_book_is_filled_instantly_by_the_house_at_its_ask",
+          "line": 42,
+          "ignored": false
+        },
+        {
+          "name": "client_orders_priced_better_than_the_house_are_internalized_first",
+          "line": 68,
+          "ignored": false
+        },
+        {
+          "name": "equal_prices_prefer_the_book_so_the_house_stays_flat",
+          "line": 93,
+          "ignored": false
+        },
+        {
+          "name": "the_house_fills_when_resting_client_prices_are_worse",
+          "line": 107,
+          "ignored": false
+        },
+        {
+          "name": "market_orders_beyond_house_risk_capacity_are_partially_filled",
+          "line": 122,
+          "ignored": false
+        },
+        {
+          "name": "market_orders_without_book_or_reference_price_are_cancelled",
+          "line": 146,
+          "ignored": false
+        },
+        {
+          "name": "clients_still_match_each_other_without_a_reference_price",
+          "line": 161,
+          "ignored": false
+        },
+        {
+          "name": "crossing_limit_orders_execute_at_the_resting_price",
+          "line": 175,
+          "ignored": false
+        },
+        {
+          "name": "equal_priced_resting_orders_fill_in_time_priority",
+          "line": 192,
+          "ignored": false
+        },
+        {
+          "name": "self_trade_prevention_cancels_the_resting_order",
+          "line": 212,
+          "ignored": false
+        },
+        {
+          "name": "reprice_fills_resting_limits_the_new_house_quote_satisfies",
+          "line": 230,
+          "ignored": false
+        },
+        {
+          "name": "cancel_only_succeeds_for_the_owner",
+          "line": 248,
+          "ignored": false
+        },
+        {
+          "name": "closing_the_hedge_window_nets_principal_flow_per_symbol",
+          "line": 268,
+          "ignored": false
+        },
+        {
+          "name": "invalid_orders_are_rejected_before_matching",
+          "line": 300,
+          "ignored": false
+        },
+        {
+          "name": "trade_sequences_are_gap_free_across_submit_and_reprice",
+          "line": 323,
+          "ignored": false
+        },
+        {
+          "name": "house_sales_deliver_from_float_first_and_mint_only_the_shortfall",
+          "line": 337,
+          "ignored": false
+        },
+        {
+          "name": "a_zero_mint_limit_restricts_delivery_to_the_float",
+          "line": 357,
+          "ignored": false
+        },
+        {
+          "name": "the_unbacked_mint_limit_caps_delivery_once_the_float_is_empty",
+          "line": 374,
+          "ignored": false
+        },
+        {
+          "name": "house_purchases_retire_unbacked_mints_before_refilling_the_float",
+          "line": 389,
+          "ignored": false
+        },
+        {
+          "name": "settled_hedge_buys_back_mints_first_then_refill_the_float",
+          "line": 420,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/portfolio-trading/src/decimal.rs",
+      "lines": 85,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26",
+        "F27"
+      ],
+      "tests": [
+        {
+          "name": "parses_exact_values_and_rejects_excess_precision",
+          "line": 62,
+          "ignored": false
+        },
+        {
+          "name": "formats_minimal_decimal_strings",
+          "line": 77,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/portfolio-trading/src/engine_service.rs",
+      "lines": 592,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26",
+        "F27"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/portfolio-trading/src/engine_service/tests.rs",
+      "lines": 346,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26",
+        "F27"
+      ],
+      "tests": [
+        {
+          "name": "market_buy_is_filled_instantly_by_the_house",
+          "line": 64,
+          "ignored": false
+        },
+        {
+          "name": "the_configured_float_is_delivered_before_minting",
+          "line": 106,
+          "ignored": false
+        },
+        {
+          "name": "clients_trade_with_each_other_when_the_book_is_better",
+          "line": 128,
+          "ignored": false
+        },
+        {
+          "name": "resting_orders_lock_balances_until_cancelled",
+          "line": 161,
+          "ignored": false
+        },
+        {
+          "name": "orders_are_listed_newest_first_per_user",
+          "line": 200,
+          "ignored": false
+        },
+        {
+          "name": "stale_reference_prices_stop_house_quoting",
+          "line": 225,
+          "ignored": false
+        },
+        {
+          "name": "invalid_orders_are_rejected",
+          "line": 241,
+          "ignored": false
+        },
+        {
+          "name": "book_merges_resting_orders_with_the_house_quote_and_trades_are_taped",
+          "line": 277,
+          "ignored": false
+        },
+        {
+          "name": "resting_limits_fill_when_the_market_moves_through_them",
+          "line": 326,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/portfolio-trading/src/lib.rs",
+      "lines": 372,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26",
+        "F27"
+      ],
+      "tests": [
+        {
+          "name": "stub_returns_empty_portfolio",
+          "line": 344,
+          "ignored": false
+        },
+        {
+          "name": "stub_acknowledges_valid_orders_with_distinct_ids",
+          "line": 352,
+          "ignored": false
+        },
+        {
+          "name": "stub_rejects_invalid_quantities",
+          "line": 361,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/portfolio-trading/src/ports.rs",
+      "lines": 44,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26",
+        "F27"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/portfolio-trading/src/usecases.rs",
+      "lines": 110,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26",
+        "F27"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/portfolio-trading/src/usecases/tests.rs",
+      "lines": 365,
+      "flows": [
+        "F23",
+        "F24",
+        "F25",
+        "F26",
+        "F27"
+      ],
+      "tests": [
+        {
+          "name": "denied_commands_and_queries_never_execute_or_publish",
+          "line": 165,
+          "ignored": false
+        },
+        {
+          "name": "acceptance_preserves_request_and_precedes_all_execution_trades",
+          "line": 200,
+          "ignored": false
+        },
+        {
+          "name": "publication_failures_still_return_ack_without_reexecution_or_skipped_trades",
+          "line": 221,
+          "ignored": false
+        },
+        {
+          "name": "engine_failure_retains_typed_error_without_publishing",
+          "line": 244,
+          "ignored": false
+        },
+        {
+          "name": "queries_and_cancellation_keep_actor_and_distinct_access_actions",
+          "line": 258,
+          "ignored": false
+        },
+        {
+          "name": "repricing_attempts_every_trade_without_access_or_acceptance_even_when_broker_fails",
+          "line": 279,
+          "ignored": false
+        },
+        {
+          "name": "repricing_failure_retains_engine_error_without_publishing",
+          "line": 293,
+          "ignored": false
+        },
+        {
+          "name": "workflows_cannot_read_or_cancel_another_actors_real_engine_order",
+          "line": 318,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/reconciliation/src/lib.rs",
+      "lines": 11,
+      "flows": [
+        "F31"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/settlement-orchestrator/src/lib.rs",
+      "lines": 10,
+      "flows": [
+        "F31"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/solana-adapter/examples/create_equity_mint.rs",
+      "lines": 39,
+      "flows": [
+        "F34"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/solana-adapter/examples/setup_shared_lists.rs",
+      "lines": 50,
+      "flows": [
+        "F34"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/solana-adapter/src/EquitySetupService/TokenMintBuilder.rs",
+      "lines": 601,
+      "flows": [
+        "F33"
+      ],
+      "tests": [
+        {
+          "name": "authority_role_and_address_are_checked_for_every_permission",
+          "line": 358,
+          "ignored": false
+        },
+        {
+          "name": "trusted_configuration_rejects_zero_addresses",
+          "line": 383,
+          "ignored": false
+        },
+        {
+          "name": "admin_and_issuer_may_share_a_key_but_keep_their_roles",
+          "line": 389,
+          "ignored": false
+        },
+        {
+          "name": "creation_has_no_issuance_or_permanent_delegate",
+          "line": 399,
+          "ignored": false
+        },
+        {
+          "name": "signer_plan_matches_transaction_including_metadata_updates",
+          "line": 426,
+          "ignored": false
+        },
+        {
+          "name": "metadata_space_grows_and_ambiguous_keys_are_rejected",
+          "line": 441,
+          "ignored": false
+        },
+        {
+          "name": "mint_and_extensions_preserve_configured_addresses",
+          "line": 455,
+          "ignored": false
+        },
+        {
+          "name": "metadata_instructions_preserve_values_and_update_authority",
+          "line": 522,
+          "ignored": false
+        },
+        {
+          "name": "invalid_inputs_are_rejected_by_build",
+          "line": 560,
+          "ignored": false
+        },
+        {
+          "name": "shared_authority_keys_only_require_one_signature_per_key",
+          "line": 588,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/solana-adapter/src/EquitySetupService/mint_setup.rs",
+      "lines": 218,
+      "flows": [
+        "F33"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/solana-adapter/src/EquitySetupService/mod.rs",
+      "lines": 5,
+      "flows": [
+        "F33"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/solana-adapter/src/authority_config/auth_config.rs",
+      "lines": 15,
+      "flows": [
+        "F33"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/solana-adapter/src/authority_config/mod.rs",
+      "lines": 5,
+      "flows": [
+        "F33"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/solana-adapter/src/authority_config/signer_config.rs",
+      "lines": 186,
+      "flows": [
+        "F33"
+      ],
+      "tests": [
+        {
+          "name": "file_and_secret_sources_load_all_authorities_without_leaking_secrets",
+          "line": 145,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/solana-adapter/src/error.rs",
+      "lines": 13,
+      "flows": [
+        "F33"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/solana-adapter/src/lib.rs",
+      "lines": 12,
+      "flows": [
+        "F33"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/solana-adapter/src/token_acl/deployment_config.rs",
+      "lines": 99,
+      "flows": [
+        "F33"
+      ],
+      "tests": [
+        {
+          "name": "saved_configuration_preserves_addresses_and_cannot_be_overwritten",
+          "line": 77,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/solana-adapter/src/token_acl/list_setup.rs",
+      "lines": 174,
+      "flows": [
+        "F33"
+      ],
+      "tests": [
+        {
+          "name": "readback_rejects_mismatched_list_identity_and_accepts_existing_members",
+          "line": 155,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/solana-adapter/src/token_acl/mint_config.rs",
+      "lines": 304,
+      "flows": [
+        "F33"
+      ],
+      "tests": [
+        {
+          "name": "handover_uses_admin_signature_and_sdk_pda_without_enabling_thaw",
+          "line": 199,
+          "ignored": false
+        },
+        {
+          "name": "handover_rejects_wrong_mint_owner_authority_or_default_state",
+          "line": 226,
+          "ignored": false
+        },
+        {
+          "name": "readback_validates_config_identity_and_freeze_delegation",
+          "line": 244,
+          "ignored": false
+        },
+        {
+          "name": "deployment_configuration_rejects_empty_identities",
+          "line": 299,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/solana-adapter/src/token_acl/mint_setup.rs",
+      "lines": 371,
+      "flows": [
+        "F33"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/solana-adapter/src/token_acl/mint_setup/tests.rs",
+      "lines": 470,
+      "flows": [
+        "F33"
+      ],
+      "tests": [
+        {
+          "name": "configures_in_order_with_verified_readback_between_every_transaction",
+          "line": 152,
+          "ignored": false
+        },
+        {
+          "name": "resumes_each_verified_stage_and_ready_mints_submit_nothing",
+          "line": 205,
+          "ignored": false
+        },
+        {
+          "name": "gate_instruction_matches_reviewed_account_order_and_privileges",
+          "line": 231,
+          "ignored": false
+        },
+        {
+          "name": "metadata_encodes_both_lists_and_wallet_lookups_including_flag_account_offset",
+          "line": 259,
+          "ignored": false
+        },
+        {
+          "name": "malformed_or_conflicting_accounts_never_enable_thaw",
+          "line": 286,
+          "ignored": false
+        },
+        {
+          "name": "uncertain_submission_stops_without_retry_and_preserves_signatures",
+          "line": 351,
+          "ignored": false
+        },
+        {
+          "name": "readback_failure_or_stale_state_stops_without_resubmission",
+          "line": 375,
+          "ignored": false
+        },
+        {
+          "name": "wrong_admin_or_zero_mint_is_rejected_before_io",
+          "line": 395,
+          "ignored": false
+        },
+        {
+          "name": "different_mints_reuse_lists_but_have_distinct_metadata_and_config_accounts",
+          "line": 414,
+          "ignored": false
+        },
+        {
+          "name": "corrupted_gate_readback_prevents_the_enable_transaction",
+          "line": 425,
+          "ignored": false
+        },
+        {
+          "name": "rpc_transport_rejects_processed_commitment_without_network_io",
+          "line": 445,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/solana-adapter/src/token_acl/mod.rs",
+      "lines": 19,
+      "flows": [
+        "F33"
+      ],
+      "tests": []
+    },
+    {
+      "source": "crates/solana-adapter/src/token_acl/shared_lists.rs",
+      "lines": 233,
+      "flows": [
+        "F33"
+      ],
+      "tests": [
+        {
+          "name": "instructions_match_reviewed_gate_create_list_wire_format",
+          "line": 141,
+          "ignored": false
+        },
+        {
+          "name": "signer_plan_matches_message_for_shared_or_separate_fee_payer",
+          "line": 192,
+          "ignored": false
+        },
+        {
+          "name": "rejects_colliding_seeds_and_empty_configuration",
+          "line": 210,
+          "ignored": false
+        }
+      ]
+    },
+    {
+      "source": "crates/solana-adapter/tests/local_mint.rs",
+      "lines": 48,
+      "flows": [
+        "F33"
+      ],
+      "tests": [
+        {
+          "name": "creates_and_verifies_equity_mint_and_rejects_duplicate_creation",
+          "line": 10,
+          "ignored": true
+        }
+      ]
+    },
+    {
+      "source": "crates/tokenization-orchestrator/src/lib.rs",
+      "lines": 10,
+      "flows": [
+        "F28",
+        "F31"
+      ],
+      "tests": []
+    }
+  ],
+  "other_paths": [
+    ".agents/skills/implement-slice/SKILL.md",
+    ".agents/skills/plan-feature/SKILL.md",
+    ".agents/skills/verify-change/SKILL.md",
+    ".cargo/config.toml",
+    ".dockerignore",
+    ".github/workflows/ci.yml",
+    ".gitignore",
+    "AGENTS.md",
+    "Cargo.lock",
+    "Cargo.toml",
+    "Dockerfile",
+    "README.md",
+    "admin-keypair.json",
+    "apps/rabovel-api/Cargo.toml",
+    "apps/reconciliation-worker/Cargo.toml",
+    "apps/settlement-worker/Cargo.toml",
+    "apps/tokenization-worker/Cargo.toml",
+    "broker-keypair.json",
+    "crates/domain/Cargo.toml",
+    "crates/events/Cargo.toml",
+    "crates/identity/Cargo.toml",
+    "crates/infrastructure/Cargo.toml",
+    "crates/kyc/Cargo.toml",
+    "crates/matching-engine/Cargo.toml",
+    "crates/portfolio-trading/Cargo.toml",
+    "crates/reconciliation/Cargo.toml",
+    "crates/settlement-orchestrator/Cargo.toml",
+    "crates/solana-adapter/Cargo.toml",
+    "crates/tokenization-orchestrator/Cargo.toml",
+    "demo/01-equity-mint.md",
+    "demo/02-holder-eligibility.md",
+    "demo/03-create-local-mint.md",
+    "demo/04-shared-lists.md",
+    "demo/05-mint-acl-configuration.md",
+    "demo/DEMO_SLICES.md",
+    "demo/ONCHAIN_REFERENCE.md",
+    "demo/README.md",
+    "demo/authority-config.example.json",
+    "demo/dangote-metadata.local.json",
+    "docker-compose.dev.yml",
+    "docker-compose.yml",
+    "docs/architecture.md",
+    "docs/commands.md",
+    "docs/domain.md",
+    "docs/plans/feature-architecture-refactor.md",
+    "docs/plans/mint-acl-setup.md",
+    "docs/plans/principal-matching-engine.md",
+    "docs/plans/public-demo-hardening.md",
+    "docs/plans/trading-simulator.md",
+    "docs/plans/unified-tradable-assets.md",
+    "docs/public-demo-operations.md",
+    "docs/settlement-flow.md",
+    "docs/solana.md",
+    "issuer-keypair.json",
+    "migrations/0001_init.sql",
+    "migrations/0002_password_credentials.sql",
+    "migrations/0003_issuer_organizations.sql",
+    "migrations/0004_asset_drafts.sql",
+    "migrations/0005_asset_setup_operations.sql",
+    "migrations/0006_restrict_password_roles.sql"
+  ]
+}

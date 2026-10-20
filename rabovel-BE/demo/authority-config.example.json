@@ -1,8 +1,5 @@
 {
-  "rabovel_admin_keypair": "/local/keys/rabovel-admin.json",
-  "broker_keypair": "/local/keys/rabovel-broker.json",
-  "issuers": {
-    "demo-dangote": "/local/keys/dangote-issuer.json",
-    "demo-bua": "/local/keys/bua-issuer.json"
-  }
+  "rabovel_admin_keypair": "keys/admin.json",
+  "broker_keypair": "keys/broker.json",
+  "issuers": {"demo-dangote": "keys/issuer.json"}
 }

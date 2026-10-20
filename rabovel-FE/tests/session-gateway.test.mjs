@@ -105,6 +105,20 @@ test("missing cookies and invalid trusted IP metadata fail closed", async () => 
   }
 });
 
+test("retired tokenization routes are rejected without forwarding", async () => {
+  for (const [path, method] of [
+    ["/tokenization/requests", "POST"],
+    ["/tokenization/requests/tok_old", "GET"],
+  ]) {
+    const response = await handleGateway(
+      makeRequest(path, method, {}, method === "POST" ? "{}" : undefined),
+      config,
+      async () => assert.fail("retired routes must not reach the backend"),
+    );
+    assert.equal(response.status, 404);
+  }
+});
+
 test("expired backend session clears the browser cookie", async () => {
   const response = await handleGateway(makeRequest("/auth/me"), config,
     async () => Response.json({ code: "unauthorized" }, { status: 401 }));

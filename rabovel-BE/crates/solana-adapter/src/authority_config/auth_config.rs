@@ -1,6 +1,6 @@
+use crate::IssuanceError;
+use crate::token_mint_builder::TokenMintBuilder;
 use solana_pubkey::Pubkey;
-
-use crate::{IssuanceError, token_mint_builder::TokenMintBuilder};
 
 #[derive(Debug, Clone, Copy)]
 pub struct AuthConfig {

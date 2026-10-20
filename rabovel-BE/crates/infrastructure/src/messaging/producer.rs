@@ -1,36 +1,8 @@
+use events::EventProducer;
+
 use async_trait::async_trait;
 
-use events::{DomainEvent, EventEnvelope};
-
 use super::MessagingError;
-
-/// Publishes an already-serialized envelope. This is intentionally
-/// non-generic (rather than a generic `publish<E>`) so `EventProducer` stays
-/// object-safe and can be stored as `Arc<dyn EventProducer>` inside a
-/// long-lived service like the BFF's `GatewayState`. Callers use the
-/// free function [`publish`] below, which builds the envelope for you.
-#[async_trait]
-pub trait EventProducer: Send + Sync {
-    async fn publish_raw(
-        &self,
-        topic: &str,
-        key: &str,
-        payload: Vec<u8>,
-    ) -> Result<(), MessagingError>;
-}
-
-/// Wraps `event` in an [`EventEnvelope`], serializes it, and hands it to
-/// `producer` under `E::TOPIC`.
-pub async fn publish<E: DomainEvent>(
-    producer: &dyn EventProducer,
-    event: E,
-    produced_by: &str,
-) -> Result<(), MessagingError> {
-    let envelope = EventEnvelope::new(event, produced_by);
-    let key = envelope.event_id.clone();
-    let bytes = envelope.to_json()?;
-    producer.publish_raw(E::TOPIC, &key, bytes).await
-}
 
 /// Publishes nothing. Used where no broker is configured, e.g. tests or a
 /// gateway started via `GatewayState::disabled()`.
@@ -108,7 +80,7 @@ mod kafka_producer {
             let client = ClientBuilder::new(bootstrap_servers)
                 .build()
                 .await
-                .map_err(|e| MessagingError::Kafka(e.to_string()))?;
+                .map_err(|e| MessagingError::Transport(e.to_string()))?;
             Ok(Self {
                 client,
                 partitions: RwLock::new(BTreeMap::new()),
@@ -130,7 +102,7 @@ mod kafka_producer {
                 self.client
                     .partition_client(topic, 0, UnknownTopicHandling::Retry)
                     .await
-                    .map_err(|e| MessagingError::Kafka(e.to_string()))?,
+                    .map_err(|e| MessagingError::Transport(e.to_string()))?,
             );
             partitions.insert(topic.to_string(), Arc::clone(&partition_client));
             Ok(partition_client)
@@ -160,7 +132,7 @@ mod kafka_producer {
             partition_client
                 .produce(vec![record], Compression::NoCompression)
                 .await
-                .map_err(|e| MessagingError::Kafka(e.to_string()))?;
+                .map_err(|e| MessagingError::Transport(e.to_string()))?;
             Ok(())
         }
     }
@@ -172,6 +144,7 @@ pub use kafka_producer::KafkaEventProducer;
 mod tests {
     use super::*;
     use events::schema::onboarding::{OnboardingStatus, OnboardingStatusChanged};
+    use events::{publish, DomainEvent};
 
     #[tokio::test]
     async fn in_memory_producer_records_publishes() {

@@ -1,36 +1,53 @@
 # Backend architecture
 
-Rabovel uses a Cargo workspace with two package groups:
+Rabovel is a modular monolith. Navigate **feature → cohesive subfeature → responsibility**. The API root is a facade; `app` composes dependencies; `http` owns shared ingress, authentication extraction, errors, observation and development documentation.
 
-- `apps/*` are runnable composition roots. They parse process configuration, assemble adapters and expose HTTP or consume events.
-- `crates/*` are reusable business boundaries, contracts and infrastructure adapters.
+## Feature ownership
 
-## Components
+| Feature | Where to start | Responsibilities |
+| --- | --- | --- |
+| Identity | API `features/identity`, `crates/identity` | Password accounts, sessions, access policy, ownership challenges and linked wallets |
+| Compliance | API `features/compliance`, `crates/kyc` | Terms/status, KYC cases/verdicts, sandbox and provider contracts |
+| Issuer | API `features/issuer`, `crates/issuer-assets` | Organizations; drafts, media/metadata, review/backing, setup, inventory and listings |
+| Catalog | API `features/catalog/instruments` | Stable IDs, NGX fixtures and published issuer lookup |
+| Market data | API `features/market_data` | Prices, markets, assets and charts |
+| Payments | API `features/payments/cngn` | Broker/wallet account readiness, balances and creation |
+| Trading | API `features/trading`, `crates/portfolio-trading/src/trading`, `crates/matching-engine` | Orders, access/event providers, execution queries and repricing jobs |
+| Settlement | API `features/settlement/direct_purchases`, `crates/settlement-orchestrator` | Direct-purchase catalog/quotes/preparation/submission; reusable pricing and chain contracts |
+| Portfolio | API `features/portfolio`, `crates/portfolio-trading/src/portfolio` | Balances, merged valuation/holdings, estimated performance and activity |
 
-| Component | Responsibility |
-| --- | --- |
-| `apps/rabovel-api` | Axum HTTP API. `http/features` owns route groups and `config` owns server configuration. |
-| `apps/*-worker` | Process entry points for tokenization, settlement and reconciliation. |
-| `domain` | I/O-free identity, onboarding and authorization rules. |
-| `identity` | Identity repository contract, records and provider ports. |
-| `kyc` | KYC provider contract and signed mock implementation. |
-| `portfolio-trading` | Portfolio/order contract, the engine-backed `EngineTradingService` used by the API, and a test stub. |
-| `matching-engine` | I/O-free principal-backed matching: client book plus house quote, risk limits, float/mint inventory and hedge netting. See [plans/principal-matching-engine.md](plans/principal-matching-engine.md). |
-| Orchestrator crates | Business-service boundaries used by workers; currently skeletons. |
-| `events` | Transport-independent envelopes, payloads and topic names. |
-| `infrastructure` | Postgres, Redis, OIDC/SIWE, rate limiting, Kafka and in-memory adapters. |
-| `solana-adapter` | Token-2022, Token ACL and ABL Gate instruction/RPC implementation. |
+An inventory change starts at `features/issuer/assets/issuance/inventory`. Its model/chain port is under the same namespace in `issuer-assets`; shared Solana implementation is beside API issuer issuance. Settlement has a separate purchase provider and owns its preparation/submission error contract. Repositories live with their feature in the owning library, not in a global directory.
 
-Dependency direction is `apps → domain crates + infrastructure`. Infrastructure implements ports owned by the relevant domain crate. Domain crates do not depend on applications or concrete infrastructure.
+## Responsibilities and dependencies
 
-## Current execution
+Create only modules actual behavior needs. `routes` register methods, `handlers` translate HTTP, `dto` carries request/response shapes, `usecases` coordinates behavior, `ports` defines required capabilities, `context` injects a narrow dependency set, `repositories` persists records, and `providers` implements external capabilities. `resolvers` performs meaningful catalog/account lookup; `jobs` adapts scheduled triggers. Future consumers/services do not get empty folders.
 
-Local Compose runs only Postgres and Redis, with ports bound to `127.0.0.1`. The API runs on the host through Cargo Watch at `http://localhost:8080`; `RABOVEL_BIND_ADDR` overrides its bind address. Postgres holds durable identity/KYC data, and Redis holds sessions, one-use challenges and rate-limit state with a 25 MB memory limit and `noeviction`. The optional test container runs only when explicitly requested.
+API-specific orchestration stays in complete feature modules. Shared rules, models, persistence and reusable execution operations live in selective crates. This avoids a crate per endpoint/layer. Workflows needing another process can lift their transport-independent operations and ports; libraries never import an app. Existing identity/asset schema annotations remain for wire compatibility and perform no I/O.
 
-Kafka and the WAF are not part of the local stack. Leave `KAFKA_BOOTSTRAP_SERVERS` unset to select the no-op event producer; a separately configured Kafka broker enables the existing event adapter.
+```mermaid
+flowchart TD
+  App[Process composition] --> HTTP[Feature handlers and narrow contexts]
+  HTTP --> Cases[Feature use cases]
+  Cases --> Ports[Owned policy/query/effect contracts]
+  Implementations[Feature repositories/providers] --> Ports
+  Implementations --> Technical[DB lifecycle, Kafka and Solana SDK]
+  Cases --> Events[Event contracts and publishing port]
+  Kafka[Kafka implementation] --> Events
+  Trading[Trading execution] --> Engine[Pure matching engine]
+```
 
-The Next.js gateway holds bearer sessions in HttpOnly cookies and forwards them server-to-server. The API requires a shared gateway secret for every route except `/health` when configured; hosted origins require it. Client IP is trusted only after gateway authentication. Without a secret, localhost development uses the socket peer and ignores forwarded headers. Debug documentation routes are disabled when the secret is configured. Workers still log events and start from the earliest offset; durable checkpoints and idempotent handling are required before they perform side effects. Event publication still lacks a transactional outbox.
+Cross-feature reads use account/wallet/asset/setup query interfaces. Compliance and wallet linking use profile-only writes that preserve principals. Credential creation retains its user+credential transaction. Asset/setup uniqueness and guarded SQL transitions remain explicit operations. Stores share one Postgres pool while their contracts/SQL remain feature-owned. Profile/KYC finalization and operation/asset updates remain separate effects; directory structure does not provide transaction guarantees.
 
-The API calls the Solana adapter directly for mint setup, issuance and purchases; worker shells do not execute these operations. Validator-backed tests remain opt-in.
+`events` owns envelopes, schemas and the publishing port. `infrastructure` owns Kafka transport and Postgres connection/migration lifecycle. Redis security state/rate limits and wallet proofs belong to identity; metadata storage belongs to issuer. `solana-adapter` contains reusable instruction/account/RPC primitives.
 
-Hosted startup requires the explicit `public-devnet` deployment profile and persistent Postgres/Redis settings. It verifies the RPC's devnet genesis before migrations and rejects debug builds for that profile. Metadata-only request logging and generic dependency-error responses are applied at the HTTP boundary. Configuration and monitoring limits are documented in the [operations runbook](public-demo-operations.md).
+Run `python3 scripts/check_architecture.py` to enforce boundaries. Aim for roughly 150–350 production lines per ordinary module; review above 500 for unrelated responsibilities. Separate large fixtures/scenarios without mechanically fragmenting cohesive code.
+
+## Current execution and limits
+
+Orders, cancellation, repricing, book/tape and balances share one engine. The immediate/5-second job starts only from production bootstrap. Engine state is process-local; fills do not settle on-chain. Direct purchases independently prepare/submit real chain transactions. Portfolio views combine these sources using documented estimates.
+
+Settlement/reconciliation workers still log events. Constant-only wrappers and the legacy tokenization process were removed. Durable execution/outbox, reservations, consumer progress/inboxes, settlement recovery and reconciliation remain the separate [upgrade track](plans/feature-architecture-refactor.md#durable-upgrade-track).
+
+Local Compose supplies Postgres/Redis and an opt-in test runner. Run the API on the host with Cargo Watch. Hosted startup validates public-devnet/RPC genesis before migrations; ingress protections remain. Quote settings validate at startup; bind configuration validates before dependency initialization. Debug documentation/sandbox routes remain unavailable in release or behind a gateway secret.
+
+See [commands](commands.md), [current ownership](refactor/current-map.md), [baseline traces](refactor/flow-map.md), [retirements](refactor/retirements.md) and the [refactor plan](plans/feature-architecture-refactor.md).

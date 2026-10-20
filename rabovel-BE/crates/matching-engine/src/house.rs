@@ -10,9 +10,12 @@
 //! hedge ("minted unbacked" until the clearing buy settles). House purchases
 //! retire outstanding unbacked units first and refill the float with the rest.
 
-use serde::{Deserialize, Serialize};
-
-use crate::{Price, Qty, Side, UnfilledReason};
+use crate::Price;
+use crate::Qty;
+use crate::Side;
+use crate::UnfilledReason;
+use serde::Deserialize;
+use serde::Serialize;
 
 const BPS_DENOMINATOR: u128 = 10_000;
 

@@ -5,7 +5,14 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-domain = { path = "../domain" }
+hex = "0.4"
+siwe = "0.6"
+redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
+utoipa = "4"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "macros", "migrate"] }
 async-trait.workspace = true
 serde_json.workspace = true
 serde.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

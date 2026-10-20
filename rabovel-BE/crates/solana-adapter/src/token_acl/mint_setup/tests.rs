@@ -1,13 +1,14 @@
 use super::*;
-use spl_token_2022::{
-    extension::{
-        BaseStateWithExtensionsMut, ExtensionType, StateWithExtensionsMut,
-        default_account_state::DefaultAccountState,
-    },
-    state::{AccountState, Mint},
-};
-use std::{collections::VecDeque, sync::Mutex};
-use token_acl_client::accounts::{MINT_CONFIG_DISCRIMINATOR, MintConfig};
+use spl_token_2022::extension::BaseStateWithExtensionsMut;
+use spl_token_2022::extension::ExtensionType;
+use spl_token_2022::extension::StateWithExtensionsMut;
+use spl_token_2022::extension::default_account_state::DefaultAccountState;
+use spl_token_2022::state::AccountState;
+use spl_token_2022::state::Mint;
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use token_acl_client::accounts::MINT_CONFIG_DISCRIMINATOR;
+use token_acl_client::accounts::MintConfig;
 
 fn account(owner: Pubkey, data: Vec<u8>) -> AclAccount {
     AclAccount {

@@ -1,11 +1,11 @@
 use super::AuthConfig;
 use serde::Deserialize;
-use solana_keypair::{Keypair, read_keypair_file};
+use solana_keypair::Keypair;
+use solana_keypair::read_keypair_file;
 use solana_signer::Signer;
-use std::{
-    collections::BTreeMap,
-    path::{Path, PathBuf},
-};
+use std::collections::BTreeMap;
+use std::path::Path;
+use std::path::PathBuf;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {

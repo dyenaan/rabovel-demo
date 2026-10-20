@@ -5,7 +5,8 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-domain = { path = "../../crates/domain" }
+settlement-orchestrator={path="../../crates/settlement-orchestrator"}
+issuer-assets = { path = "../../crates/issuer-assets" }
 events = { path = "../../crates/events" }
 infrastructure = { path = "../../crates/infrastructure" }
 identity = { path = "../../crates/identity" }

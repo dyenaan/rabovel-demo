@@ -1,12 +1,14 @@
+use super::ABL_GATE_PROGRAM_ID;
+use super::AclDeploymentConfig;
+use super::ListMode;
+use super::SharedListAddresses;
+use crate::IssuanceError;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_keypair::Keypair;
 use solana_message::Message;
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
-
-use super::{ABL_GATE_PROGRAM_ID, AclDeploymentConfig, ListMode, SharedListAddresses};
-use crate::IssuanceError;
 
 pub struct SharedListsResult {
     pub addresses: SharedListAddresses,

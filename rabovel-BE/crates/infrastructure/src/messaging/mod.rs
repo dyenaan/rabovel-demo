@@ -1,9 +1,5 @@
-mod error;
-
+//! Kafka implementations of the event contract port.
 pub mod consumer;
 pub mod producer;
-
-pub use error::MessagingError;
-pub use producer::{
-    publish, EventProducer, InMemoryEventProducer, KafkaEventProducer, NoopEventProducer,
-};
+pub use events::{publish, EventProducer, PublishError as MessagingError};
+pub use producer::{InMemoryEventProducer, KafkaEventProducer, NoopEventProducer};

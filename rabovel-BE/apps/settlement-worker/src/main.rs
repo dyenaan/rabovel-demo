@@ -6,10 +6,10 @@
 //! consumer plumbing works end-to-end. The shared connect/decode loop is
 //! [`infrastructure::messaging::consumer::log_events`].
 
-use events::schema::tokenization::TokenizationCompleted;
 use events::schema::trading::TradeExecuted;
 use events::topics;
-use infrastructure::messaging::consumer::{bootstrap_servers_from_env, log_events};
+use infrastructure::messaging::consumer::bootstrap_servers_from_env;
+use infrastructure::messaging::consumer::log_events;
 
 #[tokio::main]
 async fn main() {
@@ -20,8 +20,7 @@ async fn main() {
     let bootstrap_servers = bootstrap_servers_from_env();
 
     tracing::info!(
-        "{} starting, connecting to {:?}",
-        settlement_orchestrator::SERVICE_NAME,
+        "settlement-worker starting, connecting to {:?}",
         bootstrap_servers
     );
 
@@ -29,10 +28,6 @@ async fn main() {
         bootstrap_servers.clone(),
         topics::TRADING_TRADE_EXECUTED_V1,
     ));
-    let tokenization_completed = tokio::spawn(log_events::<TokenizationCompleted>(
-        bootstrap_servers,
-        topics::TOKENIZATION_COMPLETED_V1,
-    ));
 
-    let _ = tokio::join!(trade_executed, tokenization_completed);
+    let _ = tokio::join!(trade_executed);
 }

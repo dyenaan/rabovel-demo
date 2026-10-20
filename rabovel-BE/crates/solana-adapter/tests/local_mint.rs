@@ -1,7 +1,6 @@
-use solana_adapter::{
-    authority_config::AuthoritySigners, equity_setup_service::EquitySetupService,
-    token_mint_builder::TokenMetadata,
-};
+use solana_adapter::authority_config::AuthoritySigners;
+use solana_adapter::equity_setup_service::EquitySetupService;
+use solana_adapter::token_mint_builder::TokenMetadata;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_commitment_config::CommitmentConfig;
 use solana_keypair::Keypair;

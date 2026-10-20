@@ -33,8 +33,6 @@ const routes: [RegExp, string[]][] = [
   [/^\/investor\/(quote|purchase\/prepare|purchase\/submit)$/, ["POST"]],
   [/^\/orders$/, ["GET", "POST"]],
   [/^\/orders\/[A-Za-z0-9_-]+$/, ["GET", "DELETE"]],
-  [/^\/tokenization\/requests$/, ["POST"]],
-  [/^\/tokenization\/requests\/[A-Za-z0-9_-]+$/, ["GET"]],
 ];
 const TOKEN = /^[a-f0-9]{64}$/;
 const BODY_LIMIT = 16 * 1024;

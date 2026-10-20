@@ -1,5 +1,7 @@
 //! Runs against temporary tables only; never migrates the configured database.
-use sqlx::{Connection, PgConnection};
+
+use sqlx::Connection;
+use sqlx::PgConnection;
 
 #[tokio::test]
 #[ignore = "requires RABOVEL_TEST_DATABASE_URL pointing to a local Postgres instance"]

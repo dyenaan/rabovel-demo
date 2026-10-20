@@ -1,12 +1,14 @@
-use rabovel_api::{router_from_env, ServerConfig};
+use rabovel_api::router_from_env;
+use rabovel_api::ServerConfig;
 
 #[tokio::main]
 async fn main() {
+    let server = ServerConfig::from_env().expect("invalid server configuration");
+
     let app = router_from_env()
         .await
         .unwrap_or_else(|error| panic!("backend startup failed: {error}"));
 
-    let server = ServerConfig::from_env().expect("invalid server configuration");
     let listener = tokio::net::TcpListener::bind(server.bind_addr)
         .await
         .expect("failed to bind rabovel-api");

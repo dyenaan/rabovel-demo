@@ -1,6 +1,7 @@
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
 use crate::error::EventError;
+use serde::de::DeserializeOwned;
+use serde::Deserialize;
+use serde::Serialize;
 
 /// Implemented by every payload type in `crate::schema`. `TOPIC` and
 /// `EVENT_TYPE` are the single source of truth a producer/consumer pair

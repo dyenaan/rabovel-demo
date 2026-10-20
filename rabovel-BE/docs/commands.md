@@ -8,14 +8,15 @@ CI and Docker pin Rust 1.98; `solana-adapter` declares edition 2024 and `rust-ve
 
 ```bash
 cargo build --workspace
-cargo test -p domain --locked
+cargo test -p identity --locked
 cargo test -p rabovel-api --lib --locked
 cargo test -p solana-adapter --all-targets --locked
 ```
 
-Choose the relevant package/test filter first. Default tests do not require running infrastructure; the validator test is ignored. CI's full checks are:
+Choose the relevant package/test filter first. Default tests do not require running infrastructure; the validator test is ignored. CI lives at the parent Git root in `.github/workflows/backend.yml`. Full checks are:
 
 ```bash
+python3 scripts/check_architecture.py
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
@@ -54,7 +55,6 @@ Kafka is not provisioned by this Compose file. If you separately provision a bro
 
 ```bash
 RUST_LOG=info KAFKA_BOOTSTRAP_SERVERS=localhost:9092 cargo run -p settlement-worker
-RUST_LOG=info KAFKA_BOOTSTRAP_SERVERS=localhost:9092 cargo run -p tokenization-worker
 RUST_LOG=info KAFKA_BOOTSTRAP_SERVERS=localhost:9092 cargo run -p reconciliation-worker
 ```
 
@@ -70,3 +70,14 @@ cargo test -p solana-adapter --test local_mint -- --ignored
 The test uses localhost:8899, requests an airdrop and creates a mint. It does not verify ACL or settlement. Follow [mint setup](../demo/03-create-local-mint.md) for the configured `create_equity_mint` example and [shared lists](../demo/04-shared-lists.md) for `setup_shared_lists`, external program prerequisites and exact arguments. Keep keys outside the repository. The existing [foundation verification guidance](../demo/README.md#local-configuration) excludes service startup/transaction submission from automated foundation verification.
 
 There is no repository Anchor build or custom program build command. The shared-list runbook's `cargo build-sbf` targets separately fetched Gate source, not a crate in this workspace. Per-mint ACL verification commands and limits are in [its runbook](../demo/05-mint-acl-configuration.md#tests-only).
+
+## Optional database parity
+
+With `RABOVEL_TEST_DATABASE_URL` pointing to an isolated local Postgres instance:
+
+```bash
+cargo test -p identity --test profile_updates --locked -- --ignored
+cargo test -p infrastructure --test password_role_migration --locked -- --ignored
+```
+
+These checks use connection-local temporary tables and do not migrate the configured database. Validator checks remain separate. Signing files belong outside Git under user/deployment configuration. The incomplete container development override was retired; retain base Compose dependencies and host Cargo Watch.

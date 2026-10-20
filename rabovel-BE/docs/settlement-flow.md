@@ -1,26 +1,18 @@
-# Order-to-chain lifecycle
+# Execution and settlement boundaries
 
-## Implemented now
+## Implemented paths
 
-1. The API authenticates the session and authorizes the order action (`place_order_handler` in `apps/rabovel-api/src/lib.rs`). Default onboarding currently prevents normal users from passing the financial gate; see [domain.md](domain.md).
-2. If authorized, `EngineTradingService` (`crates/portfolio-trading`) validates the order exactly in integer units. Only symbols in the instrument catalog are accepted, and the reference price comes from the price feed. The service then executes the order immediately on the in-memory principal matching engine (`crates/matching-engine`). Orders, fills and net balances are process-local and lost on restart.
-3. The gateway publishes `OrderAccepted`, then one fill-level `TradeExecuted` per trade (buyer/seller, liquidity source and house inventory movement). It discards publication errors before returning the acknowledgment, so a successful HTTP response does not establish durable event delivery.
-4. The order path ends there. The settlement worker only logs `TradeExecuted`; fills are not yet delivered on-chain.
-5. Separately, authorized tokenization requests publish `TokenizationRequested` and return an ID. The tokenization worker only logs requests; the HTTP status endpoint always says `pending`.
-6. The settlement worker only logs `TradeExecuted` and `TokenizationCompleted`. Reconciliation only logs those plus `PortfolioChanged`. These subscriptions do not create settlement state or submit chain transactions.
+1. Order handlers call reusable order workflows after current identity/ownership/role/permission policy. Exact integer inputs and catalog prices feed the shared in-memory matching engine.
+2. Acceptance precedes fill-level events. Publication is best-effort; errors preserve the acknowledgement. Repricing uses the same engine/event sink on an immediate/5-second schedule. Engine state, order IDs and balances do not recover across restart.
+3. Settlement logs `TradeExecuted`. Reconciliation logs that plus `PortfolioChanged` (which has no active publisher). Neither worker moves assets, stores progress or repairs discrepancies.
+4. Issuer mint/setup/inventory and direct investor purchases call chain providers independently. Purchase preparation may create/thaw accounts and add eligibility before returning a partially issuer-signed transaction. Investor signs as fee payer; submission checks that payer and signatures before confirmed RPC submission.
 
-The independent adapter can create and verify mints/shared lists and configure per-mint ACL state through RPC. No order/request is correlated to these operations; their transaction/readback flow is described in [solana.md](solana.md).
+There is no engine-to-chain settlement integration. Quotes are not persisted/bound intents; sell quotes have no settlement endpoint. Purchase submission has no durable operation journal/status lookup/idempotency key. Existing setup readback/replay guards do not imply complete API crash recovery.
 
-The investor catalog has a separate demo purchase path for explicitly live, backed listings. The API revalidates inventory and cNGN funds, prepares the investor equity account and ACL entry, and returns one partially issuer-signed Solana transaction containing both the investor-to-broker cNGN transfer and issuer-to-investor Token-2022 equity transfer. Phantom signs as the linked investor and fee payer; the API verifies all signatures and submits the transaction at confirmed commitment. This is a direct primary-inventory purchase, not matching-engine order settlement.
+## Durability requirements
 
-## Planned direction, not implemented
+The [upgrade track](plans/feature-architecture-refactor.md#durable-upgrade-track) requires one mutation ordering authority, replayable commands/state, atomic execution facts/outbox, stable envelopes, consumer inbox/checkpoints, reservations, durable settlement attempts/finality/unknown outcomes, and reconciliation/projection rebuilds. Capture repricing mutations preceding a rejected new order as well as successful commands.
 
-The [README gaps](../README.md#known-gaps) call for durable order IDs, an outbox and consumer progress tracking. The [on-chain reference, sections 9–10](../demo/ONCHAIN_REFERENCE.md#9-backend-mappings-and-durable-execution) describes durable operation preparation/submission/reconciliation and a possible future settlement-authorizing hook. Its proposed state names are guidance, not an existing backend state machine. Durable settlement tracking and reconciliation are not present in this workspace.
+Kafka logging starts partition 0 at Earliest and discards record offsets from its returned interface. Do not attach economic effects without durable progress/deduplication and uncertain-outcome recovery. Repeating an identical signed transaction differs from creating/signing a new purchase; there is no durable business idempotency mechanism today.
 
-## Unresolved integration boundaries
-
-- Durable settlement records, finality beyond confirmed commitment, failure recovery and cancellation.
-- Durable operation/signature storage, economic duplicate protection and status propagation to the gateway.
-- Consumer offsets and replay handling: `log_events` starts partition 0 at `Earliest`; `next_event` does not expose the consumed offset today. Adding persistence requires transport/interface work, not merely changing a worker start value.
-
-Do not attach economic side effects to the logging loops without addressing replay and uncertain transaction outcomes. Solana prevents resubmitting an identical signed purchase transaction, but there is no durable idempotency key preventing an investor from intentionally preparing and signing another purchase.
+The legacy tokenization API/worker were removed. Retained tokenization payloads/topics support compatibility, not an active processor. See [retirements](refactor/retirements.md), [Solana details](solana.md), [baseline traces](refactor/flow-map.md) and [current owners](refactor/current-map.md).

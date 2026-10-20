@@ -1,5 +1,7 @@
 # Mint and ACL setup slice
 
+2026-10-20 ownership: the structural refactor is recorded in [current-map](../refactor/current-map.md). This document retains its original design context; durable execution/worker behavior remains future work unless explicitly implemented in that map.
+
 ## Outcome
 
 An issuer can start setup for an `approved_for_setup` asset and see durable progress through metadata readiness, zero-supply Token-2022 mint creation, ACL handover/list association, and verified completion. A completed operation records the mint, ACL accounts, transaction signatures and readback evidence. It does not issue inventory or list the asset for investors.

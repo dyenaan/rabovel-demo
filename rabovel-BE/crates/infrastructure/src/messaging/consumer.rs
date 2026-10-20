@@ -1,13 +1,13 @@
-use std::sync::Arc;
-
+use super::MessagingError;
+use events::DomainEvent;
+use events::EventEnvelope;
 use futures::StreamExt;
-use rskafka::client::consumer::{StartOffset, StreamConsumer, StreamConsumerBuilder};
+use rskafka::client::consumer::StartOffset;
+use rskafka::client::consumer::StreamConsumer;
+use rskafka::client::consumer::StreamConsumerBuilder;
 use rskafka::client::partition::UnknownTopicHandling;
 use rskafka::client::ClientBuilder;
-
-use events::{DomainEvent, EventEnvelope};
-
-use super::MessagingError;
+use std::sync::Arc;
 
 /// A single-topic, single-partition (0) consumer. rskafka has no built-in
 /// consumer-group/offset-tracking support (by design — see its README), so
@@ -27,12 +27,12 @@ impl TopicConsumer {
         let client = ClientBuilder::new(bootstrap_servers)
             .build()
             .await
-            .map_err(|e| MessagingError::Kafka(e.to_string()))?;
+            .map_err(|e| MessagingError::Transport(e.to_string()))?;
         let partition_client = Arc::new(
             client
                 .partition_client(topic, 0, UnknownTopicHandling::Retry)
                 .await
-                .map_err(|e| MessagingError::Kafka(e.to_string()))?,
+                .map_err(|e| MessagingError::Transport(e.to_string()))?,
         );
         let inner = StreamConsumerBuilder::new(partition_client, start_offset)
             .with_max_wait_ms(1_000)
@@ -50,11 +50,11 @@ impl TopicConsumer {
         Some(match item {
             Ok((record_and_offset, _high_watermark)) => match record_and_offset.record.value {
                 Some(bytes) => EventEnvelope::<E>::from_json(&bytes).map_err(Into::into),
-                None => Err(MessagingError::Kafka(
+                None => Err(MessagingError::Transport(
                     "received a record with no value".to_string(),
                 )),
             },
-            Err(err) => Err(MessagingError::Kafka(err.to_string())),
+            Err(err) => Err(MessagingError::Transport(err.to_string())),
         })
     }
 }

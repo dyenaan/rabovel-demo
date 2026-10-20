@@ -1,5 +1,7 @@
 # Trading simulator: deposit, buy and sell like a trading app
 
+2026-10-20 ownership: the structural refactor is recorded in [current-map](../refactor/current-map.md). This document retains its original design context; durable execution/worker behavior remains future work unless explicitly implemented in that map.
+
 **Plan — 2026-10-10.** Builds on [unified-tradable-assets.md](unified-tradable-assets.md) and absorbs its U2–U4. [principal-matching-engine.md](principal-matching-engine.md) still covers hedging and reconciliation.
 
 ## Outcome

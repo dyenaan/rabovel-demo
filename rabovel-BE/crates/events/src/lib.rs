@@ -53,3 +53,6 @@ mod tests {
         assert!(matches!(result, Err(EventError::TopicMismatch { .. })));
     }
 }
+
+pub mod publisher;
+pub use publisher::{publish, EventProducer, PublishError};

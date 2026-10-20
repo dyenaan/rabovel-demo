@@ -1,5 +1,7 @@
 # Unified tradable assets: one catalog, matched off-chain, settled on-chain
 
+2026-10-20 ownership: the structural refactor is recorded in [current-map](../refactor/current-map.md). This document retains its original design context; durable execution/worker behavior remains future work unless explicitly implemented in that map.
+
 **Plan — 2026-10-09.** Extends [principal-matching-engine.md](principal-matching-engine.md). It replaces that plan's "Tradable symbols" carry-forward and redefines its slice 3.
 
 ## Outcome
@@ -18,10 +20,10 @@ Simulated NGX instruments and issuer-minted assets become the same kind of thing
 
 ## Current behaviour (source)
 
-- **Engine catalog.** `CatalogReferencePrices` ([price_feed.rs](../../apps/rabovel-api/src/price_feed.rs)) accepts only tickers from `InstrumentProvider`. That provider is `SimulatedInstrumentProvider`, a hard-coded list of 4 NGX tickers ([instrument_provider.rs](../../apps/rabovel-api/src/instrument_provider.rs)). Any other symbol returns `UnknownSymbol`.
+- **Engine catalog.** `CatalogReferencePrices` ([price_feed.rs](../../apps/rabovel-api/src/features/market_data/prices/mod.rs)) accepts only tickers from `InstrumentProvider`. That provider is `SimulatedInstrumentProvider`, a hard-coded list of 4 NGX tickers ([instrument_provider.rs](../../apps/rabovel-api/src/features/catalog/instruments/mod.rs)). Any other symbol returns `UnknownSymbol`.
 - **Engine state.** Engine state is in memory. `EngineTradingConfig.initial_float` comes from static config only. Fills only change engine balances; the settlement worker only logs.
 - **Issuer assets.** They are listed via `listing_status = "live"`, a confirmed `AssetSetupOperation` and `issuance_complete` inventory. They appear only in `/investor/catalog` ([lib.rs](../../apps/rabovel-api/src/lib.rs) `investor_catalog_handler`). Trading them is a separate direct DvP: a quote that isn't persisted, an issuer-partially-signed transaction, and the investor signing and submitting.
-- **Investor activation.** Allow-list entry, equity ATA creation and Gate thaw run inside `prepare_purchase` ([mint_setup.rs](../../apps/rabovel-api/src/mint_setup.rs)), not as an explicit step.
+- **Investor activation.** Allow-list entry, equity ATA creation and Gate thaw run inside `prepare_purchase` ([mint_setup.rs](../../apps/rabovel-api/src/features/settlement/direct_purchases/providers/solana.rs)), not as an explicit step.
 - **Signers.** `SignerConfig::load(issuer_id)` falls back to the default issuer keypair, so a seeded platform issuer works with the existing `RABOVEL_ISSUER_KEYPAIR_BASE64`. Equity inventory sits in that issuer's ATA, and the issuer holds mint authority.
 - **Price feed.** `SimulatedPriceFeed` prices any ticker deterministically. Issuers never supply prices.
 
@@ -102,7 +104,7 @@ Deviations from the steps below:
 docker compose run --rm tests cargo test -p rabovel-api -p portfolio-trading -p identity --locked
 ```
 
-Seeded-chain setup needs a configured Devnet run, recorded per [DEMO_SLICES.md](../../demo/DEMO_SLICES.md) rules; mock tests are not chain evidence.
+Seeded-chain setup needs a configured Devnet run, recorded per [DEMO_SLICES.md](../history/DEMO_SLICES.md) rules; mock tests are not chain evidence.
 
 ## Notes for U2–U3 (not detailed yet)
 

@@ -1,18 +1,16 @@
+use crate::IssuanceError;
 use solana_instruction::Instruction;
 use solana_pubkey::Pubkey;
-use spl_token_2022::{
-    extension::{
-        BaseStateWithExtensions, StateWithExtensions, default_account_state::DefaultAccountState,
-    },
-    state::{AccountState, Mint},
-};
-use token_acl_client::{
-    accounts::{MINT_CONFIG_DISCRIMINATOR, MintConfig},
-    instructions::{CreateConfig, CreateConfigInstructionArgs},
-    programs::TOKEN_ACL_ID,
-};
-
-use crate::IssuanceError;
+use spl_token_2022::extension::BaseStateWithExtensions;
+use spl_token_2022::extension::StateWithExtensions;
+use spl_token_2022::extension::default_account_state::DefaultAccountState;
+use spl_token_2022::state::AccountState;
+use spl_token_2022::state::Mint;
+use token_acl_client::accounts::MINT_CONFIG_DISCRIMINATOR;
+use token_acl_client::accounts::MintConfig;
+use token_acl_client::instructions::CreateConfig;
+use token_acl_client::instructions::CreateConfigInstructionArgs;
+use token_acl_client::programs::TOKEN_ACL_ID;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AclConfigState {
