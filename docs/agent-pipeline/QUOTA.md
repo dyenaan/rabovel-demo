@@ -9,9 +9,8 @@ or a reset time changes** (one-line PR or direct edit by the repo owner).
 
 | Service | Used for | Plan | Resets | Notes |
 | --- | --- | --- | --- | --- |
-| ChatGPT / Codex | Builder | Plus (confirmed) | _fill in from Codex usage page_ | Plus tier: weekly rolling caps; no Pro-style 5h gate logic needed. Dashboard is ground truth |
-| Muse | Planner + reviewer option | Free (weekly limit) | **Wed Oct 21, 2026, 3:38 PM MDT** (observed) | Ask Muse "check my usage" for a live read |
-| OpenCode | Builder / reviewer | rides provider login above | follows that provider | Headless CI auth is the fiddly part; prefer Codex cloud for builds |
+| ChatGPT / Codex | Builder | Plus (confirmed) | _fill in from Codex usage page_ | Plus has TWO meters: a rolling 5-hour window AND a weekly cap (hit either → wait). Schedule heavy builds around both; poll Codex `/status` per account, never hardcode resets. Pro ($100/$200) is exempt from the 5h window (weekly cap only). Dashboard/CLI is ground truth |
+| Muse | Planner + reviewer | Free (weekly limit) | **Wed Oct 21, 2026, 3:38 PM MDT** (observed) | Ask Muse "check my usage" for a live read |
 
 ## How to check each cap
 
@@ -20,8 +19,6 @@ or a reset time changes** (one-line PR or direct edit by the repo owner).
 - **Muse:** ask Muse in chat ("check my Muse usage") — it reads the
   live allowance and reset time. Observed pattern: free plan is a weekly
   limit resetting mid-afternoon MDT.
-- **OpenCode:** quota is whatever provider it is logged into; check that
-  provider.
 
 ## Parking policy (when capped)
 

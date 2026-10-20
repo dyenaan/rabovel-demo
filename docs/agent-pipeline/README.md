@@ -1,9 +1,10 @@
 # Agent pipeline — ticket to production
 
-A low-cost, human-gated agent loop for this repo. It is designed so the AI
-steps ride subscriptions that are already paid for (ChatGPT/Codex, Muse,
-OpenCode) instead of per-token API billing. Marginal cost target: **$0**
-beyond those subscriptions. GitHub Actions is free for public repos.
+A low-cost, human-gated agent loop for this repo. Two tools only:
+**Codex cloud** builds, **Muse** plans and reviews. The AI steps ride
+subscriptions that are already paid for instead of per-token API billing.
+Marginal cost target: **$0** beyond those subscriptions. GitHub Actions
+is free for public repos.
 
 ## The loop
 
@@ -19,20 +20,22 @@ monitoring ◄── production ◄── [HUMAN GATE] ◄── staging ◄─�
    criteria, tests/evals, out-of-scope, risk. No spec, no run.
 2. **Triage.** Label `ai-build`. The `AI Build Triage` workflow validates the
    spec and posts the hand-off pack on the issue.
-3. **Planner.** Breaks the ticket into one small vertical slice (repo rule).
-   Bigger than one slice → split into sub-issues and stop. Planner can be
-   Muse in chat. Uses the `plan-feature` skill in the target area.
-4. **Builder.** Codex cloud (assign the issue / `@codex`) or OpenCode on the
-   subscription login. Follows `AGENTS.md` in `rabovel-BE/` or `rabovel-FE/`
+3. **Planner — Muse.** Breaks the ticket into one small vertical slice
+   (repo rule). Bigger than one slice → split into sub-issues and stop.
+   Uses the `plan-feature` skill in the target area.
+4. **Builder — Codex cloud.** Assign the issue from the GitHub Agents tab
+   (or `@codex`). Follows `AGENTS.md` in `rabovel-BE/` or `rabovel-FE/`
    and the `implement-slice` skill. Opens a PR; never pushes to `main`.
 5. **Tests.** Existing CI is the gate: BE = fmt, clippy `-D warnings`,
    `cargo test --workspace`; FE = node tests under `rabovel-FE/tests/`.
    Red CI = builder iterates or the ticket goes back, capped at 3 attempts.
-6. **Reviewer AI (second AI).** A *different* model than the builder
-   (builder = Codex → reviewer = Muse/OpenCode-other, or vice versa).
-   Scores the PR against [REVIEW_RUBRIC.md](REVIEW_RUBRIC.md), including
-   scripted product-flow evals where they exist, and posts the scored
-   review as a PR comment. Uses the `verify-change` skill.
+6. **Reviewer AI (second AI) — Muse.** A different model family from
+   the builder (Codex builds, Muse reviews — that independence is the
+   point). Scores the PR against [REVIEW_RUBRIC.md](REVIEW_RUBRIC.md),
+   including scripted product-flow evals where they exist, and posts the
+   scored review as a PR comment. Uses the `verify-change` skill.
+   In v1 the reviewer is pinged in Muse chat with the PR number; there
+   is no GitHub-side auto-trigger yet.
 7. **PR + human review.** Green CI + passing rubric = merge-ready. A human
    merges. Agents never merge their own PRs.
 8. **Staging → production.** Merge deploys to staging behind a feature
